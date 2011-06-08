@@ -1,5 +1,3 @@
-$Id: README 338 2009-04-20 21:25:32Z stewartac $
-
 DIYA - Do It Yourself Annotator
 
 Diya is software that runs sequence annotation pipelines, it is
@@ -14,11 +12,14 @@ under the terms of the GNU General Public License, version 3 or later
 versions of the code must be free software licensed under the same
 terms.
 
+THIS REPOSITORY
+
+The files in the diya/trunk directory from diyg.sourceforge.net were
+used to make this repository.
 
 INSTALLATION
 
 For software requirements and installation details see the INSTALL file.
-
 
 DOCUMENTATION
 
@@ -33,14 +34,6 @@ find diya. Alternatively:
  >perldoc lib/diya.pm
 
 Or wherever diya.pm can be found.
-
-
-LATEST VERSION
-
-You can always obtain the latest version of Diya and Diyg using an
-anonymous checkout with Subversion:
-
- svn co https://diyg.svn.sourceforge.net:443/svnroot/diyg
 
 
 SAMPLE PIPELINES
