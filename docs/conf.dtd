@@ -1,0 +1,29 @@
+<!-- $Id: conf.dtd 282 2008-12-11 16:29:33Z briano $ -->
+
+<!ELEMENT conf ( parser | order | run | script )* >
+
+<!ELEMENT module ( command | executable | home | inputformat | inputfrom | name )* >
+
+<!ELEMENT command ( #PCDATA ) >
+
+<!ELEMENT name ( #PCDATA ) >
+
+<!ELEMENT executable ( #PCDATA ) >
+
+<!ELEMENT home ( #PCDATA ) >
+
+<!ELEMENT inputformat ( #PCDATA ) >
+
+<!ELEMENT inputfrom ( #PCDATA ) >
+
+<!ELEMENT script ( command | executable | home | inputfrom | name )* >
+
+<!ELEMENT run ( mode ) >
+
+<!ELEMENT mode ( serial | sge ) >
+
+<!ELEMENT order ( names ) >
+
+<!ELEMENT names ( #PCDATA ) >
+
+

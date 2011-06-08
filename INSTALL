@@ -1,0 +1,53 @@
+$Id: INSTALL 206 2008-05-28 17:34:45Z briano $
+
+
+Required Perl modules (available from CPAN)
+
+	* BioPerl (instructions at http://bioperl.org)
+	* Data::Merger
+	* Getopt::Long
+	* FileHandle
+	* XML::Simple
+	* File::Basename
+
+Linux and Mac OS X users should be able to use yum or fink to install Bioperl.
+
+Suggested software, these are the applications used by the annotation
+pipelines in the examples/ directory.
+
+	* Perl 5.8 or greater
+	* MUMmer v3.20 		(http://mummer.sourceforge.net/)
+	* Glimmer v3.02 	(http://www.cbcb.umd.edu/software/glimmer/)
+	* BLAST v2.2.16 	(ftp://ftp.ncbi.nih.gov/blast/)
+	* tRNAscan-SE v1.23	(http://lowelab.ucsc.edu/tRNAscan-SE/)
+	* Infernal v0.81 	(http://infernal.janelia.org/)
+	* rfamscan.pl v0.1	(http://www.sanger.ac.uk/Users/sgj/code/)
+
+Suggested databases, these are the databases and files used by the annotation
+pipelines in the examples/ directory.
+
+   * UniRef50				(http://www.ebi.ac.uk/uniref/)
+   * Protein Clusters (ftp://ftp.ncbi.nih.gov/genomes/Bacteria/CLUSTERS/)
+
+A file called 'Clusters.bcp' is used in one example pipeline, this
+file is all the *bcp file in the CLUSTERS directory concatenated together.
+
+The file cddid_all.tbl can be found at ftp://ftp.ncbi.nih.gov/pub/mmdb/cdd/.
+
+
+Quick Install
+
+1. Install all the required Perl modules and any suggested software
+   and databases
+
+2. Type the following at a command line
+
+	tar -xvf diya-X.X.X.tar 
+	cd diya-X.X.X
+	perl Makefile.PL
+	make
+	make test
+	sudo make install
+
+3. Set the $DIYAHOME variable to /path/to/diya-X.X or to wherever you
+   would like to see the diya output files.

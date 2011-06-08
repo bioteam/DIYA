@@ -1,1 +1,79 @@
-The file in the diya/trunk/ directory from diyg.sourceforge.net was added to make a repository for the DIYA code that will be used by researchers at USDA MARC. 
+$Id: README 338 2009-04-20 21:25:32Z stewartac $
+
+DIYA - Do It Yourself Annotator
+
+Diya is software that runs sequence annotation pipelines, it is
+part of the Do It Yourself Genomics (DIYG) bioinformatics project
+community at http://sourceforge.net/projects/diyg.
+
+Copyright (C) 2008 Navy Medical Research Center
+
+The contributors hold the copyright to this work, and it is licensed
+under the terms of the GNU General Public License, version 3 or later
+(see http://www.gnu.org/licenses/gpl.txt). Derivative works and later
+versions of the code must be free software licensed under the same
+terms.
+
+
+INSTALLATION
+
+For software requirements and installation details see the INSTALL file.
+
+
+DOCUMENTATION
+
+See the file docs/diya.html or read the documentation in diya.pm.
+One way to do this is:
+
+ >perldoc diya
+
+This will work if you've run 'make install'and Perl knows where to
+find diya. Alternatively:
+
+ >perldoc lib/diya.pm
+
+Or wherever diya.pm can be found.
+
+
+LATEST VERSION
+
+You can always obtain the latest version of Diya and Diyg using an
+anonymous checkout with Subversion:
+
+ svn co https://diyg.svn.sourceforge.net:443/svnroot/diyg
+
+
+SAMPLE PIPELINES
+
+Diya is not itself a pipeline, but rather a simple infrastructure for running
+pipelines which take the form of xml configuration files.  Several sample 
+pipelines are provided under the /examples directory.  Some of these includes...
+
+genome-annotator.conf		- annotate 454 assemblies for NCBI submission
+genome-annotator-fasta.conf - annotate sequences in plain fasta format
+download-and-annotate.conf	- download from ncbi, run basic glimmer annotations
+download-and-format.conf	- download from ncbi, generate blast targets
+
+There are also several single-step .conf files names after individual diya parser
+modules.
+
+
+FREQUENTLY ASKED QUESTIONS
+
+Q:	What is the Clusters.bcp file and where can I find it?
+
+A:	It's basically an index of all the clusters found in the NCBI protein 
+	clusters database.
+
+
+Q:	I'm getting an error from rnammer along the lines of "FATAL: POSIX threads 
+	support is not compiled into HMMER; --cpu doesn't have any effect".  What do
+	I do?
+	
+A: This error is basically caused by sending the --cpu option to hmmsearch, 
+	which is called in the core-rnammer script.  A quick remedy is to remove it 
+	from the script file.  It should be on lines 114 and 187 (make sure to get 
+	both!).
+
+	Optionally you can run the following from a command line..
+		% perl -pi -e "s/\-\-cpu 1//g\" /path/to/core-rnammer

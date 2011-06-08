@@ -1,0 +1,1191 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>DIYA - diya.pm</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:_www@b04.apple.com" />
+</head>
+
+<body style="background-color: white">
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#version">VERSION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#in_a_nutshell">In a nutshell</a></li>
+		<li><a href="#parser_steps"><strong>parser</strong> steps</a></li>
+		<li><a href="#script_steps"><strong>script</strong> steps</a></li>
+		<li><a href="#code_functionality">Code functionality</a></li>
+	</ul>
+
+	<li><a href="#installation">INSTALLATION</a></li>
+	<ul>
+
+		<li><a href="#the__diyahome_variable">The $DIYAHOME variable</a></li>
+		<li><a href="#diya_tests"><em>diya</em> tests</a></li>
+	</ul>
+
+	<li><a href="#the_configuration_file">THE CONFIGURATION FILE</a></li>
+	<ul>
+
+		<li><a href="#an_example_configuration_file">An example configuration file</a></li>
+		<li><a href="#the_order_section">The <strong>order</strong> section</a></li>
+		<li><a href="#the_run_section">The <strong>run</strong> section</a></li>
+		<li><a href="#the_parser_sections">The <strong>parser</strong> sections</a></li>
+		<li><a href="#the_script_sections">The <strong>script</strong> sections</a></li>
+	</ul>
+
+	<li><a href="#initialization_options">INITIALIZATION OPTIONS</a></li>
+	<li><a href="#using_a_diya_script">USING A DIYA SCRIPT</a></li>
+	<ul>
+
+		<li><a href="#commandline_options">Command-line options</a></li>
+		<li><a href="#using_set_to_modify_a_command">Using -set to modify a command</a></li>
+		<li><a href="#using_set_to_set_a_variable_in_a_perl_module">Using -set to set a variable in a Perl module</a></li>
+	</ul>
+
+	<li><a href="#writing_your_own_conf__files">WRITING YOUR OWN conf* FILES</a></li>
+	<ul>
+
+		<li><a href="#the_meaning_of_inputfile">The meaning of <em>INPUTFILE</em></a></li>
+		<li><a href="#the_meaning_of_outputfile">The meaning of <em>OUTPUTFILE</em></a></li>
+		<li><a href="#the_meaning_of_outputdir">The meaning of <em>OUTPUTDIR</em></a></li>
+	</ul>
+
+	<li><a href="#creating_and_loading_gff">CREATING AND LOADING GFF</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#contributors">CONTRIBUTORS</a></li>
+	<li><a href="#methods">METHODS</a></li>
+	<ul>
+
+		<li><a href="#new">new</a></li>
+		<li><a href="#read_conf">read_conf</a></li>
+		<li><a href="#run">run</a></li>
+		<li><a href="#new_parser">new_parser</a></li>
+		<li><a href="#order">order</a></li>
+		<li><a href="#write_conf">write_conf</a></li>
+		<li><a href="#verbose">verbose</a></li>
+		<li><a href="#project">project</a></li>
+		<li><a href="#outputdir">outputdir</a></li>
+		<li><a href="#mode">mode</a></li>
+		<li><a href="#cleanup">cleanup</a></li>
+		<li><a href="#inputfile">inputfile</a></li>
+		<li><a href="#_next_inputfile">_next_inputfile</a></li>
+		<li><a href="#_execute">_execute</a></li>
+		<li><a href="#_reconstruct_sequence">_reconstruct_sequence</a></li>
+		<li><a href="#_check_executable">_check_executable</a></li>
+		<li><a href="#_check_input_sequence">_check_input_sequence</a></li>
+		<li><a href="#_check_inputfile">_check_inputfile</a></li>
+		<li><a href="#_check_outputdir">_check_outputdir</a></li>
+		<li><a href="#_make_command">_make_command</a></li>
+		<li><a href="#_make_outputfilename">_make_outputfilename</a></li>
+		<li><a href="#_lastsgeid">_lastsgeid</a></li>
+		<li><a href="#_outputfile">_outputfile</a></li>
+		<li><a href="#_greeting">_greeting</a></li>
+		<li><a href="#_help">_help</a></li>
+		<li><a href="#_diyahome">_diyahome</a></li>
+		<li><a href="#_conf">_conf</a></li>
+		<li><a href="#_executable">_executable</a></li>
+		<li><a href="#_parsers">_parsers</a></li>
+		<li><a href="#_scripts">_scripts</a></li>
+		<li><a href="#_sequence">_sequence</a></li>
+		<li><a href="#_home">_home</a></li>
+		<li><a href="#_inputfrom">_inputfrom</a></li>
+		<li><a href="#_command">_command</a></li>
+		<li><a href="#_inputformat">_inputformat</a></li>
+		<li><a href="#_use_conf">_use_conf</a></li>
+		<li><a href="#_initialize">_initialize</a></li>
+		<li><a href="#_get_type">_get_type</a></li>
+		<li><a href="#_load_app_module">_load_app_module</a></li>
+		<li><a href="#_get_options">_get_options</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>DIYA - diya.pm</p>
+<p>
+</p>
+<hr />
+<h1><a name="version">VERSION</a></h1>
+<p>1.0</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>A simple diya script:</p>
+<pre>
+  use diya;</pre>
+<pre>
+  $pipeline = diya-&gt;new;
+  $pipeline-&gt;read_conf;
+  $pipeline-&gt;run;</pre>
+<p>The script can be run like this:</p>
+<pre>
+  diya-script.pl --conf diya.conf seq1.fa seq2.fa ...</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><em>diya</em> is an open source tool used to build annotation pipelines. A pipeline is
+a series of steps linking the various stages of sequence annotation into a 
+concise process. The software is designed to use sequences as input. These could 
+be complete genomes or the result of shotgun sequencing of a genome library. 
+A possible output would be a fully annotated genomic sequence in Genbank format.</p>
+<p>You can also use this Genbank file as input and load GFF into a
+backend database for viewing with tools like GBrowse.</p>
+<p>A pipeline may be executed on a single computer or on a cluster. Currently <em>diya</em> 
+only supports the Sun Grid Engine platform if you are using a cluster.</p>
+<p>
+</p>
+<h2><a name="in_a_nutshell">In a nutshell</a></h2>
+<p>All diya pipelines are made up of <strong>parser</strong> or <strong>script</strong> steps that are executed 
+in a specific order. The details on the <strong>parser</strong> and <strong>script</strong> steps for a given 
+pipeline are contained in a single XML configuration, or conf, file.</p>
+<p>The <code>diya.pm</code> Perl module is the controller module for a <em>diya</em> annotation pipeline. 
+This module reads the configuration file that describes the pipeline, executes each 
+step in the pipeline, and launches specific <strong>parser</strong> modules when required. 
+It also keeps track of the input and output files and keeps all these files
+in a single output directory.</p>
+<p>
+</p>
+<h2><a name="parser_steps"><strong>parser</strong> steps</a></h2>
+<p>A <strong>parser</strong> step is what is doing the analysis in the pipeline. For every <em>diya</em>
+<strong>parser</strong> step there will be a bioinformatics application that will produce
+output and a corresponding Perl module that parses the
+application output and creates an annotated Genbank file. 
+A <strong>parser</strong> step can act at any time in the pipeline.</p>
+<p>
+</p>
+<h2><a name="script_steps"><strong>script</strong> steps</a></h2>
+<p>A <strong>script</strong> step in <em>diya</em> is simpler than a <strong>parser</strong> step. Its output is not parsed so it does
+not required a corresponding Perl module. A <strong>script</strong> step may do something
+like move a file, format a database, or send an alert. A <strong>script</strong> step can
+act at any time in the pipeline.</p>
+<p>
+</p>
+<h2><a name="code_functionality">Code functionality</a></h2>
+<p>This is a rough description of how a pipeline works in the <code>diya.pm</code> code:</p>
+<ol>
+<li><strong><a name="item_a_diya_script_is_launched_from_the_command_2dline">A <em>diya</em> script is launched from the command-line</a></strong>
+
+<li><strong><a name="item_new">A pipeline object is created by <code>new()</code></a></strong>
+
+<li><strong><a name="item_variables_such_as_the_input_sequence_files_and_the">Variables such as the input sequence files and the conf file name are set</a></strong>
+
+<li><strong><a name="item_the_diya_home_directory_is_set_using__24diyahome_o">The <em>diya</em> home directory is set using $DIYAHOME or the current working directory</a></strong>
+
+<li><strong><a name="item_read_conf">The pipeline object reads the configuration file with <code>read_conf()</code></a></strong>
+
+<li><strong><a name="item_run">The <code>run()</code> method is called, it will iterate over all the steps in the pipeline</a></strong>
+
+<li><strong><a name="item_the_pipeline_object_locates_or_creates_the_output_">The pipeline object locates or creates the output directory</a></strong>
+
+<li><strong><a name="item_the_pipeline_object_sets_the_input_sequence_file">The pipeline object sets the input sequence file</a></strong>
+
+<li><strong><a name="item_the_pipeline_performs_format_conversion_on_the_inp">The pipeline performs format conversion on the input file, if necessary</a></strong>
+
+<li><strong><a name="item_a_command_string_is_constructed_using_the_informat">A command string is constructed using the information in the configuration file</a></strong>
+
+<li><strong><a name="item_the_command_is_executed_2c_creating_a_program_outp">The command is executed, creating a program output file</a></strong>
+
+<li><strong><a name="item_the_pipeline_creates_a_parser_object_and_the_outpu">The pipeline creates a parser object and the output file is parsed</a></strong>
+
+<li><strong><a name="item_the_pipeline_proceeds_to_the_next_step">The pipeline proceeds to the next step</a></strong>
+
+<li><strong>If the pipeline finishs then <code>run()</code> starts again with the next sequence</strong>
+
+</ol>
+<p>A good way to watch what <em>diya</em> is doing is to run it with <em>verbose</em> set
+to 1. For example:</p>
+<pre>
+  diya.pl --conf diya.conf --verbose 1</pre>
+<p>
+</p>
+<hr />
+<h1><a name="installation">INSTALLATION</a></h1>
+<p>The details are in the INSTALL file. <em>diya</em> uses BioPerl, and you will need
+to install some other Perl modules from CPAN in addition.</p>
+<p>
+</p>
+<h2><a name="the__diyahome_variable">The $DIYAHOME variable</a></h2>
+<p>Consider setting the $DIYAHOME environment variable. By default 
+<em>diya</em> uses this directory when it looks for a <em>diya</em> configuration file
+and when it creates output directories. If you do not have this set then make
+sure to tell <em>diya</em> where your configuration file is using <code>-conf</code> or
+<code>-use_conf</code>, see more about this below.</p>
+<p>
+</p>
+<h2><a name="diya_tests"><em>diya</em> tests</a></h2>
+<p>This package comes with a number of test scripts in the <code>t/</code> directory that 
+run automatically if you type:</p>
+<pre>
+  &gt;perl Makefile.PL
+  &gt;make
+  &gt;make test</pre>
+<p>Most of the test scripts run bioinformatics applications, specifically
+<code>blastall</code>, <code>formatdb</code>, <code>tRNAscan-SE</code>, 
+and <code>glimmer3</code>. The scripts
+are written such that they will skip many tests if these applications
+are not found in <code>/usr/local/bin</code>. If you want to run these tests and
+you have these applications installed then you may need to edit the *conf 
+files found in <code>t/data</code> to enter the correct paths.</p>
+<p>
+</p>
+<hr />
+<h1><a name="the_configuration_file">THE CONFIGURATION FILE</a></h1>
+<p>Most of the information about the pipeline is stored in a
+configuration file in XML format. The configuration file that comes with the 
+package is called <code>diya.conf</code> but you can create your own configuration files 
+and call them whatever you want. There are also example *conf files in the 
+<code>t/data</code> and <code>examples</code> directory in this package.</p>
+<p>The configuration file contains different sections. These sections can appear 
+in any order in the file.</p>
+<p>
+</p>
+<h2><a name="an_example_configuration_file">An example configuration file</a></h2>
+<pre>
+ &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+ &lt;conf&gt;
+   &lt;script&gt;
+     &lt;name&gt;download&lt;/name&gt;
+     &lt;executable&gt;download-genome.pl&lt;/executable&gt;
+     &lt;command&gt;-id MYID -out OUTPUTFILE&lt;/command&gt;
+     &lt;home&gt;/Users/bosborne/diya/diya/branches/0.4.0/examples&lt;/home&gt;
+     &lt;inputfrom&gt;&lt;/inputfrom&gt;
+   &lt;/script&gt;
+   &lt;parser&gt;
+     &lt;name&gt;blastp&lt;/name&gt;
+     &lt;executable&gt;blastall&lt;/executable&gt;
+     &lt;command&gt;-i INPUTFILE -d MYDB -p blastp -o OUTPUTFILE&lt;/command&gt;
+     &lt;home&gt;/usr/local/bin&lt;/home&gt;
+     &lt;inputformat&gt;fasta&lt;/inputformat&gt;
+     &lt;inputfrom&gt;download&lt;/inputfrom&gt;
+   &lt;/parser&gt;
+   &lt;run&gt;
+     &lt;mode&gt;serial&lt;/mode&gt;
+   &lt;/run&gt;
+   &lt;order&gt;
+     &lt;names&gt;download blastp&lt;/names&gt;
+   &lt;/order&gt;
+ &lt;/conf&gt;</pre>
+<p>You might run the pipeline using this configuration file like this:</p>
+<pre>
+ diya.pl -conf download-blastp.conf -set MYDB=/opt/gb/at.fa -set MYID=3</pre>
+<p>
+</p>
+<h2><a name="the_order_section">The <strong>order</strong> section</a></h2>
+<p>This section tell <em>diya</em> what <strong>script</strong> and <strong>parser</strong> steps to run and in what order.
+The <strong>names</strong> of the steps are separated by spaces. For example:</p>
+<pre>
+  &lt;order&gt;
+    &lt;names&gt;tRNAscanSE glimmer blastall&lt;/names&gt;
+  &lt;/order&gt;</pre>
+<p>You will see below that every <strong>parser</strong> or <strong>script</strong> section has a line
+for its <strong>name</strong>, like this:</p>
+<pre>
+  &lt;name&gt;tRNAscanSE&lt;/name&gt;</pre>
+<p>You use that same <strong>name</strong> in the <strong>names</strong> line. This means that
+there has to be a corresponding <strong>parser</strong> or <strong>script</strong> section for each
+<strong>name</strong> in the <strong>names</strong> section.</p>
+<p>
+</p>
+<h2><a name="the_run_section">The <strong>run</strong> section</a></h2>
+<p>This section tells <em>diya</em> whether to run the pipeline on a cluster or not. 
+For example:</p>
+<pre>
+  &lt;run&gt;
+    &lt;mode&gt;serial&lt;/mode&gt;
+  &lt;/run&gt;</pre>
+<p>You can run <em>diya</em> to run in <strong>sge</strong> or <strong>serial</strong> mode.
+These are the only 2 possible values.</p>
+<p>
+</p>
+<h2><a name="the_parser_sections">The <strong>parser</strong> sections</a></h2>
+<p>This section describes a <strong>parser</strong> step. An example for 
+the application <code>tRNAscan-SE</code>:</p>
+<pre>
+  &lt;parser&gt;
+    &lt;executable&gt;tRNAscan-SE&lt;/executable&gt;
+    &lt;home&gt;/usr/local/bin&lt;/home&gt;
+    &lt;command&gt;-B -o OUTPUTFILE INPUTFILE&lt;/command&gt;
+    &lt;name&gt;tRNAscanSE&lt;/name&gt;
+    &lt;inputformat&gt;fasta&lt;/inputformat&gt;
+    &lt;inputfrom&gt;&lt;/inputfrom&gt;
+  &lt;/parser&gt;</pre>
+<dl>
+<dt><strong><a name="item_executable"><strong>executable</strong></a></strong>
+
+<dd>
+<p>The name of the application. This should be the actual name, not a
+synonym. Required.</p>
+</dd>
+</li>
+<dt><strong><a name="item_home"><strong>home</strong></a></strong>
+
+<dd>
+<p>The directory where the application is found. Required.</p>
+</dd>
+</li>
+<dt><strong><a name="item_command"><strong>command</strong></a></strong>
+
+<dd>
+<p>The command that has to be run, without the application name. Note that
+these do not have to be real file names. Instead you can substitute actual 
+input and output file names with <em>INPUTFILE</em> and <em>OUTPUTFILE</em>.
+See more on this in <a href="#writing_your_own_conf__files">WRITING YOUR OWN conf* FILES</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_name"><strong>name</strong></a></strong>
+
+<dd>
+<p>The arbitrary name for the step. It does not have to be the same as the
+<strong>executable</strong> but if the step is a <strong>parser</strong> then this has to be the same 
+as the name of the Perl module that parses the executable output. The only
+rule is that no punctuation or spaces are allowed in the <strong>name</strong>. For example,
+a <strong>name</strong> could be <em>tRNAscanSE</em>, but not <em>tRNAscan-SE</em> (the reason for this is
+that spaces and punctuation are not allowed in a Perl module name).
+Required.</p>
+</dd>
+<dd>
+<p>In addition, you may want to have different steps in a pipeline that
+use the same application or script, but in different ways. This way you can assign
+a different <strong>name</strong> to each of these steps.</p>
+</dd>
+</li>
+<dt><strong><a name="item_inputformat"><strong>inputformat</strong></a></strong>
+
+<dd>
+<p>The sequence format for the input file. Optional, if there is no <strong>inputformat</strong> 
+set then fasta format is assumed.</p>
+</dd>
+<dd>
+<p>If <strong>inputformat</strong> is set then <em>diya</em> will determine the format of the input 
+file for the given step. If this format is different from the <strong>inputformat</strong> 
+of the step then <em>diya</em> will create a new file of the correct format and
+make it the new input file for the step.</p>
+</dd>
+</li>
+<dt><strong><a name="item_inputfrom"><strong>inputfrom</strong></a></strong>
+
+<dd>
+<p>This is optional. Use this if you want the output file from one <strong>parser</strong>
+or <strong>script</strong> step to be used as the input file for another <strong>parser</strong> or <strong>script</strong>
+step. For example, if the input file for 'stepA' should be created by 'stepB' 
+do this:</p>
+</dd>
+<dd>
+<pre>
+  &lt;parser&gt;
+    &lt;name&gt;stepA&lt;/name&gt;
+    &lt;inputfrom&gt;stepB&lt;/inputfrom&gt;
+    &lt;executable&gt;mixmaster&lt;/executable&gt;
+    &lt;home&gt;/usr/local/bin&lt;/home&gt;
+    &lt;command&gt;INPUTFILE&lt;/command&gt;
+    &lt;inputformat&gt;&lt;/inputformat&gt;
+  &lt;/parser&gt;</pre>
+</dd>
+<dd>
+<p>If you do not specify <strong>inputfrom</strong> for any step then it is assumed that the 
+input file comes from the command-line. For example, if you run <em>diya</em> like this:</p>
+</dd>
+<dd>
+<pre>
+   diya-script.pl --conf diya.conf seq1.fa</pre>
+</dd>
+<dd>
+<p>then the input file will be 'seq1.fa' when there is no <strong>inputfrom</strong> for a given
+step.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="the_script_sections">The <strong>script</strong> sections</a></h2>
+<p>A <strong>script</strong> step simply executes and its output is not parsed. For example, you may 
+need to copy a sequence file from some location before running a pipeline. 
+Or you may want to send the pipeline output somewhere or do an email alert 
+after the pipeline is done, you would write <strong>script</strong> steps for these purposes. 
+An example:</p>
+<pre>
+ &lt;script&gt;
+   &lt;name&gt;formatdb&lt;/name&gt;
+   &lt;executable&gt;formatdb.sh&lt;/executable&gt;
+   &lt;command&gt;INPUTFILE&lt;/command&gt;
+   &lt;home&gt;/Users/bosborne/diya/branches/0.4.0/examples&lt;/home&gt;
+   &lt;inputfrom&gt;extractCDS&lt;/inputfrom&gt;
+ &lt;/script&gt;</pre>
+<dl>
+<dt><strong><strong>executable</strong></strong>
+
+<dd>
+<p>The name of the script. This should be the actual name, not a
+synonym. Required.</p>
+</dd>
+</li>
+<dt><strong><strong>name</strong></strong>
+
+<dd>
+<p>The <strong>name</strong> for this step in the pipeline. Required.</p>
+</dd>
+</li>
+<dt><strong><strong>home</strong></strong>
+
+<dd>
+<p>The directory where the script is found. Required.</p>
+</dd>
+</li>
+<dt><strong><strong>command</strong></strong>
+
+<dd>
+<p>The command that has to be run, without the executable name. Optional.</p>
+</dd>
+</li>
+<dt><strong><strong>inputfrom</strong></strong>
+
+<dd>
+<p>This is optional. Use this if you want the output file from a <strong>parser</strong>
+or <strong>script</strong> step to be used as the input file for a <strong>script</strong> step.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="initialization_options">INITIALIZATION OPTIONS</a></h1>
+<p>You can pass options to your pipeline object when you create it with
+the <a href="#item_new"><code>new()</code></a> method.</p>
+<dl>
+<dt><strong><a name="item_verbose"><strong>verbose</strong></a></strong>
+
+<dd>
+<p>When you set <strong>verbose</strong> to 1 the pipeline object will print out useful
+diagnostic messages. Set verbose to <em>true</em> like this:</p>
+</dd>
+<dd>
+<pre>
+  my $pipeline = diya-&gt;new(-verbose =&gt; 1)</pre>
+</dd>
+<dd>
+<p>Setting <strong>verbose</strong> is optional, the default value is 0 or <em>false</em></p>
+</dd>
+</li>
+<dt><strong><a name="item_mode"><strong>mode</strong></a></strong>
+
+<dd>
+<p>The values are <em>serial</em> and <em>sge</em>. Set <strong>mode</strong> like this:</p>
+</dd>
+<dd>
+<pre>
+  my $pipeline = diya-&gt;new(-mode =&gt; 'sge')</pre>
+</dd>
+<dd>
+<p>Setting <strong>mode</strong> is optional, the default value is <em>serial</em>.</p>
+</dd>
+</li>
+<dt><strong><a name="item_use_conf"><strong>use_conf</strong></a></strong>
+
+<dd>
+<p>Specify the configuration file for the pipeline. The conf file can have
+any sort of name as long as it has the correct format. An example:</p>
+</dd>
+<dd>
+<pre>
+  my $pipeline = diya-&gt;new( -use_conf =&gt; &quot;~/myconf.conf&quot; )</pre>
+</dd>
+<dd>
+<p>Setting <strong>use_conf</strong> is optional. If it is not set then <em>diya</em> will
+look for a file named <code>diya.conf</code> in your $DIYAHOME directory or in the
+current working directory.</p>
+</dd>
+</li>
+<dt><strong><a name="item_outputdir"><strong>outputdir</strong></a></strong>
+
+<dd>
+<p>Specify the output directory for the pipeline. An example:</p>
+</dd>
+<dd>
+<pre>
+  my $pipeline = diya-&gt;new( -outputdir =&gt; &quot;~/myfiles&quot; )</pre>
+</dd>
+<dd>
+<p>Setting <strong>outputdir</strong> is optional. If it is not set then <em>diya</em> will create
+an output directory in your $DIYAHOME directory using a timestamp, 
+for example ``2008-06-29-11:35:38-diya''.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="using_a_diya_script">USING A DIYA SCRIPT</a></h1>
+<p>You will run <em>diya</em> using a fairly simple script since most of the details 
+are in the configuration file. The <code>diya.pl</code> script that comes with 
+<em>diya</em> is an example.</p>
+<p><em>diya</em> scripts are run like this:</p>
+<pre>
+        % diya.pl [options] [input files]</pre>
+<p>
+</p>
+<h2><a name="commandline_options">Command-line options</a></h2>
+<dl>
+<dt><strong><a name="item__2d_2dverbose"><strong>--verbose</strong></a></strong>
+
+<dd>
+<p>Set the verbosity level, 0 or 1.</p>
+</dd>
+<dd>
+<pre>
+ diya.pl --verbose 1</pre>
+</dd>
+</li>
+<dt><strong><a name="item__2d_2dmode__5bserial_7csge_5d"><strong>--mode</strong> [serial|sge]</a></strong>
+
+<dd>
+<p>Run the batch in serial mode, or sge mode if SGE is available.</p>
+</dd>
+<dd>
+<pre>
+ diya.pl --mode serial</pre>
+</dd>
+</li>
+<dt><strong><a name="item__2d_2dconf"><strong>--conf</strong></a></strong>
+
+<dd>
+<p>Use the given conf file. If you use this option then this given
+conf file will be used, if there is a conf file specified in the <a href="#item_new"><code>new()</code></a> 
+method it will be ignored.</p>
+</dd>
+<dd>
+<pre>
+ diya.pl --conf new-diya.conf</pre>
+</dd>
+</li>
+<dt><strong><a name="item__2d_2doutputdir"><strong>--outputdir</strong></a></strong>
+
+<dd>
+<p>Set the output directory.</p>
+</dd>
+<dd>
+<pre>
+ diya.pl --outputdir /tmp/mypipeline</pre>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<h2><a name="using_set_to_modify_a_command">Using --set to modify a command</a></h2>
+<p>You can also modify your commands dynamically from the command-line.
+For example, you might want to run <code>blastall</code> and create an output file with
+a specific name. Here is an example <code>blastall</code> command from a *conf file:</p>
+<pre>
+  &lt;command&gt;-p blastp -d ran.fa -i INPUTFILE -o MYOUTPUTFILE&lt;/command&gt;</pre>
+<p>You could run <code>diya.pl</code> like this:</p>
+<pre>
+  diya.pl --set MYOUTPUTFILE=blastp.out</pre>
+<p>And an output file called <code>blastp.out</code> would be created.</p>
+<p>You can add these ``wild card'' words anywhere you want to in the <strong>command</strong>
+line of the *conf file. The only rule is that you should not use the words 
+<em>INPUTFILE</em>, <em>OUTPUTFILE</em>, and <em>OUTPUTDIR</em>. These are already being used by 
+<em>diya</em>. One way to make sure your ``wild card'' is unique is to prefix it with 
+'MY'. We also suggest capitalizing these words, for clarity.</p>
+<p>
+</p>
+<h2><a name="using_set_to_set_a_variable_in_a_perl_module">Using --set to set a variable in a Perl module</a></h2>
+<p>Suppose you want your Perl module to be able to get some value from
+the command-line and use it as a variable, e.g. <code>$MYDATABASE</code>. First add the 
+variable name to the <code>@EXPORT_OK</code> array in <code>diya.pm</code>. Then modify the <code>use diya;</code> 
+line in your Perl module, for example:</p>
+<pre>
+ use diya qw($MYDATABASE);</pre>
+<p>After these modifications you should be able to do the following:</p>
+<pre>
+ diya.pl --set MYDATABASE=ncbi Seq.fa</pre>
+<p>And the variable <code>$MYDATABASE</code> will have the value <em>ncbi</em> in your Perl module
+when <code>diya.pl</code> runs.</p>
+<p>When you use --set you are creating global variables that can be used
+in your own Perl modules so make sure that your variable names do not collide with 
+<em>diya</em> variables. One way to do this is to use variable names that are all 
+capitalized, or prefix the name with 'MY'.</p>
+<p>
+</p>
+<hr />
+<h1><a name="writing_your_own_conf__files">WRITING YOUR OWN conf* FILES</a></h1>
+<p><a href="#the_configuration_file">THE CONFIGURATION FILE</a> section discusses the structure of the *conf file
+but in order to create your own files you will need to understand some
+of the internal details of <em>diya</em>.</p>
+<p>When <em>diya</em> runs it can create the names of input and output files.
+This makes it easy for <em>diya</em> to keep track of files since one of its jobs is
+to pass the output of one step to the next step as input. <em>diya</em> uses a
+timestamp and the <strong>name</strong> of the step to create file names, for example:</p>
+<pre>
+  2008_08_07_10_19_53-create-fasta-db.out</pre>
+<p>
+</p>
+<h2><a name="the_meaning_of_inputfile">The meaning of <em>INPUTFILE</em></a></h2>
+<p>The file above was created by the <em>create-fasta-db</em> step, as you can see
+from its name. This file could be the input for some other step, and you would 
+indicate this by using the <strong>inputfrom</strong> field. For example:</p>
+<pre>
+  &lt;parser&gt;
+    &lt;inputfrom&gt;create-fasta-db&lt;/inputfrom&gt;
+    &lt;executable&gt;blastall&lt;/executable&gt;
+    &lt;home&gt;/usr/local/bin&lt;/home&gt;
+    &lt;command&gt;-p blastp -i INPUTFILE -d MYDATABASE -o OUTPUTFILE &lt;/command&gt;
+    &lt;name&gt;blastpCDS&lt;/name&gt;
+    &lt;inputformat&gt;&lt;/inputformat&gt;
+  &lt;/parser&gt;</pre>
+<p>The block above says that the <em>INPUTFILE</em> should come from the <em>create-fasta-db</em>
+step. When <em>diya</em> runs and the actual command is constructed this part of 
+the <strong>command</strong> line:</p>
+<pre>
+    -p blastp -i INPUTFILE</pre>
+<p>Will be transformed into something like:</p>
+<pre>
+    -p blastp -i /tmp/2008_08_07_10_19_53-create-fasta-db.out</pre>
+<p><em>INPUTFILE</em> has a second meaning, which is the name of the sequence file passed
+to the <em>diya</em> script. Recall that you can run a <em>diya</em> script like this:</p>
+<pre>
+  mydiya.pl --conf my.conf NC_123456.fa</pre>
+<p>If a given step has no <strong>inputfrom</strong> value then the value of <em>INPUTFILE</em> will be
+the name of the sequence file set from the command-line, or ``NC_123456.fa'' in the
+example above.</p>
+<p>This does not mean that you have to use <em>INPUTFILE</em> in each step. It means that
+when <em>INPUTFILE</em> is present in a <strong>command</strong> line it will substituted in one
+of these 2 ways, depending on whether or not there is an <strong>inputfrom</strong> value.</p>
+<p>
+</p>
+<h2><a name="the_meaning_of_outputfile">The meaning of <em>OUTPUTFILE</em></a></h2>
+<p>The <em>OUTPUTFILE</em> from one step will frequently be used as the <em>INPUTFILE</em> to
+another step. Thus you may need to explicitly create a file with the name
+contained in <em>OUTPUTFILE</em> using the <strong>command</strong> line. An example <strong>script</strong> block:</p>
+<pre>
+ &lt;script&gt;
+   &lt;name&gt;create-fasta-db&lt;/name&gt;
+   &lt;executable&gt;createdb.pl&lt;/executable&gt;
+   &lt;command&gt;-o OUTPUTFILE&lt;/command&gt;
+   &lt;home&gt;~/scripts&lt;/home&gt;
+   &lt;inputfrom&gt;&lt;/inputfrom&gt;
+ &lt;/script&gt;</pre>
+<p>When this step runs a command like this will be run and executed:</p>
+<pre>
+  ~/scripts/createdb.pl -o /tmp/2008_08_07_10_19_53-create-fasta-db.out</pre>
+<p>Here <code>~/scripts/createdb.pl</code> will use the file name provided by <em>diya</em>
+and put its output into that file. An alternative is to redirect the 
+output of an application into an output file. For example:</p>
+<pre>
+ &lt;script&gt;
+   &lt;name&gt;create-fasta-db&lt;/name&gt;
+   &lt;executable&gt;createdb.pl&lt;/executable&gt;
+   &lt;command&gt; &gt; OUTPUTFILE&lt;/command&gt;
+   &lt;home&gt;~/scripts&lt;/home&gt;
+   &lt;inputfrom&gt;&lt;/inputfrom&gt;
+ &lt;/script&gt;</pre>
+<p>
+</p>
+<h2><a name="the_meaning_of_outputdir">The meaning of <em>OUTPUTDIR</em></a></h2>
+<p>By default <em>diya</em> creates an output directory to contain all the input and output files
+created during a pipeline run, something like:</p>
+<pre>
+   2008_11_21_22_02_19_diya/</pre>
+<p>You can get this name in order to use it in your <strong>script</strong> or <strong>parser</strong>
+steps, something like:</p>
+<pre>
+ &lt;script&gt;
+   &lt;name&gt;move-file&lt;/name&gt;
+   &lt;executable&gt;move-file.pl&lt;/executable&gt;
+   &lt;command&gt;-o OUTPUTDIR&lt;/command&gt;
+   &lt;home&gt;~/scripts&lt;/home&gt;
+   &lt;inputfrom&gt;&lt;/inputfrom&gt;
+ &lt;/script&gt;</pre>
+<p>In this example the name of the <em>diya</em> output directory will be passed to 
+the script.</p>
+<p>
+</p>
+<hr />
+<h1><a name="creating_and_loading_gff">CREATING AND LOADING GFF</a></h1>
+<p>The authors use <em>diya</em> to annotate sequences and save these annotations
+as GenBank files. They routinely convert these files to GFF, load
+the GFF into <a href="/Bio/DB/GFF.html">Bio::DB::GFF</a> databases, and visualize the annotations
+using GBrowse. The conversion script used is <code>diya-genbank2gff3.pl</code>
+in the <code>scripts</code> directory, this script is a modification of the
+<code>genbank2gff3.pl</code> script that comes with BioPerl.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Andrew Stewart, <a href="mailto:andrew.stewart@med.navy.mil">andrew.stewart@med.navy.mil</a>
+Brian Osborne, <a href="mailto:briano@bioteam.net">briano@bioteam.net</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="contributors">CONTRIBUTORS</a></h1>
+<p>Tim Read, <a href="mailto:timothy.read@med.navy.mil">timothy.read@med.navy.mil</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<p>Public methods are listed first, followed by private methods prefixed with '_'.</p>
+<p>
+</p>
+<h2><a name="new">new</a></h2>
+<pre>
+ Name    : new
+ Usage   : $diya = diya-&gt;new()
+ Function: create a diya pipeline object
+ Returns : a diya object
+ Args    : -verbose   (optional), 1 or 0, set the verbosity level
+           -use_conf  (optional), name of the conf file to be used
+           -outputdir (optional), the directory where results will reside
+           -mode      (optional), 'serial' is default 
+ Example : my $pipeline = diya-&gt;new(-verbose   =&gt; 1,
+                                    -use_conf  =&gt; &quot;latest.conf&quot;,
+                                    -outputdir =&gt; 'mydir',
+                                    -mode      =&gt; 'sge' );</pre>
+<p>
+</p>
+<h2><a name="read_conf">read_conf</a></h2>
+<pre>
+ Name    : read_conf
+ Usage   : $diya-&gt;read_conf(&quot;my_conf_file&quot;)
+ Function: read a diya conf file
+ Returns : 1 on success
+ Args    : the name of the conf file to be read (optional)
+ Example : $pipeline-&gt;read_conf()  or  $pipeline-&gt;read_conf(&quot;latest.conf&quot;)</pre>
+<p>
+</p>
+<h2><a name="run">run</a></h2>
+<pre>
+ Name    : run
+ Usage   : $diya-&gt;run()
+ Function: run a diya pipeline
+ Returns : 1 on success
+ Args    : 
+ Example : $pipeline-&gt;run</pre>
+<p>
+</p>
+<h2><a name="new_parser">new_parser</a></h2>
+<pre>
+ Name    : new_parser
+ Usage   : $parser = $module-&gt;new_parser
+ Function: instantiate a new parser object 
+ Returns : a new parser object
+ Args    : none
+ Example :</pre>
+<p>
+</p>
+<h2><a name="order">order</a></h2>
+<pre>
+ Name    : order
+ Usage   : $diya-&gt;order( @array ) or $order = $diya-&gt;order
+ Function: get or set the order of the steps to be run
+ Returns : array of step names
+ Args    : To set pass an array of one or more step names the parsers and
+           scripts must exist in the conf file in the &lt;parser&gt; and
+           &lt;script&gt; sections
+ Example : $pipeline-&gt;order( qw(tRNAscanSE blastall) )  or 
+           $pipeline-&gt;order('tRNAscanSE') or
+           @my_order = $self-&gt;order</pre>
+<p>
+</p>
+<h2><a name="write_conf">write_conf</a></h2>
+<pre>
+ Name    : write_conf
+ Usage   : $diya-&gt;write_conf(&quot;my_new_conf_file&quot;)
+ Function: write a conf file - if no name is supplied then the new file will
+           be given a name of format &lt;timestamp&gt;-diya.conf
+           (e.g.  2008-06-29-11:35:38-diya.conf )
+ Returns : the name of the conf file that was written
+ Args    : the name of the conf file that will be written (optional)
+ Example : $pipeline-&gt;write_conf()  or $pipeline-&gt;write_conf(&quot;version2.conf&quot;)</pre>
+<p>
+</p>
+<h2><a name="verbose">verbose</a></h2>
+<pre>
+ Name    : verbose
+ Usage   : $diya-&gt;verbose($num) or $verbose_level = $diya-&gt;verbose
+ Function: get or set the verbose level
+ Returns : the verbose level
+ Args    : 
+ Example : $pipeline-&gt;verbose(1)</pre>
+<p>
+</p>
+<h2><a name="project">project</a></h2>
+<pre>
+ Name    : project
+ Usage   : $diya-&gt;project($num) or $project = $diya-&gt;project
+ Function: get or set the NCBI project number
+ Returns : the NCBI project number
+ Args    : 
+ Example : $pipeline-&gt;project(1355)</pre>
+<p>
+</p>
+<h2><a name="outputdir">outputdir</a></h2>
+<pre>
+ Name    : outputdir
+ Usage   : $diya-&gt;outputdir()
+ Function: get or set the name of the output directory, where all of 
+           the files created by the pipeline will be written - the 
+           object will try and create the directory if it does not exist</pre>
+<pre>
+           if no output directory is specified then an output directory will
+           be created based on a timestamp, e.g. &quot;2008-06-29-11:35:38-diya&quot;</pre>
+<pre>
+ Returns : name of the output directory or 0 if not output directory is set
+ Args    : 
+ Example : $diya-&gt;outputdir(&quot;pipe-output&quot;)</pre>
+<p>
+</p>
+<h2><a name="mode">mode</a></h2>
+<pre>
+ Name    : mode
+ Usage   : 
+ Function: get or set the mode corresponding to a pipeline
+ Returns : &quot;serial&quot; or &quot;sge&quot;
+ Args    : 
+ Example : $pipeline-&gt;mode(&quot;serial&quot;)</pre>
+<p>
+</p>
+<h2><a name="cleanup">cleanup</a></h2>
+<pre>
+ Name    : cleanup
+ Usage   : $diya-&gt;cleanup
+ Function: remove extraneous files created when a pipeline is run
+ Returns : 1 on success
+ Args    : none
+ Example :</pre>
+<p>
+</p>
+<h2><a name="inputfile">inputfile</a></h2>
+<pre>
+ Name    : inputfile
+ Usage   : $diya-&gt;inputfile('NC.gbk')
+ Function: Get or set the names of the input sequence files
+ Returns : 
+ Args    : 
+ Example : $self-&gt;inputfile(&quot;234.fa&quot;) or $self-&gt;inputfile( qw(234.fa AB.fa) )</pre>
+<p>
+</p>
+<h2><a name="_next_inputfile">_next_inputfile</a></h2>
+<pre>
+ Name    : _next_inputfile
+ Usage   : 
+ Function: Get the name of the next input sequence file, remove the 
+           last from the queue
+ Returns : 
+ Args    : 
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_execute">_execute</a></h2>
+<pre>
+ Name    : _execute
+ Usage   : $self-&gt;_execute($command)
+ Function: encapsulate the serial and sge execution logic 
+ Returns : none
+ Args    : command
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_reconstruct_sequence">_reconstruct_sequence</a></h2>
+<pre>
+ Usage   : _reconstruct_sequence
+ Function: reconstruct the sequence object. Used only when mode is sge. 
+           When mode is sge, the _execute() will generate an intermediate
+           script performing the $parse-&gt;parse($diya). In the intermediate script,
+           this method is called. Please see _execute 
+ Returns : none
+ Args    : none
+ Example : $self-&gt;_reconstruct_sequence()</pre>
+<p>
+</p>
+<h2><a name="_check_executable">_check_executable</a></h2>
+<pre>
+ Usage   : _check_executable
+ Function: checks to see that the executable exists
+ Returns : 1 or die
+ Args    : Name of step
+ Example : $self-&gt;_check_executable($step)</pre>
+<p>
+</p>
+<h2><a name="_check_input_sequence">_check_input_sequence</a></h2>
+<pre>
+ Usage   : _check_input_sequence
+ Function: checks to see that the format of the input sequence file is correct,
+           if the format is not correct then it creates a sequence file
+           of the correct format
+ Returns : The name of the file of the correct format
+ Args    : Name of step
+ Example : $self-&gt;_check_input_sequence($step)</pre>
+<p>
+</p>
+<h2><a name="_check_inputfile">_check_inputfile</a></h2>
+<pre>
+ Usage   : _check_inputfile
+ Function: records the input file name for the step - this may be
+           the input sequence for the entire pipeline but a step may also
+           use the output of another step as input
+ Returns : the name of the input file for the step
+ Args    : name of step
+ Example : $self-&gt;_check_inputfile($step)</pre>
+<p>
+</p>
+<h2><a name="_check_outputdir">_check_outputdir</a></h2>
+<pre>
+ Name    : _check_outputdir
+ Usage   : $diya-&gt;_check_outputdir
+ Function: checks that there is an output directory - if no output directory is defined
+           then a directory name will be made using a timestamp 
+           (e.g.  &quot;2008-06-29-11:35:38-diya&quot;) and this directory will be in the diya home
+           directory - if an output directory is defined but does not exist then we will 
+           attempt to create it
+ Returns : name of output directory, on success
+ Args    : none
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_make_command">_make_command</a></h2>
+<pre>
+
+ Name    : _make_command
+ Usage   : $pipeline-&gt;_make_command($step)
+ Function: to create a complete command using information from the conf file 
+           and any command-line options - private method called by run()
+ Returns : a command, ready to execute
+ Args    : the name of the parser step (e.g. &quot;tRNAscanSE&quot;)
+ Example : $pipeline-&gt;_make_command($parser)</pre>
+<p>
+</p>
+<h2><a name="_make_outputfilename">_make_outputfilename</a></h2>
+<pre>
+ Name    : _make_outputfilename
+ Usage   : $diya-&gt;_make_outputfilename($parser)
+ Function: create an output file name with parser step name and timestamp,
+           private method, called by run()
+ Returns : output file name
+ Args    : step name
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_lastsgeid">_lastsgeid</a></h2>
+<pre>
+ Name    : _lastsgeid
+ Usage   : $diya-&gt;_lastsgeid()
+ Function: set or get the last sge job id submitted by current process,
+                          used only internally for job id tracking.
+ Returns : last sge job id submitted by current process.
+ Args    : 
+ Example : $pipeline-&gt;_lastsgeid(53)</pre>
+<p>
+</p>
+<h2><a name="_outputfile">_outputfile</a></h2>
+<pre>
+ Name    : _outputfile
+ Usage   : $file = $self-&gt;_outputfile($parser)
+ Function: get the output file name for a given parser step, 
+           private method called by run() or a parser module
+ Returns : output file name
+ Args    : step name
+ Example : $file = $self-&gt;_outputfile($step)</pre>
+<p>
+</p>
+<h2><a name="_greeting">_greeting</a></h2>
+<pre>
+ Name    : _greeting
+ Usage   : $diya-&gt;_greeting
+ Function: print a greeting - private method, called by new()
+ Returns : nothing
+ Args    : 
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_help">_help</a></h2>
+<pre>
+ Name    : _help
+ Usage   : $diya-&gt;_help
+ Function: print the POD - works only if DIYA is installed
+ Returns : nothing
+ Args    : 
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_diyahome">_diyahome</a></h2>
+<pre>
+ Name    : _diyahome
+ Usage   : 
+ Function: add the path to the diya home directory to the object -  the path to the 
+           diya package comes from the env $DIYAHOME. If this not set then try to 
+           use the current working directory. Private method, called by new()
+ Returns : the diya home directory
+ Args    : none
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_conf">_conf</a></h2>
+<pre>
+ Name    : _conf
+ Usage   : 
+ Function: get or set a hash representing the conf file - private method, 
+           called by read_conf() and write_conf()
+ Returns : a hash reference representing the conf file
+ Args    : 
+ Example : $conf = $diya-&gt;_conf</pre>
+<p>
+</p>
+<h2><a name="_executable">_executable</a></h2>
+<pre>
+  Name    : _executable
+  Usage   : 
+  Function: return the executable name corresponding to a parser
+            or script, private method called by _make_command
+            and _check_executable
+  Returns : executable name
+  Args    : parser or script name 
+  Example : $exe = $self-&gt;_executable($name)</pre>
+<p>
+</p>
+<h2><a name="_parsers">_parsers</a></h2>
+<pre>
+ Name    : _parsers
+ Usage   : 
+ Function: return all the parser names in the conf file,
+           private method called by order()
+ Returns : array of parser names  
+ Args    : none
+ Example : @parsers = $self-&gt;_parsers</pre>
+<p>
+</p>
+<h2><a name="_scripts">_scripts</a></h2>
+<pre>
+ Name    : _scripts
+ Usage   : 
+ Function: return all the script names in the conf file,
+           private method called by order()
+ Returns : array of script names  
+ Args    : none
+ Example : @scripts = $self-&gt;_scripts</pre>
+<p>
+</p>
+<h2><a name="_sequence">_sequence</a></h2>
+<pre>
+ Name    : _sequence
+ Usage   : $diya-&gt;_sequence($seq) or $seq = $diya-&gt;_sequence
+ Function: get or set the DNA sequence object, private method used by parser
+           modules and by _check_input_sequence() 
+ Returns : the sequence object
+ Args    : 
+ Example : $pipeline-&gt;_sequence($seq)</pre>
+<p>
+</p>
+<h2><a name="_home">_home</a></h2>
+<pre>
+ Name    : _home
+ Usage   : 
+ Function: return the home or location corresponding to an executable, 
+           private method called by _make_command and _check_executable
+ Returns :  
+ Args    : parser or script name 
+ Example : $path = $self-&gt;_home($exe)</pre>
+<p>
+</p>
+<h2><a name="_inputfrom">_inputfrom</a></h2>
+<pre>
+ Name    : _inputfrom
+ Usage   : 
+ Function: return the inputfrom field corresponding to a parser or
+           script
+ Returns :  
+ Args    : parser or script name
+ Example : $path = $self-&gt;_inputfrom($module)</pre>
+<p>
+</p>
+<h2><a name="_command">_command</a></h2>
+<pre>
+ Name    : _command
+ Usage   : 
+ Function: return the command corresponding to a step,
+           private method called by _make_command()
+ Returns :  
+ Args    : step name
+ Example : $args = $self-&gt;_command($step)</pre>
+<p>
+</p>
+<h2><a name="_inputformat">_inputformat</a></h2>
+<pre>
+ Name    : _inputformat
+ Usage   : 
+ Function: return the file format required by a parser step,
+           private method called by run()
+ Returns : format name, or 0 if no value is found
+ Args    : parser step name
+ Example : $format = $self-&gt;_inputformat($step)</pre>
+<p>
+</p>
+<h2><a name="_use_conf">_use_conf</a></h2>
+<pre>
+ Name    : _use_conf
+ Usage   : $diya-&gt;_use_conf(&quot;conf_file&quot;)
+ Function: add the name of the conf file being used to the object - private method, 
+           called by read_conf()
+ Returns : the name of the conf file being used
+ Args    : 
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_initialize">_initialize</a></h2>
+<pre>
+ Name    : _initialize
+ Usage   : $diya-&gt;_initialize
+ Function: add parameters to the diya object - strips the dash used by named 
+           parameters, private method called by new()
+ Returns : 
+ Args    : 
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_get_type">_get_type</a></h2>
+<pre>
+ Name    : _get_type
+ Usage   : $type = $diya-&gt;_get_type($step)
+ Function: return 'script' or 'parser', private method called by run()
+ Returns : 'script' or 'parser'
+ Args    : 
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_load_app_module">_load_app_module</a></h2>
+<pre>
+ Name    : _load_app_module
+ Usage   : $diya-&gt;_load_app_module($module)
+ Function: call require on the given module, private method called by run()
+ Returns : full name of module, e.g. &quot;diya::tRNAscanSE&quot;
+ Args    : name of the module, e.g. 'tRNAscanSE'
+ Example :</pre>
+<p>
+</p>
+<h2><a name="_get_options">_get_options</a></h2>
+<pre>
+ Name    : _get_options
+ Usage   : 
+ Function: get command-line options - the --set option is used to
+           create globals that can be imported into a 
+           parser module or used directly in this module
+ Returns : 1 on success 
+ Args    : none 
+ Example : At the command-line: diya.pl --set REFD=~/mydb.ref</pre>
+
+</body>
+
+</html>

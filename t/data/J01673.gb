@@ -1,0 +1,92 @@
+LOCUS       ECORHO                  1880 bp    DNA     linear   BCT 26-APR-1993
+DEFINITION  E.coli rho gene coding for transcription termination factor.
+ACCESSION   J01673 J01674
+VERSION     J01673.1  GI:147605
+KEYWORDS    attenuator; leader peptide; rho gene; transcription terminator.
+SOURCE      Escherichia coli
+  ORGANISM  Escherichia coli
+            Bacteria; Proteobacteria; Gammaproteobacteria; Enterobacteriales;
+            Enterobacteriaceae; Escherichia.
+REFERENCE   1  (bases 1 to 1880)
+  AUTHORS   Brown,S., Albrechtsen,B., Pedersen,S. and Klemm,P.
+  TITLE     Localization and regulation of the structural gene for
+            transcription-termination factor rho of Escherichia coli
+  JOURNAL   J. Mol. Biol. 162 (2), 283-298 (1982)
+  MEDLINE   83138788
+   PUBMED   6219230
+REFERENCE   2  (bases 1 to 1880)
+  AUTHORS   Pinkham,J.L. and Platt,T.
+  TITLE     The nucleotide sequence of the rho gene of E. coli K-12
+  JOURNAL   Nucleic Acids Res. 11 (11), 3531-3545 (1983)
+  MEDLINE   83220759
+   PUBMED   6304634
+COMMENT     Original source text: Escherichia coli (strain K-12) DNA.
+            A clean copy of the sequence for [2] was kindly provided by
+            J.L.Pinkham and T.Platt.
+FEATURES             Location/Qualifiers
+     source          1..1880
+                     /organism="Escherichia coli"
+                     /mol_type="genomic DNA"
+                     /strain="K-12"
+                     /db_xref="taxon:562"
+     mRNA            212..>1880
+                     /product="rho mRNA"
+     CDS             282..383
+                     /note="rho operon leader peptide"
+                     /codon_start=1
+                     /transl_table=11
+                     /protein_id="AAA24531.1"
+                     /db_xref="GI:147606"
+                     /translation="MRSEQISGSSLNPSCRFSSAYSPVTRQRKDMSR"
+     gene            468..1727
+                     /gene="rho"
+     CDS             468..1727
+                     /gene="rho"
+                     /note="transcription termination factor"
+                     /codon_start=1
+                     /transl_table=11
+                     /protein_id="AAA24532.1"
+                     /db_xref="GI:147607"
+                     /translation="MNLTELKNTPVSELITLGENMGLENLARMRKQDIIFAILKQHAK
+                     SGEDIFGDGVLEILQDGFGFLRSADSSYLAGPDDIYVSPSQIRRFNLRTGDTISGKIR
+                     PPKEGERYFALLKVNEVNFDKPENARNKILFENLTPLHANSRLRMERGNGSTEDLTAR
+                     VLDLASPIGRGQRGLIVAPPKAGKTMLLQNIAQSIAYNHPDCVLMVLLIDERPEEVTE
+                     MQRLVKGEVVASTFDEPASRHVQVAEMVIEKAKRLVEHKKDVIILLDSITRLARAYNT
+                     VVPASGKVLTGGVDANALHRPKRFFGAARNVEEGGSLTIIATALIDTGSKMDEVIYEE
+                     FKGTGNMELHLSRKIAEKRVFPAIDYNRSGTRKEELLTTQEELQKMWILRKIIHPMGE
+                     IDAMEFLINKLAMTKTNDDFFEMMKRS"
+ORIGIN      15 bp upstream from HhaI site.
+        1 aaccctagca ctgcgccgaa atatggcatc cgtggtatcc cgactctgct gctgttcaaa
+       61 aacggtgaag tggcggcaac caaagtgggt gcactgtcta aaggtcagtt gaaagagttc
+      121 ctcgacgcta acctggcgta agggaatttc atgttcgggt gccccgtcgc taaaaactgg
+      181 acgcccggcg tgagtcatgc taacttagtg ttgacttcgt attaaacata ccttattaag
+      241 tttgaatctt gtaatttcca acgcttcccg ttttatctta aatgcgaagt gaacagattt
+      301 ctggctcgtc actcaatccg tcttgtcgtt tcagttctgc gtactctcct gtgaccaggc
+      361 agcgaaaaga catgagtcga tgaccgtaaa caggcatgga tgatcctgcc ataccattca
+      421 caacattaag ttcgagattt accccaagtt taagaactca caccactatg aatcttaccg
+      481 aattaaagaa tacgccggtt tctgagctga tcactctcgg cgaaaatatg gggctggaaa
+      541 acctggctcg tatgcgtaag caggacatta tttttgccat cctgaagcag cacgcaaaga
+      601 gtggcgaaga tatctttggt gatggcgtac tggagatatt gcaggatgga tttggtttcc
+      661 tccgttccgc agacagctcc tacctcgccg gtcctgatga catctacgtt tcccctagcc
+      721 aaatccgccg tttcaacctc cgcactggtg ataccatctc tggtaagatt cgcccgccga
+      781 aagaaggtga acgctatttt gcgctgctga aagttaacga agttaacttc gacaaacctg
+      841 aaaacgcccg caacaaaatc ctctttgaga acttaacccc gctgcacgca aactctcgtc
+      901 tgcgtatgga acgtggtaac ggttctactg aagatttaac tgctcgcgta ctggatctgg
+      961 catcacctat cggtcgtggt cagcgtggtc tgattgtggc accgccgaaa gccggtaaaa
+     1021 ccatgctgct gcagaacatt gctcagagca ttgcttacaa ccacccggat tgtgtgctga
+     1081 tggttctgct gatcgacgaa cgtccggaag aagtaaccga gatgcagcgt ctggtaaaag
+     1141 gtgaagttgt tgcttctacc tttgacgaac ccgcatctcg ccacgttcag gttgcggaaa
+     1201 tggtgatcga gaaggccaaa cgcctggttg agcacaagaa agacgttatc attctgctcg
+     1261 actccatcac tcgtctggcg cgcgcttaca acaccgttgt tccggcgtca ggtaaagtgt
+     1321 tgaccggtgg tgtggatgcc aacgccctgc atcgtccgaa acgcttcttt ggtgcggcgc
+     1381 gtaacgtgga agagggcggc agcctgacca ttatcgcgac ggcgcttatc gataccggtt
+     1441 ctaaaatgga cgaagttatc tacgaagagt ttaaaggtac aggcaacatg gaactgcacc
+     1501 tctctcgtaa gatcgctgaa aaacgcgtct tcccggctat cgactacaac cgttctggta
+     1561 cccgtaaaga agagctgctc acgactcagg aagaactgca gaaaatgtgg atcctgcgca
+     1621 aaatcattca cccgatgggc gaaatcgatg caatggaatt cctcattaat aaactggcaa
+     1681 tgaccaagac caatgacgat ttcttcgaaa tgatgaaacg ctcataaatt tgtcttatgc
+     1741 caaaaacgcc acgtgtttac gtggcgtttt gcttttatat ctgtaatctt aatgccgcgc
+     1801 tgggcatgtt aggaaaattc ctggaatttg ctggcatgtt atgcaatttg catatcaaat
+     1861 ggttaatttt tgcacaggac
+//
+
