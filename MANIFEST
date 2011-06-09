@@ -20,14 +20,6 @@ examples/genome-annotator-fasta.conf
 examples/genome-annotator.conf
 lib/diya.pm
 lib/diya/template.pm
-lib/diya/blastpCDS.pm
-lib/diya/blastall.pm
-lib/diya/rpsblastCDS.pm
-lib/diya/glimmer3.pm
-lib/diya/glimmer3ann.pm
-lib/diya/rfamscan.pm
-lib/diya/rnammer.pm
-lib/diya/tRNAscanSE.pm
 lib/diya/GenbankConvertUtil.pm
 lib/diya/MARC/blastpCDS.pm
 lib/diya/MARC/rpsblastCDS.pm
