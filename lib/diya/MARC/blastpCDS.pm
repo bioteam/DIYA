@@ -60,10 +60,10 @@ sub parse {
 	print "Indexing \'" . $blastout . "\'\n" if $diya->verbose;
 
 	my $index = Bio::Index::Blast->new(-filename => "$blastout.index",
-												  -write_flag => 1);
+				           -write_flag => 1);
 	$index->make_index($blastout);
 
-	my $gbk = $diya->_outputfile("MARC::glimmer3");
+	my $gbk = $diya->_outputfile("MARC::blastpCDS");
 	my $in = Bio::SeqIO->new(-file => "$gbk.gbk", -format => 'genbank');
 	my $seq = $in->next_seq;
 

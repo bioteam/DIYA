@@ -1,7 +1,6 @@
 #!/usr/bin/perl -w
-# $Id: diya-blast.pl 150 2008-07-30 17:52:45Z briano $
 #-------------------------------------------------------------------------------
-# Copyright 2008 ???HJF???
+# Copyright 2008
 #
 # This file is part of DIYA.
 #
@@ -72,9 +71,8 @@ use strict;
 use lib "./lib";
 use diya;
 
-
 my $diya = diya->new( -use_conf  => "t/data/blast.conf",
-						    -verbose   => 1 );
+		      -verbose   => 1 );
 
 $diya->inputfile("t/data/little-buchnera.fa");
 $diya->outputdir("t/tmp/Blast");

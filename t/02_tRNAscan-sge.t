@@ -1,5 +1,4 @@
 #-*-Perl-*-
-# $Id: 03_tRNAscan.t 94 2008-07-10 16:07:14Z briano $
  
 use strict;
 use vars qw($NTESTS);
@@ -21,8 +20,8 @@ BEGIN: {
 
 my $gbk_file = "t/data/BA000003-nt.gbk";
 my $testconf = "t/data/tRNAscan.conf";
-my $tmpdir = "t/tmp/trnaoutputsge";
-my $module = 'tRNAscanSE';
+my $tmpdir   = "t/tmp/trnaoutputsge";
+my $module   = 'MARC::tRNAscanSE';
 
 use_ok('diya');
 

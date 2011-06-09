@@ -1,5 +1,4 @@
 #-*-Perl-*-
-# $Id: 07_formatdb.t 270 2008-12-09 14:02:48Z briano $
  
 use strict;
 use vars qw($NTESTS);
@@ -20,9 +19,10 @@ BEGIN: {
 }
 
 my $testconf = "t/data/blast.conf";
-my $tmpdir = "t/tmp/blast";
-my $script = 'formatdb';
-my $module = 'blastall';
+my $tmpdir   = "t/tmp/blast";
+my $script   = 'formatdb';
+my $module   = 'MARC::blastall';
+my $path     = '/usr/local/share/apps/ncbi/bin';
 
 use_ok('diya');
 
@@ -41,7 +41,7 @@ is($type, 'parser', "$module is of type parser");
 #
 # check <inputfrom>
 #
-my $inputfrom = $blast->_inputfrom("blastall");
+my $inputfrom = $blast->_inputfrom("MARC::blastall");
 is($inputfrom,'formatdb',"Can get inputfrom() of parser from $testconf" || 
   "Can not get inputfrom() from $testconf");
 
@@ -49,8 +49,8 @@ $blast->order('formatdb');
 
 SKIP: {
 
-	skip("Skipping test, /usr/local/bin/formatdb not found", 2) 
-	  unless (-e "/usr/local/bin/formatdb");
+	skip("Skipping test, $path/formatdb not found", 2) 
+	  unless (-e "$path/formatdb");
 
 	$blast->run;
 
