@@ -1,4 +1,3 @@
-# $Id: rpsblastCDS.pm 337 2009-03-31 14:36:06Z briano $
 #--------------------------------------------------------------------------
 # ©Copyright 2008
 #
@@ -45,7 +44,7 @@ Andrew Stewart, andrew.stewart@med.navy.mil
 
 =cut
 
-package diya::PipeLineOne::rpsblastCDS;
+package diya::MARC::rpsblastCDS;
 
 use strict;
 
@@ -69,14 +68,14 @@ sub parse {
    print "CDD map from \'$MYCDD\' loaded\n" 
      if ( defined $cddmap && $diya->verbose );
 
-	my $blastout = $diya->_outputfile("PipeLineOne::rpsblastCDS");
+	my $blastout = $diya->_outputfile("MARC::rpsblastCDS");
 	print "Indexing \'" . $blastout . "\'\n" if $diya->verbose;
 
 	my $index = Bio::Index::Blast->new(-filename => "$blastout.index",
 												  -write_flag => 1);
 	$index->make_index($blastout);
 
-	my $gbk = $diya->_outputfile("PipeLineOne::blastpCDS");
+	my $gbk = $diya->_outputfile("MARC::blastpCDS");
 	my $in = Bio::SeqIO->new(-file => "$gbk.gbk", -format => 'genbank');
 	my $seq = $in->next_seq;
 

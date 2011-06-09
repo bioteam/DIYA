@@ -1,4 +1,3 @@
-# $Id: tRNAscanSE.pm 297 2008-12-18 15:36:01Z briano $
 #--------------------------------------------------------------------------
 # ©Copyright 2008
 #
@@ -43,7 +42,7 @@ Brian Osborne, briano@bioteam.net
 
 =cut
 
-package diya::PipeLineOne::tRNAscanSE;
+package diya::MARC::tRNAscanSE;
 
 use strict;
 use base 'diya';
@@ -55,14 +54,14 @@ sub parse {
 
 	my $LOCUS_TAG_NUMBER = 0;
 
-	my $out = $diya->_outputfile('PipeLineOne::tRNAscanSE');
+	my $out = $diya->_outputfile('MARC::tRNAscanSE');
 	print "Parsing " . $out . "\n" if $diya->verbose;
 
 	# Parse tRNAscan output
 	my $parser = Bio::Tools::tRNAscanSE->new(-file => "$out",
 														  -genetag	=> 'tRNA');
 
-	my $gbk = $diya->_outputfile("PipeLineOne::rpsblastCDS");
+	my $gbk = $diya->_outputfile("MARC::rpsblastCDS");
 	my $in = Bio::SeqIO->new(-file => "$gbk.gbk", -format => 'genbank');
 	my $seq = $in->next_seq;
 

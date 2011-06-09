@@ -5,18 +5,9 @@ This Diya conf file can be used to take 454 assemblies and a *qual file as input
 and output an annotated Genbank file and corresponding ASN.1 that can be submitted to 
 NCBI.
 
-Example pipeline runs:
+Example:
 
-nohup /site/perl/diya.pl -conf genome-annotator.conf -set MYUNIREFD=/site/data/uniref50.fasta \
--set MYSCAFF=/Asgard/G_labdata/scaff/yberc0001.scaff -set MYSTRAIN='ATCC 43970' \
--set MYSPECIES='Yersinia bercovieri' -set MYRPSD=/site/data/Cdd -set MYSEQID=yberc \
--set MYCLUSTERS=/site/data/Clusters.bcp -set MYCDD=/site/data/cddid_all.tbl \
-/Asgard/G_labdata/454_data/organized/assemblies/2006_10/P_2006_10_06_10_01_01_runAssembly/454AllContigs.fna \
-> yberc.out &
-
-Test run:
-
-nohup /site/perl/diya.pl -conf genome-annotator.conf -set MYUNIREFD=/site/data/uniref50.fasta \
+nohup /site/perl/diya.pl -conf genome-annotator-for-ncbi.conf -set MYUNIREFD=/site/data/uniref50.fasta \
 -set MYSTRAIN=test0001 -set MYSPECIES='Test test' -set MYRPSD=/site/data/Cdd -set MYSEQID=test0001 \
 -set MYCLUSTERS=/site/data/Clusters.bcp -set MYCDD=/site/data/cddid_all.tbl \
 -set MYQUALFILE=test-files/454LargeContigs.qual -set MYTAXID=12345 \
@@ -38,18 +29,10 @@ test-files/454LargeContigs.fna > test0001.out &
 
 <conf>
   <order>
-	 <names>assemble_pseudocontig make-single-fa PipeLineOne::glimmer3 extractCDS  
-	        PipeLineOne::blastpCDS  PipeLineOne::rpsblastCDS PipeLineOne::tRNAscanSE
-           PipeLineOne::rnammer gbconvert</names> 
+	 <names>make-single-fa MARC::glimmer3 extractCDS  
+	        MARC::blastpCDS  MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer 
+          MARC::CTR MARC::RNAsifter MARC::phobos gbconvert</names> 
   </order>
-  <script>
-    <name>assemble_pseudocontig</name>
-    <executable>diya-assemble_pseudocontig.pl</executable>
-    <command>-newbler '250:10' -infile INPUTFILE -scaff MYSCAFF -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR</command>
-    <home>/massive/site/home/briano/diya/diya/tags/pre-1.0/modules/</home>
-    <inputfrom></inputfrom>
-    <inputformat></inputformat>
-  </script>
   <script>
     <name>make-single-fa</name>
     <executable>make-single-fa.pl</executable>
@@ -59,7 +42,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <inputformat></inputformat>
   </script>
   <parser> 
-    <name>PipeLineOne::glimmer3</name>
+    <name>MARC::glimmer3</name>
     <executable>g3-from-scratch.diya.csh</executable>
     <command>MYSEQID.fa MYSEQID</command>
     <home>/site/glimmer3/scripts</home>
@@ -71,11 +54,11 @@ test-files/454LargeContigs.fna > test0001.out &
     <executable>extractCDS.pl</executable>
     <command>INPUTFILE OUTPUTFILE</command>
     <home>/site/diya/scripts</home>
-    <inputfrom>PipeLineOne::glimmer3</inputfrom>
+    <inputfrom>MARC::glimmer3</inputfrom>
     <inputformat></inputformat>
   </script>
   <parser>
-    <name>PipeLineOne::blastpCDS</name>
+    <name>MARC::blastpCDS</name>
     <executable>blastall</executable>
 <!-- <command>-p blastx -d MYUNIREFD -i INPUTFILE -o OUTPUTFILE -e .001 -v 1 -b 1</command> -->
 	 <command>-i INPUTFILE -p blastx -d MYUNIREFD -o OUTPUTFILE -e .001 -v 1 -b 1</command>
@@ -84,7 +67,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <inputfrom>extractCDS</inputfrom>
   </parser>
   <parser>
-    <name>PipeLineOne::rpsblastCDS</name>
+    <name>MARC::rpsblastCDS</name>
     <executable>rpsblast</executable>
 <!-- <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1</command> -->
     <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1</command>
@@ -93,7 +76,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <inputfrom>extractCDS</inputfrom>
   </parser>
   <parser>
-    <name>PipeLineOne::tRNAscanSE</name>
+    <name>MARC::tRNAscanSE</name>
     <executable>tRNAscan-SE</executable>
     <command>-B -o OUTPUTFILE MYSEQID.fa</command>
     <home>/arch/bin</home>
@@ -101,10 +84,34 @@ test-files/454LargeContigs.fna > test0001.out &
     <inputfrom></inputfrom>
   </parser>
   <parser>
-    <name>PipeLineOne::rnammer</name>
+    <name>MARC::rnammer</name>
     <executable>rnammer</executable>
     <command>-S bac --gff OUTPUTFILE MYSEQID.fa</command>
     <home>/site/rnammer-1.2.Linux</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <parser>
+    <name>MARC::CTR</name>
+    <executable></executable>
+    <command></command>
+    <home></home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <parser>
+    <name>MARC::RNAsifter</name>
+    <executable>RNAsifter</executable>
+    <command></command>
+    <home></home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <parser>
+    <name>MARC::phobos</name>
+    <executable>phobos</executable>
+    <command></command>
+    <home></home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
@@ -114,7 +121,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <command>-agp -q MYQUALFILE -t MYTAXID INPUTFILE.gbk</command>
     <home>/massive/site/home/briano/diya/diya/branches/0.4.0/scripts</home>
     <inputformat></inputformat>
-    <inputfrom>PipeLineOne::rnammer</inputfrom>
+    <inputfrom>MARC::rnammer</inputfrom>
   </script>
   <script>
     <name>create-genome-page</name>
