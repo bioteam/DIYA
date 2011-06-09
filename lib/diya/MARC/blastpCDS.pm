@@ -1,4 +1,3 @@
-# $Id: blastpCDS.pm 336 2009-03-31 14:34:24Z briano $
 #--------------------------------------------------------------------------
 # ©Copyright 2008
 #
@@ -45,7 +44,7 @@ Andrew Stewart, andrew.stewart@med.navy.mil
 
 =cut
 
-package diya::PipeLineOne::blastpCDS;
+package diya::MARC::blastpCDS;
 
 use strict;
 use base 'diya';
@@ -57,14 +56,14 @@ use Data::Dumper;
 sub parse {
 	my ($self,$diya) = @_;
 
-	my $blastout = $diya->_outputfile("PipeLineOne::blastpCDS");
+	my $blastout = $diya->_outputfile("MARC::blastpCDS");
 	print "Indexing \'" . $blastout . "\'\n" if $diya->verbose;
 
 	my $index = Bio::Index::Blast->new(-filename => "$blastout.index",
 												  -write_flag => 1);
 	$index->make_index($blastout);
 
-	my $gbk = $diya->_outputfile("PipeLineOne::glimmer3");
+	my $gbk = $diya->_outputfile("MARC::glimmer3");
 	my $in = Bio::SeqIO->new(-file => "$gbk.gbk", -format => 'genbank');
 	my $seq = $in->next_seq;
 

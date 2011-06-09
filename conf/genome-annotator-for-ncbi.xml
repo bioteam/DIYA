@@ -37,7 +37,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <name>make-single-fa</name>
     <executable>make-single-fa.pl</executable>
     <command>MYSEQID.gbk OUTPUTDIR</command>
-    <home>/site/diya/scripts</home>
+    <home>/usr/local/share/DIYA/scripts</home>
     <inputfrom></inputfrom>
     <inputformat></inputformat>
   </script>
@@ -45,7 +45,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <name>MARC::glimmer3</name>
     <executable>g3-from-scratch.diya.csh</executable>
     <command>MYSEQID.fa MYSEQID</command>
-    <home>/site/glimmer3/scripts</home>
+    <home>/usr/local/share/DIYA/scripts</home>
     <inputfrom></inputfrom>
     <inputformat></inputformat>
   </parser>
@@ -53,7 +53,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <name>extractCDS</name>
     <executable>extractCDS.pl</executable>
     <command>INPUTFILE OUTPUTFILE</command>
-    <home>/site/diya/scripts</home>
+    <home>/usr/local/share/DIYA/scripts</home>
     <inputfrom>MARC::glimmer3</inputfrom>
     <inputformat></inputformat>
   </script>
@@ -62,7 +62,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <executable>blastall</executable>
 <!-- <command>-p blastx -d MYUNIREFD -i INPUTFILE -o OUTPUTFILE -e .001 -v 1 -b 1</command> -->
 	 <command>-i INPUTFILE -p blastx -d MYUNIREFD -o OUTPUTFILE -e .001 -v 1 -b 1</command>
-    <home>/common/bin/</home>
+    <home>/usr/local/bin/</home>
     <inputformat></inputformat>
     <inputfrom>extractCDS</inputfrom>
   </parser>
@@ -71,7 +71,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <executable>rpsblast</executable>
 <!-- <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1</command> -->
     <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1</command>
-    <home>/common/bin/</home>
+    <home>/usr/local/bin/</home>
     <inputformat></inputformat>
     <inputfrom>extractCDS</inputfrom>
   </parser>
@@ -79,7 +79,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <name>MARC::tRNAscanSE</name>
     <executable>tRNAscan-SE</executable>
     <command>-B -o OUTPUTFILE MYSEQID.fa</command>
-    <home>/arch/bin</home>
+    <home>/usr/local/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
@@ -87,7 +87,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <name>MARC::rnammer</name>
     <executable>rnammer</executable>
     <command>-S bac --gff OUTPUTFILE MYSEQID.fa</command>
-    <home>/site/rnammer-1.2.Linux</home>
+    <home>/usr/local/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
@@ -119,17 +119,9 @@ test-files/454LargeContigs.fna > test0001.out &
     <name>gbconvert</name>
     <executable>gbconvert.pl</executable>
     <command>-agp -q MYQUALFILE -t MYTAXID INPUTFILE.gbk</command>
-    <home>/massive/site/home/briano/diya/diya/branches/0.4.0/scripts</home>
+    <home>/usr/local/share/DIYA/scripts</home>
     <inputformat></inputformat>
     <inputfrom>MARC::rnammer</inputfrom>
-  </script>
-  <script>
-    <name>create-genome-page</name>
-    <executable>create-genomes.pl</executable>
-    <command>-p -g</command>
-    <home>/massive/site/home/briano/Scriptorium/trunk/genbank-submission/Genome</home>
-    <inputformat></inputformat>
-    <inputfrom></inputfrom>
   </script>
   <run>
     <mode>serial</mode>

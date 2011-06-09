@@ -1,4 +1,3 @@
-# $Id: rnammer.pm 297 2008-12-18 15:36:01Z briano $
 #--------------------------------------------------------------------------
 # ©Copyright 2008
 #
@@ -39,7 +38,7 @@ Brian Osborne, briano@bioteam.net
 
 =cut
 
-package diya::PipeLineOne::rnammer;
+package diya::MARC::rnammer;
 
 use strict;
 use base 'diya';
@@ -54,11 +53,11 @@ sub parse {
 
 	#my $gbk = $diya->_sequence;
 
-	my $rin = $diya->_outputfile('PipeLineOne::tRNAscanSE') . ".gbk";
+	my $rin = $diya->_outputfile('MARC::tRNAscanSE') . ".gbk";
 	my $in = Bio::SeqIO->new(-file => $rin, -format => 'genbank');
 	my $gbk = $in->next_seq;
 
-	my $rout = $diya->_outputfile('PipeLineOne::rnammer');
+	my $rout = $diya->_outputfile('MARC::rnammer');
 
 	open MYIN,$rout or die "Cannot read file $rout";
 
