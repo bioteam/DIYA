@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- $Id: genome-annotator.conf 318 2009-02-24 21:01:06Z briano $
 
-This Diya conf file can be used to take 454 assemblies and a *scaff file as input
+This Diya conf file can be used to take 454 assemblies and a *qual file as input
 and output an annotated Genbank file and corresponding ASN.1 that can be submitted to 
 NCBI.
 
@@ -21,6 +21,18 @@ nohup /site/perl/diya.pl -conf genome-annotator.conf -set MYUNIREFD=/site/data/u
 -set MYCLUSTERS=/site/data/Clusters.bcp -set MYCDD=/site/data/cddid_all.tbl \
 -set MYQUALFILE=test-files/454LargeContigs.qual -set MYTAXID=12345 \
 test-files/454LargeContigs.fna > test0001.out &
+
+1. copy all relevant files to a working directory
+2. run glimmer3
+3. run blastp of predicted peptides against UniRef50 (SGE)
+4. run rpsblast of predicted peptides against CDD (SGE)
+5. run tRNAscanSE
+6. run rnammer
+7. run CTR
+8. run RNAsifter
+9. run phobos
+10. correct of annotation text
+11. create ASN and associated files for NCBI submission
 
 -->
 
