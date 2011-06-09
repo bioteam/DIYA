@@ -1,4 +1,3 @@
-diya.conf
 diya.pl
 INSTALL
 LICENSE
@@ -30,12 +29,12 @@ lib/diya/rfamscan.pm
 lib/diya/rnammer.pm
 lib/diya/tRNAscanSE.pm
 lib/diya/GenbankConvertUtil.pm
-lib/diya/PipeLineOne/blastpCDS.pm
-lib/diya/PipeLineOne/rpsblastCDS.pm
-lib/diya/PipeLineOne/glimmer3.pm
-lib/diya/PipeLineOne/rfamscan.pm
-lib/diya/PipeLineOne/rnammer.pm
-lib/diya/PipeLineOne/tRNAscanSE.pm
+lib/diya/MARC/blastpCDS.pm
+lib/diya/MARC/rpsblastCDS.pm
+lib/diya/MARC/glimmer3.pm
+lib/diya/MARC/rfamscan.pm
+lib/diya/MARC/rnammer.pm
+lib/diya/MARC/tRNAscanSE.pm
 scripts/gbconvert.pl
 scripts/diya-postrun_hook.pl
 scripts/diya-assemble_pseudocontig.pl
