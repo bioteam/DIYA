@@ -1,5 +1,5 @@
 #!/usr/bin/perl 
-# $Id: diya-assemble_pseudocontig.pl 353 2010-01-26 14:22:28Z briano $
+# $Id: diya-assemble_pseudocontig.pl 348 2009-07-07 15:45:47Z briano $
 #--------------------------------------------------------------------------
 # ©Copyright 2008
 #
@@ -325,10 +325,10 @@ if ($REFERENCE) {
 if ( $SCAFFFILE ) {
 	open SCAFF, $SCAFFFILE || die "Cannot open $SCAFFFILE file for some reason";
 	while (<SCAFF>) {
-		my @G = split( /\t+/ );
+		my @G = split(/\t+/);
 		my $scaffdirA;
 
-		die "Check format of .scaff file: the columns must be tab-delimited" if ( @G < 4 );
+		die "Check format of .scaff file: appears to be too few columns" if (@G < 4);
 
 		push (@tiledids,$G[0]);
 		if ($G[1] eq "EB") {

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: gbconvert.pl 334 2009-03-30 18:16:57Z briano $
+# $Id: gbconvert.pl 303 2009-01-26 19:28:17Z briano $
 
 =head1 NAME
 
@@ -373,7 +373,7 @@ $parser->create_agp($infile) if $agp;
 # Run again
 $parser->run_tbl2asn($comment,2);
 
-$parser->cleanup;
+#$parser->cleanup;
 
 
 sub usage {
