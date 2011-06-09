@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- $Id: genome-annotator.conf 318 2009-02-24 21:01:06Z briano $
+
+This Diya conf file can be used to take 454 assemblies and a *scaff file as input
+and output an annotated Genbank file and corresponding ASN.1 that can be submitted to 
+NCBI.
+
+Example pipeline runs:
+
+nohup /site/perl/diya.pl -conf genome-annotator.conf -set MYUNIREFD=/site/data/uniref50.fasta \
+-set MYSCAFF=/Asgard/G_labdata/scaff/yberc0001.scaff -set MYSTRAIN='ATCC 43970' \
+-set MYSPECIES='Yersinia bercovieri' -set MYRPSD=/site/data/Cdd -set MYSEQID=yberc \
+-set MYCLUSTERS=/site/data/Clusters.bcp -set MYCDD=/site/data/cddid_all.tbl \
+/Asgard/G_labdata/454_data/organized/assemblies/2006_10/P_2006_10_06_10_01_01_runAssembly/454AllContigs.fna \
+> yberc.out &
+
+Test run:
+
+nohup /site/perl/diya.pl -conf genome-annotator.conf -set MYUNIREFD=/site/data/uniref50.fasta \
+-set MYSTRAIN=test0001 -set MYSPECIES='Test test' -set MYRPSD=/site/data/Cdd -set MYSEQID=test0001 \
+-set MYCLUSTERS=/site/data/Clusters.bcp -set MYCDD=/site/data/cddid_all.tbl \
+-set MYQUALFILE=test-files/454LargeContigs.qual -set MYTAXID=12345 \
+test-files/454LargeContigs.fna > test0001.out &
+
+-->
+
+<conf>
+  <order>
+	 <names>assemble_pseudocontig make-single-fa PipeLineOne::glimmer3 extractCDS  
+	        PipeLineOne::blastpCDS  PipeLineOne::rpsblastCDS PipeLineOne::tRNAscanSE
+           PipeLineOne::rnammer gbconvert</names> 
+  </order>
+  <script>
+    <name>assemble_pseudocontig</name>
+    <executable>diya-assemble_pseudocontig.pl</executable>
+    <command>-newbler '250:10' -infile INPUTFILE -scaff MYSCAFF -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR</command>
+    <home>/massive/site/home/briano/diya/diya/tags/pre-1.0/modules/</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </script>
+  <script>
+    <name>make-single-fa</name>
+    <executable>make-single-fa.pl</executable>
+    <command>MYSEQID.gbk OUTPUTDIR</command>
+    <home>/site/diya/scripts</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </script>
+  <parser> 
+    <name>PipeLineOne::glimmer3</name>
+    <executable>g3-from-scratch.diya.csh</executable>
+    <command>MYSEQID.fa MYSEQID</command>
+    <home>/site/glimmer3/scripts</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </parser>
+  <script>
+    <name>extractCDS</name>
+    <executable>extractCDS.pl</executable>
+    <command>INPUTFILE OUTPUTFILE</command>
+    <home>/site/diya/scripts</home>
+    <inputfrom>PipeLineOne::glimmer3</inputfrom>
+    <inputformat></inputformat>
+  </script>
+  <parser>
+    <name>PipeLineOne::blastpCDS</name>
+    <executable>blastall</executable>
+<!-- <command>-p blastx -d MYUNIREFD -i INPUTFILE -o OUTPUTFILE -e .001 -v 1 -b 1</command> -->
+	 <command>-i INPUTFILE -p blastx -d MYUNIREFD -o OUTPUTFILE -e .001 -v 1 -b 1</command>
+    <home>/common/bin/</home>
+    <inputformat></inputformat>
+    <inputfrom>extractCDS</inputfrom>
+  </parser>
+  <parser>
+    <name>PipeLineOne::rpsblastCDS</name>
+    <executable>rpsblast</executable>
+<!-- <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1</command> -->
+    <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1</command>
+    <home>/common/bin/</home>
+    <inputformat></inputformat>
+    <inputfrom>extractCDS</inputfrom>
+  </parser>
+  <parser>
+    <name>PipeLineOne::tRNAscanSE</name>
+    <executable>tRNAscan-SE</executable>
+    <command>-B -o OUTPUTFILE MYSEQID.fa</command>
+    <home>/arch/bin</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <parser>
+    <name>PipeLineOne::rnammer</name>
+    <executable>rnammer</executable>
+    <command>-S bac --gff OUTPUTFILE MYSEQID.fa</command>
+    <home>/site/rnammer-1.2.Linux</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <script>
+    <name>gbconvert</name>
+    <executable>gbconvert.pl</executable>
+    <command>-agp -q MYQUALFILE -t MYTAXID INPUTFILE.gbk</command>
+    <home>/massive/site/home/briano/diya/diya/branches/0.4.0/scripts</home>
+    <inputformat></inputformat>
+    <inputfrom>PipeLineOne::rnammer</inputfrom>
+  </script>
+  <script>
+    <name>create-genome-page</name>
+    <executable>create-genomes.pl</executable>
+    <command>-p -g</command>
+    <home>/massive/site/home/briano/Scriptorium/trunk/genbank-submission/Genome</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </script>
+  <run>
+    <mode>serial</mode>
+  </run>
+</conf>
