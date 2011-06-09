@@ -1,3 +1,4 @@
+# $Id: glimmer3.pm 347 2009-05-13 19:23:09Z briano $
 #--------------------------------------------------------------------------
 # ©Copyright 2008
 #
@@ -47,7 +48,7 @@ Brian Osborne, briano@bioteam.net
 
 =cut
 
-package diya::MARC::glimmer3;
+package diya::PipeLineOne::glimmer3;
 
 use strict;
 use vars qw(@ISA);
@@ -68,7 +69,7 @@ sub parse {
 	if ( defined $MYSEQID ) {
 		$out = $MYSEQID;
 	} else {
-		$out = $diya->_outputfile('MARC::glimmer3');
+		$out = $diya->_outputfile('PipeLineOne::glimmer3');
 	}
 	print "Parsing $out.predict\n" if $diya->verbose;
 
@@ -77,8 +78,13 @@ sub parse {
 
 	if ( defined $MYSEQID ) {
 		my $gbk = "$MYSEQID.gbk";
-		my $dir = $diya->outputdir;
-		my $in = Bio::SeqIO->new(-file => "$dir/$gbk",
+
+		if ( ! -e $gbk ) {
+			my $dir = $diya->outputdir;
+			$gbk = "$dir/$gbk";
+		}
+
+		my $in = Bio::SeqIO->new(-file => "$gbk",
 										 -format => 'genbank' );
 		$seq = $in->next_seq;
 
@@ -112,7 +118,7 @@ sub parse {
 	$seq->add_SeqFeature(@features);
 
 	# Output
-	my $outfile = $diya->_outputfile('MARC::glimmer3');
+	my $outfile = $diya->_outputfile('PipeLineOne::glimmer3');
 
 	my $seqo = Bio::SeqIO->new(-format	=> 'genbank',
 										-file	=> ">$outfile.gbk");
