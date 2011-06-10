@@ -66,7 +66,7 @@ SKIP: {
 1;
 
 END {
-	unlink "formatdb.log";
+  unlink "formatdb.log";
 }
 
 __END__

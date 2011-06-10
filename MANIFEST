@@ -31,7 +31,6 @@ lib/diya/MARC/rnammer.pm
 lib/diya/MARC/tRNAscanSE.pm
 lib/diya/MARC/blastall.pm
 scripts/gbconvert.pl
-scripts/diya-postrun_hook.pl
 scripts/diya-assemble_pseudocontig.pl
 scripts/diya-genbank2gff.pl
 scripts/diya-genbank2gff3.pl
