@@ -4,7 +4,7 @@
 ARGS=2
 IN=$1
 BOOL=$2
-FORMATDB=/usr/local/bin/formatdb
+FORMATDB=/usr/local/share/apps/ncbi/bin/formatdb
 
 if [ $# -ne $ARGS ]  # Correct number of arguments passed to script?
 then

@@ -1,5 +1,4 @@
 #-*-Perl-*-
-# $Id: 06_blast.t 193 2008-08-12 16:20:24Z briano $
  
 use strict;
 use vars qw($NTESTS);
@@ -20,17 +19,17 @@ BEGIN: {
 }
 
 my $tmp = "t/tmp/Blast";
-my $fa = "little-buchnera.fa";
+my $fa  = "little-buchnera.fa";
 my $out = "blastp.out";
-my $in = "t/data/contig1.fa";
+my $in  = "t/data/contig1.fa";
 
 # test command-line options - the blastall command in t/data/blast.conf is
 #     <command>-p blastn -d DB -i INPUT -o OUTPUT</command>
 
 SKIP: {
 
-	skip("Skipping test, /usr/local/bin/blastall not found", 2) 
-	  unless (-e "/usr/local/bin/blastall");
+	skip("Skipping test, /usr/local/share/apps/ncbi/bin/blastall not found", 2) 
+	  unless (-e "/usr/local/share/apps/ncbi/bin/blastall");
 
 	system "t/data/diya-blast.pl --set DB=$tmp/$fa --set OUTPUT=$tmp/$out --set INPUT=$in";
 

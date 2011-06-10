@@ -1,5 +1,4 @@
 #-*-Perl-*-
-# $Id: 01_diya.t 270 2008-12-09 14:02:48Z briano $
  
 use strict;
 use vars qw( $NTESTS );
@@ -100,15 +99,15 @@ $diya->_use_conf($testconf);
 $diya->read_conf;
 my @modules = $diya->order;
 my $mod_str = join " ",@modules;
-is($mod_str,"tRNAscanSE glimmer3 blastall","Can get with order()") ||
+is($mod_str,"MARC::tRNAscanSE MARC::glimmer3 MARC::blastall","Can get with order()") ||
   diag("Can not get with order()");
 
-$diya->order("blastall");
+$diya->order("MARC::blastall");
 @modules = $diya->order();
-is($modules[0],"blastall","Can set single step with order()") ||
+is($modules[0],"MARC::blastall","Can set single step with order()") ||
   diag("Can not set single step with order()");
 
-my @new_modules = qw(glimmer3  blastall); 
+my @new_modules = qw(MARC::glimmer3  MARC::blastall); 
 $diya->order( @new_modules );
 @modules = $diya->order();
 is_deeply(\@modules, \@new_modules,"Can set order() with array") ||
@@ -119,13 +118,13 @@ dies_ok{ $diya->order("non-existent") } 'order() dies if passed a bad name';
 #
 # check _parsers
 #
-my @ps = qw( blastall  glimmer3 tRNAscanSE );
+my @ps = qw( MARC::blastall  MARC::glimmer3 MARC::tRNAscanSE );
 my @cs = $diya->_parsers;
 is_deeply(\@cs, \@ps, "Can get with _parsers" || "Can not get with _parsers");
 #
 # get executable name for parser
 #
-$p = $diya->_executable("tRNAscanSE");
+$p = $diya->_executable("MARC::tRNAscanSE");
 is($p, "tRNAscan-SE", "Can get executable name with _executable") ||
   diag("Can not get executable name with _executable");
 #
@@ -163,7 +162,7 @@ is( $t->mode, "sge", "read_conf() does not overwrite existing values" ) ||
 my $type = $t->_get_type("diya-postbatch");
 is($type,'script',"Can get type of script from $testconf" || "Can not get type");
 
-$type = $t->_get_type("blastall");
+$type = $t->_get_type("MARC::blastall");
 is($type,'parser',"Can get type of parser from $testconf" || "Can not get type");
 
 $conf = "t/data/blast.conf";
@@ -173,12 +172,12 @@ $z->read_conf;
 $type = $z->_get_type("formatdb");
 is($type,'script',"Can get type of script from $conf" || "Can not get type from $conf");
 
-$type = $z->_get_type("blastall");
+$type = $z->_get_type("MARC::blastall");
 is($type,'parser',"Can get type of parser from $conf" || "Can not get type from $conf");
 #
 # check <inputfrom>
 #
-my $inputfrom = $z->_inputfrom("blastall");
+my $inputfrom = $z->_inputfrom("MARC::blastall");
 is($inputfrom,'formatdb',"Can get inputfrom() of parser from $conf" || 
   "Can not get inputfrom() from $conf");
 $inputfrom = $z->_inputfrom("formatdb");
@@ -194,7 +193,7 @@ $q->read_conf;
 dies_ok{ $diya->_check_executable("imaginary") } 
   '_check_executable() dies if passed a bad name';
 
-my $path = '/usr/local/glimmer3.02/scripts/g3-from-scratch.csh';
+my $path = '/usr/local/share/DIYA/scripts/g3-from-scratch.diya.csh';
 
 SKIP: {
         skip("Can't run 1 test, $path not found", 1) 
