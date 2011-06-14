@@ -6,12 +6,12 @@ NCBI.
 
 Example:
 
-nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.conf \
--set MYUNIREFD=/site/data/uniref50.fasta \
--set MYSTRAIN=test0001 -set MYSPECIES='Test test' -set MYRPSD=/site/data/Cdd -set MYSEQID=test0001 \
--set MYCLUSTERS=/site/data/Clusters.bcp -set MYCDD=/site/data/cddid_all.tbl \
--set MYQUALFILE=test-files/454LargeContigs.qual -set MYTAXID=12345 \
-test-files/454LargeContigs.fna > test0001.out &
+nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml \
+-set MYUNIREFD=/boris/user_data/swissprot/uniref50.fasta -set MYSTRAIN=test0001 \
+-set MYSPECIES='Test test' -set MYRPSD=/boris/user_data/ncbi/CDD/Cdd -set MYSEQID=test0001 \
+-set MYCLUSTERS=/boris/user_data/ncbi/CDD/Clusters.bcp \
+-set MYCDD=/boris/user_data/ncbi/CDD/cddid_all.tbl -set MYQUALFILE=454MiniContigs.qual \
+-set MYTAXID=12345 454MiniContigs.fna > test0001.out &
 
 1. copy all relevant files to a working directory
 2. run glimmer3
@@ -33,13 +33,15 @@ test-files/454LargeContigs.fna > test0001.out &
 	        MARC::blastpCDS  MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer 
           MARC::CTR MARC::RNAsifter MARC::phobos gbconvert</names> 
 -->
-   <names>assemble_pseudocontig</names> 
+   <names>assemble_pseudocontig make-single-fa MARC::glimmer3 extractCDS
+   MARC::blastpCDS MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer
+   </names> 
   </order>
     <script>
     <name>assemble_pseudocontig</name>
     <executable>diya-assemble_pseudocontig.pl</executable>
     <command>-bin /usr/local/bin -infile INPUTFILE -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR</command>
-    <home>/usr/local/share/apps/DIYA/scripts</home>
+    <home>/usr/local/share/DIYA/scripts</home>
     <inputfrom></inputfrom>
     <inputformat></inputformat>
   </script>
@@ -53,7 +55,7 @@ test-files/454LargeContigs.fna > test0001.out &
   </script>
   <parser> 
     <name>MARC::glimmer3</name>
-    <executable>g3-from-scratch.diya.csh</executable>
+    <executable>g3-from-scratch.csh</executable>
     <command>MYSEQID.fa MYSEQID</command>
     <home>/usr/local/share/apps/glimmer3.02/scripts</home>
     <inputfrom></inputfrom>
@@ -70,18 +72,16 @@ test-files/454LargeContigs.fna > test0001.out &
   <parser>
     <name>MARC::blastpCDS</name>
     <executable>blastall</executable>
-<!-- <command>-p blastx -d MYUNIREFD -i INPUTFILE -o OUTPUTFILE -e .001 -v 1 -b 1</command> -->
-	 <command>-i INPUTFILE -p blastx -d MYUNIREFD -o OUTPUTFILE -e .001 -v 1 -b 1</command>
-    <home>/usr/local/bin/</home>
+    <command>-i INPUTFILE -p blastx -d MYUNIREFD -o OUTPUTFILE -e .001 -v 1 -b 1</command>
+    <home>/usr/local/share/apps/ncbi/bin</home>
     <inputformat></inputformat>
     <inputfrom>extractCDS</inputfrom>
   </parser>
   <parser>
     <name>MARC::rpsblastCDS</name>
     <executable>rpsblast</executable>
-<!-- <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1</command> -->
     <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1</command>
-    <home>/usr/local/bin/</home>
+    <home>/usr/local/share/apps/ncbi/bin</home>
     <inputformat></inputformat>
     <inputfrom>extractCDS</inputfrom>
   </parser>
@@ -105,7 +105,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <name>MARC::CTR</name>
     <executable></executable>
     <command></command>
-    <home></home>
+    <home>/usr/local/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
@@ -113,7 +113,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <name>MARC::RNAsifter</name>
     <executable>RNAsifter</executable>
     <command></command>
-    <home></home>
+    <home>/usr/local/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
@@ -121,7 +121,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <name>MARC::phobos</name>
     <executable>phobos</executable>
     <command></command>
-    <home></home>
+    <home>/usr/local/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
