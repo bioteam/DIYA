@@ -63,7 +63,7 @@ sub parse {
 				           -write_flag => 1);
 	$index->make_index($blastout);
 
-	my $gbk = $diya->_outputfile("MARC::blastpCDS");
+	my $gbk = $diya->_outputfile("MARC::glimmer3");
 	my $in = Bio::SeqIO->new(-file => "$gbk.gbk", -format => 'genbank');
 	my $seq = $in->next_seq;
 
