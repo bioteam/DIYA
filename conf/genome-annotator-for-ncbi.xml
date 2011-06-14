@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: genome-annotator.conf 318 2009-02-24 21:01:06Z briano $
-
+<!--
 This Diya conf file can be used to take 454 assemblies and a *qual file as input
 and output an annotated Genbank file and corresponding ASN.1 that can be submitted to 
 NCBI.
 
 Example:
 
-nohup /site/perl/diya.pl -conf genome-annotator-for-ncbi.conf -set MYUNIREFD=/site/data/uniref50.fasta \
+nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.conf \
+-set MYUNIREFD=/site/data/uniref50.fasta \
 -set MYSTRAIN=test0001 -set MYSPECIES='Test test' -set MYRPSD=/site/data/Cdd -set MYSEQID=test0001 \
 -set MYCLUSTERS=/site/data/Clusters.bcp -set MYCDD=/site/data/cddid_all.tbl \
 -set MYQUALFILE=test-files/454LargeContigs.qual -set MYTAXID=12345 \
@@ -24,15 +24,25 @@ test-files/454LargeContigs.fna > test0001.out &
 9. run phobos
 10. correct of annotation text
 11. create ASN and associated files for NCBI submission
-
 -->
 
 <conf>
   <order>
-	 <names>make-single-fa MARC::glimmer3 extractCDS  
+<!--
+	 <names>assemble_pseudocontig make-single-fa MARC::glimmer3 extractCDS  
 	        MARC::blastpCDS  MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer 
           MARC::CTR MARC::RNAsifter MARC::phobos gbconvert</names> 
+-->
+   <names>assemble_pseudocontig</names> 
   </order>
+    <script>
+    <name>assemble_pseudocontig</name>
+    <executable>diya-assemble_pseudocontig.pl</executable>
+    <command>-bin /usr/local/bin -infile INPUTFILE -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR</command>
+    <home>/usr/local/share/apps/DIYA/scripts</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </script>
   <script>
     <name>make-single-fa</name>
     <executable>make-single-fa.pl</executable>
@@ -45,7 +55,7 @@ test-files/454LargeContigs.fna > test0001.out &
     <name>MARC::glimmer3</name>
     <executable>g3-from-scratch.diya.csh</executable>
     <command>MYSEQID.fa MYSEQID</command>
-    <home>/usr/local/share/DIYA/scripts</home>
+    <home>/usr/local/share/apps/glimmer3.02/scripts</home>
     <inputfrom></inputfrom>
     <inputformat></inputformat>
   </parser>
