@@ -33,6 +33,17 @@ to the CDS regions of the Genbank file and annotates the CDS
 features with rpsblast match data. The output is an annotated Genbank
 file.
 
+=head1 FILES
+
+Download:
+
+ pub/mmdb/cddid_all.tbl
+ pub/mmdb/cdd/Cdd_LE.tar.gz
+ genomes/CLUSTERS/CURRENT/PRK/PRK_Clusters.bcp
+ genomes/CLUSTERS/CURRENT/PHA/PHA_Clusters.bcp
+
+ >cat P*Clusters.bcp > Clusters.bcp
+
 =head1 AUTHOR
 
 Brian Osborne, briano@bioteam.net
