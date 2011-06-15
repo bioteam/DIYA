@@ -19,7 +19,7 @@
 
 =head1 NAME
 
-CTR
+MARC::CRT
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ Brian Osborne, briano@bioteam.net
 =cut
 
 # add the new module name here
-package diya::MARC:CRT;
+package diya::MARC::CRT;
 
 use strict;
 # simplest approach
@@ -62,9 +62,71 @@ use base 'diya';
 =cut
 
 sub parse {
+	my ($self,$diya) = @_;
 
-	1;
+	my $LOCUS_TAG_NUMBER = 0;
+
+	my $out = $diya->_outputfile('MARC::CRT');
+	print "Parsing " . $out . "\n" if $diya->verbose;
+	my @crisprs = parse_crt($out);
+	print "Found CRISPRS\n" if ( $diya->verbose && @crisprs );
+
+	my $gbkin = $diya->_outputfile("MARC::rnammer");
+	my $seqin = Bio::SeqIO->new(-file => "$gbkin.gbk", -format => 'genbank');
+	my $seq = $gbkin->next_seq;
+
+	# parse the results
+	for my $crispr ( @crisprs ) {
+		my %tag;
+		$tag{locus_tag} = $seq->display_id . "_c" . ($LOCUS_TAG_NUMBER += 10);
+		$crispr->set_attributes(-tag => \%tag);
+		$crispr->source_tag('CRISPR Recognition Tool');
+		$seq->add_SeqFeature($crispr);
+	}
+
+	# Sort features by location
+	my @features = $seq->remove_SeqFeatures;
+	# sort features by start position
+	@features = sort { $a->start <=> $b->start } @features;
+	$seq->add_SeqFeature(@features);
+
+	# Output
+	my $gbkout = $out . ".gbk";
+
+	my $seqout = Bio::SeqIO->new(-format	=> 'genbank',
+							   -file	=> ">$gbkout");
+	$seqout->write_seq($seq);
+
 }
+
+sub parse_crt {
+	my $file = shift;
+	my $txt = read_file($file);
+	my @features;
+
+	# CRISPR 1   Range: 123524 - 124955
+	while ( $txt =~ /CRISPR\s+\d+\s+Range:\s+(\d+)\s+-\s+(\d+)/g ) {
+
+		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
+    		                                    -end         => $2,
+        		                                -strand      => 1,
+            		                            -primary_tag => 'CRISPR');
+        push @features,$feat;
+    }
+
+	return 0 if ( ! @features );
+
+	@features;
+}
+
+sub read_file {
+	my $file = shift;
+	local $/ = undef;
+	open MYIN,$file;
+	my $txt = <MYIN>;
+	$txt;
+}
+
 
 1;
 
