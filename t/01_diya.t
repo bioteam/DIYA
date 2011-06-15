@@ -5,7 +5,7 @@ use vars qw( $NTESTS );
 use lib "./lib";
 
 BEGIN: {
-	$NTESTS = 38;
+	$NTESTS = 50;
 
     eval { require Test::More;
 		     require Test::Exception; };
@@ -19,6 +19,19 @@ BEGIN: {
 }
 
 use_ok("diya");
+use_ok("diya::MARC::CRT");
+use_ok("diya::MARC::rnammer");
+use_ok("diya::MARC::CRT");
+use_ok("diya::MARC::rpsblastCDS");
+use_ok("diya::MARC::GenbankConvertUtil");
+use_ok("diya::MARC::phobos");
+use_ok("diya::MARC::blastpCDS");
+use_ok("diya::template");
+use_ok("diya::MARC::glimmer3");
+use_ok("diya::MARC::RNAsifter");
+use_ok("diya::MARC::blastall");
+use_ok("diya::MARC::tRNAscanSE");
+
 
 my $diya = diya->new();
 isa_ok($diya,'diya');
@@ -193,7 +206,7 @@ $q->read_conf;
 dies_ok{ $diya->_check_executable("imaginary") } 
   '_check_executable() dies if passed a bad name';
 
-my $path = '/usr/local/share/DIYA/scripts/g3-from-scratch.diya.csh';
+my $path = 'scripts/g3-from-scratch.csh';
 
 SKIP: {
         skip("Can't run 1 test, $path not found", 1) 

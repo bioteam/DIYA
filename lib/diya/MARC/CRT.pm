@@ -66,6 +66,7 @@ sub parse {
 
 	my $LOCUS_TAG_NUMBER = 0;
 
+	# Parse CRT output, get features back
 	my $out = $diya->_outputfile('MARC::CRT');
 	print "Parsing " . $out . "\n" if $diya->verbose;
 	my @crisprs = parse_crt($out);
@@ -73,9 +74,9 @@ sub parse {
 
 	my $gbkin = $diya->_outputfile("MARC::rnammer");
 	my $seqin = Bio::SeqIO->new(-file => "$gbkin.gbk", -format => 'genbank');
-	my $seq = $gbkin->next_seq;
+	my $seq = $seqin->next_seq;
 
-	# parse the results
+	# Add any new features
 	for my $crispr ( @crisprs ) {
 		my %tag;
 		$tag{locus_tag} = $seq->display_id . "_c" . ($LOCUS_TAG_NUMBER += 10);
@@ -86,15 +87,13 @@ sub parse {
 
 	# Sort features by location
 	my @features = $seq->remove_SeqFeatures;
-	# sort features by start position
 	@features = sort { $a->start <=> $b->start } @features;
 	$seq->add_SeqFeature(@features);
 
-	# Output
+	# Output to Genbank file
 	my $gbkout = $out . ".gbk";
-
-	my $seqout = Bio::SeqIO->new(-format	=> 'genbank',
-							   -file	=> ">$gbkout");
+	my $seqout = Bio::SeqIO->new(-format => 'genbank',
+				     -file   => ">$gbkout");
 	$seqout->write_seq($seq);
 
 }
@@ -126,7 +125,6 @@ sub read_file {
 	my $txt = <MYIN>;
 	$txt;
 }
-
 
 1;
 
