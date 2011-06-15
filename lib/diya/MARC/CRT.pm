@@ -37,7 +37,7 @@ Brian Osborne, briano@bioteam.net
 =cut
 
 # add the new module name here
-package diya::MARC:CTR;
+package diya::MARC:CRT;
 
 use strict;
 # simplest approach
