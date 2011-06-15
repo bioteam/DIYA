@@ -62,11 +62,77 @@ use base 'diya';
 =cut
 
 sub parse {
+	my ($self,$diya) = @_;
 
-	1;
+	my $LOCUS_TAG_NUMBER = 0;
+
+	# Parse phobos output, get features back
+	my $out = $diya->_outputfile('MARC::phobos');
+	print "Parsing " . $out . "\n" if $diya->verbose;
+	my @repeats = parse_phobos($out);
+	print "Found repeats\n" if ( $diya->verbose && @repeats );
+
+	# Get the annotated sequence from the previous step
+	my $gbkin = $diya->_outputfile("MARC::CRT");
+	my $seqin = Bio::SeqIO->new(-file => "$gbkin.gbk", -format => 'genbank');
+	my $seq = $seqin->next_seq;
+
+	# Add any new features from phobos
+	for my $repeat ( @repeats ) {
+		my %tag;
+		$tag{locus_tag} = $seq->display_id . "_r" . ($LOCUS_TAG_NUMBER += 10);
+		$repeat->set_attributes(-tag => \%tag);
+		$repeat->source_tag('phobos');
+		$seq->add_SeqFeature($repeat);
+	}
+
+	# Sort features by location
+	my @features = $seq->remove_SeqFeatures;
+	@features = sort { $a->start <=> $b->start } @features;
+	$seq->add_SeqFeature(@features);
+
+	# Output to Genbank file
+	my $gbkout = $out . ".gbk";
+	my $seqout = Bio::SeqIO->new(-format => 'genbank',
+				     -file   => ">$gbkout");
+	$seqout->write_seq($seq);
+
+}
+
+sub parse_phobos {
+	my $file = shift;
+	my $txt = read_file($file);
+	my @features;
+
+# contig00007	Phobos	tandem-repeat	8849	8866	100.00	.	.	Name="repeat_region 8849-8
+# 866 unit_size 9 repeat_number 2.000 perfection 100.000 unit ATCGCCGCC"
+
+	while ( $txt =~ /^\S+\s+Phobos\s+tandem-repeat\s+(\d+)\s+(\d+)/g ) {
+
+		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
+    		                                    -end         => $2,
+        		                                -strand      => 1,
+            		                            -primary_tag => 'Tandem repeat');
+        push @features,$feat;
+    }
+
+	return 0 if ( ! @features );
+
+	@features;
+}
+
+sub read_file {
+	my $file = shift;
+	my $txt;
+
+	open MYIN,$file;
+	while (<MYIN>) {
+		$txt .= $_ if ( ! /^#/ );	
+	}
+
+	$txt;
 }
 
 1;
 
 __END__
-
