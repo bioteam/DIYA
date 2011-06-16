@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-# $Id: gbconvert.pl 303 2009-01-26 19:28:17Z briano $
 
 =head1 NAME
 
@@ -14,18 +13,15 @@ that NCBI wants.
 =cut
 
 use strict;
-use diya::GenbankConvertUtil;
+use diya::MARC::GenbankConvertUtil;
 use Getopt::Long;
 use Bio::SeqIO;
 use FileHandle;
 use Bio::Annotation::Collection;
 use Bio::Annotation::Comment;
 
-
 my ($debug, $help, $project, $spacer_start, $spacer_end,
 	 $contig_start, $contig_end, $qual, $agp, $taxid);
-
-# example NBCI project id: 16104, for yberc0001
 
 GetOptions("project|p=i"  => \$project,
 			  "help!"        => \$help,
@@ -36,7 +32,7 @@ GetOptions("project|p=i"  => \$project,
 
 usage() if $help;
 
-my $parser = diya::GenbankConvertUtil->new(-debug => $debug );
+my $parser = diya::MARC::GenbankConvertUtil->new(-debug => $debug );
 
 my $infile = shift @ARGV or usage('Need a Genbank format file');
 
@@ -373,8 +369,6 @@ $parser->create_agp($infile) if $agp;
 # Run again
 $parser->run_tbl2asn($comment,2);
 
-#$parser->cleanup;
-
 
 sub usage {
 	my ($message) = @_;
@@ -385,10 +379,3 @@ sub usage {
 
 __END__
 
-# This block is not necessary now, tbl2asn can create the Genbank file
-# create revised Genbank file
-# unlink "$id-revision.gbk" if ( -e "$id-submitted.gbk" );
-# my $out = Bio::SeqIO->new(-file   => ">$id-submitted.gbk",
-#								  -format => 'genbank' );
-# $out->write_seq($seq);
-# print "Created revised Genbank file $id-submitted.gbk\n";
