@@ -24,7 +24,7 @@ lib/diya/MARC/GenbankConvertUtil.pm
 lib/diya/MARC/blastpCDS.pm
 lib/diya/MARC/rpsblastCDS.pm
 lib/diya/MARC/glimmer3.pm
-lib/diya/MARC/CTR.pm
+lib/diya/MARC/CRT.pm
 lib/diya/MARC/RNAsifter.pm
 lib/diya/MARC/phobos.pm
 lib/diya/MARC/rnammer.pm

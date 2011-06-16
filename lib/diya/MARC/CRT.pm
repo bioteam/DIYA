@@ -19,7 +19,7 @@
 
 =head1 NAME
 
-phobos
+MARC::CRT
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ Brian Osborne, briano@bioteam.net
 =cut
 
 # add the new module name here
-package diya::;
+package diya::MARC::CRT;
 
 use strict;
 # simplest approach
@@ -66,24 +66,23 @@ sub parse {
 
 	my $LOCUS_TAG_NUMBER = 0;
 
-	# Parse phobos output, get features back
-	my $out = $diya->_outputfile('MARC::phobos');
+	# Parse CRT output, get features back
+	my $out = $diya->_outputfile('MARC::CRT');
 	print "Parsing " . $out . "\n" if $diya->verbose;
-	my @repeats = parse_phobos($out);
-	print "Found repeats\n" if ( $diya->verbose && @repeats );
+	my @crisprs = parse_crt($out);
+	print "Found CRISPRS\n" if ( $diya->verbose && @crisprs );
 
-	# Get the annotated sequence from the previous step
-	my $gbkin = $diya->_outputfile("MARC::CRT");
+	my $gbkin = $diya->_outputfile("MARC::rnammer");
 	my $seqin = Bio::SeqIO->new(-file => "$gbkin.gbk", -format => 'genbank');
 	my $seq = $seqin->next_seq;
 
-	# Add any new features from phobos
-	for my $repeat ( @repeats ) {
+	# Add any new features
+	for my $crispr ( @crisprs ) {
 		my %tag;
-		$tag{locus_tag} = $seq->display_id . "_r" . ($LOCUS_TAG_NUMBER += 10);
-		$repeat->set_attributes(-tag => \%tag);
-		$repeat->source_tag('phobos');
-		$seq->add_SeqFeature($repeat);
+		$tag{locus_tag} = $seq->display_id . "_c" . ($LOCUS_TAG_NUMBER += 10);
+		$crispr->set_attributes(-tag => \%tag);
+		$crispr->source_tag('CRISPR Recognition Tool');
+		$seq->add_SeqFeature($crispr);
 	}
 
 	# Sort features by location
@@ -99,20 +98,18 @@ sub parse {
 
 }
 
-sub parse_phobos {
+sub parse_crt {
 	my $file = shift;
 	my $txt = read_file($file);
 	my @features;
 
-# contig00007	Phobos	tandem-repeat	8849	8866	100.00	.	.	Name="repeat_region 8849-8
-# 866 unit_size 9 repeat_number 2.000 perfection 100.000 unit ATCGCCGCC"
-
-	while ( $txt =~ /^\S+\s+Phobos\s+tandem-repeat\s+(\d+)\s+(\d+)/g ) {
+	# CRISPR 1   Range: 123524 - 124955
+	while ( $txt =~ /CRISPR\s+\d+\s+Range:\s+(\d+)\s+-\s+(\d+)/g ) {
 
 		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
     		                                    -end         => $2,
         		                                -strand      => 1,
-            		                            -primary_tag => 'Tandem repeat');
+            		                            -primary_tag => 'CRISPR');
         push @features,$feat;
     }
 
@@ -123,16 +120,13 @@ sub parse_phobos {
 
 sub read_file {
 	my $file = shift;
-	my $txt;
-
+	local $/ = undef;
 	open MYIN,$file;
-	while (<MYIN>) {
-		$txt .= $_ if ( ! /^#/ );	
-	}
-
+	my $txt = <MYIN>;
 	$txt;
 }
 
 1;
 
 __END__
+
