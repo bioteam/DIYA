@@ -1,5 +1,4 @@
 #!/bin/bash
-# $Id: make-final-file.sh 233 2009-04-17 17:37:12Z briano $
 
 ARGS=2
 INPUT=$2

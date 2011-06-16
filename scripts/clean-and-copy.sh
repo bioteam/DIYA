@@ -1,5 +1,4 @@
 #!/bin/bash
-# $Id: clean-and-copy.sh 232 2009-04-16 21:04:05Z briano $
 
 ARGS=2
 DEST=/massive/data/genome/submissions

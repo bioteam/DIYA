@@ -1,29 +1,30 @@
 #!/usr/bin/perl
-
-# Blast Runner
-# Chris Dwan (cdwan@bioteam.net)
-# August, 2004
-# 
-# The execution portion of btbatchblast
+#--------------------------------------------------------------------------
+# ©Copyright 2008
 #
-# But really it's rpsblast.  Ha ha. 
+# This file is part of DIYA.
 #
-#$ -S /usr/bin/perl
+# DIYA is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# DIYA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with the diya package.  If not, see <http://www.gnu.org/licenses/>.
+#--------------------------------------------------------------------------
 
 use strict;
-#use lib qw(/RemotePerl/5.8.6);
-use lib qw(/site/perl/lib/perl5);
 use Getopt::Long;
 use Bio::SeqIO;
 use File::Basename;
 
-unless (defined($ENV{BLASTMAT})) {
-  $ENV{BLASTMAT} = "/common/data/blastmat";
-}
+$ENV{BLASTMAT} = "/common/data/blastmat" unless (defined($ENV{BLASTMAT});
 
-#
-# Parse Arguments
-#
 my ($chunk_size, $query, $id, $blast_output, $db, $tmp_output, $localdata);
 $chunk_size = 1;
 Getopt::Long::Configure(("pass_through", "no_auto_abbrev", "no_ignore_case"));

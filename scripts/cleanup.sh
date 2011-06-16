@@ -1,5 +1,4 @@
 #!/bin/bash
-# $Id: cleanup.sh 256 2009-05-14 01:30:41Z briano $
 
 ARGS=2
 

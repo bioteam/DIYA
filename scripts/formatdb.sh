@@ -1,5 +1,4 @@
 #!/bin/bash
-# $Id: formatdb.sh 234 2009-04-17 17:58:35Z briano $
 
 ARGS=2
 IN=$1

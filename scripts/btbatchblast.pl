@@ -1,36 +1,36 @@
 #!/usr/bin/perl
+#--------------------------------------------------------------------------
+# ©Copyright 2008
 #
-# btrpsblast
-# Copyright 2004, The BioTeam http://www.bioteam.net
-# 
-# This is a modified version of btbatchblast.  When we say "btbatchblast" in the 
-# comments below, we really mean "this tool, right here."
+# This file is part of DIYA.
 #
-# btbatchblast is a high throughput solution for BLAST processing.  
-# Its syntax is similar to blastall, except that -o and -i are required arguments
-# (STDIN and STDOUT streams are not yet supported).
+# DIYA is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# Chris Dwan <cdwan@bioteam.net>
-# The BioTeam
+# DIYA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
+# You should have received a copy of the GNU General Public License
+# along with the diya package.  If not, see <http://www.gnu.org/licenses/>.
+#--------------------------------------------------------------------------
 
-# 
-# Parse Options
-# 
 use strict;
-use lib qw(/site/perl/lib/perl5);
 use File::Spec;
 use Bio::SeqIO;
 use Getopt::Long;
 use POSIX qw(ceil);
 use File::Basename;
 
-$ENV{BLASTMAT} = "/common/data/blastmat" if ( ! defined $ENV{BLASTMAT} );
+$ENV{BLASTMAT} = "/common/data/blastmat" if (! defined $ENV{BLASTMAT} );
 
-my ($query, $splits, $cleanup, $finishUp, $jobname, $sync, $project, $arch);
+my ($query, $splits,$nocwd,$cleanup,$finishUp,$jobname,$sync,$project,$arch);
 my $chunk = 1;
 my $output = "stdout.txt";
-my $tmp_output_dir = "rpsblast_tmp";
+my $tmp_output_dir = "batchblast_tmp";
 
 Getopt::Long::Configure("pass_through", "no_auto_abbrev", "no_ignore_case");
 GetOptions("i=s"       => \$query,
@@ -40,7 +40,9 @@ GetOptions("i=s"       => \$query,
            "sync"      => \$sync,
            "jobname=s" => \$jobname,
 			  "arch=s"    => \$arch,
-           "project=s" => \$project);
+           "project=s" => \$project,
+			  "nocwd=i"   => \$nocwd
+);
 my $more_args = join(" ", @ARGV);
 
 $tmp_output_dir = File::Spec->rel2abs($tmp_output_dir);
@@ -55,6 +57,7 @@ die "Unable to find query file $query" if ( ! -e $query );
 my $count = `grep '>' $query | wc -l`;
 chomp $count;
 print STDERR "Counted $count sequences in query $query\n";
+
 $splits = ceil($count / $chunk);
 if ($splits>500)
 {
@@ -70,24 +73,29 @@ if ($splits>500)
     }
 }
 
-
 # Submit an array job of SPLITS tasks, each doing 
 # num_seqs / SPLITS query sequences.
 print STDERR "Submitting $splits jobs of $chunk queries.\n";
 unless ($jobname){
-	$jobname="Job$$-rpsblast";
+	$jobname="Job$$-blast";
 }
 print STDERR "BLASTMAT = $ENV{BLASTMAT}\n";
 my $cmd = "qsub ";
 $cmd .= "-l arch=$arch " if $arch;
 if ($splits > 1)      { $cmd .= "-t 1-$splits "; }
-$cmd .=   "-cwd -o rpsblast.stdout -e rpsblast.stderr " .
-	       "-N \"$jobname\" ";
+
+if ( $nocwd ) {
+	$cmd .=   "-o batchblast.stdout -e batchblast.stderr -N \"$jobname\" ";
+} else {
+	$cmd .=   "-cwd -o batchblast.stdout -e batchblast.stderr -N \"$jobname\" ";
+}
+
 if ($project) { $cmd .= "-P $project "; }
-$cmd .=   "/common/bin/rpsblast_runner.pl " .
+$cmd .=   "/common/bin/blast_runner.pl " .
           "-i $query "                            .
           "-o $output "                           .
           "--chunk $chunk ";
+
 if ($main::LOCALDATA) { $cmd .= "--localdata $main::LOCALDATA "; }
 $cmd .=   "$more_args";
 print STDERR "qsub cmd:  $cmd\n";
@@ -119,5 +127,3 @@ $finishUp .= " $cleanfn";
 system($finishUp);
 
 `rm $cleanfn`;
-
-__END__
