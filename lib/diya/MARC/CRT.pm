@@ -109,7 +109,8 @@ sub parse_crt {
 		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
     		                                    -end         => $2,
         		                                -strand      => 1,
-            		                            -primary_tag => 'CRISPR');
+							-note => 'CRISPR',
+            		                            -primary_tag => 'repeat_region');
         push @features,$feat;
     }
 

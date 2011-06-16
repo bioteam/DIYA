@@ -5,7 +5,7 @@ use vars qw( $NTESTS );
 use lib "./lib";
 
 BEGIN: {
-	$NTESTS = 50;
+	$NTESTS = 49;
 
     eval { require Test::More;
 		     require Test::Exception; };
@@ -26,7 +26,6 @@ use_ok("diya::MARC::rpsblastCDS");
 use_ok("diya::MARC::GenbankConvertUtil");
 use_ok("diya::MARC::phobos");
 use_ok("diya::MARC::blastpCDS");
-use_ok("diya::template");
 use_ok("diya::MARC::glimmer3");
 use_ok("diya::MARC::RNAsifter");
 use_ok("diya::MARC::blastall");

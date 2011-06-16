@@ -37,7 +37,7 @@ Brian Osborne, briano@bioteam.net
 =cut
 
 # add the new module name here
-package diya::;
+package diya::MARC::phobos;
 
 use strict;
 # simplest approach
