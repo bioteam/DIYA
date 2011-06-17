@@ -79,7 +79,7 @@ sub parse {
 	# Add any new features
 	for my $crispr ( @crisprs ) {
 		my %tag;
-		$tag{locus_tag} = $seq->display_id . "_c" . ($LOCUS_TAG_NUMBER += 10);
+		$tag{note} = 'CRISPR';
 		$crispr->set_attributes(-tag => \%tag);
 		$crispr->source_tag('CRISPR Recognition Tool');
 		$seq->add_SeqFeature($crispr);
@@ -109,7 +109,6 @@ sub parse_crt {
 		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
     		                                    -end         => $2,
         		                                -strand      => 1,
-							-note => 'CRISPR',
             		                            -primary_tag => 'repeat_region');
         push @features,$feat;
     }

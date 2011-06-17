@@ -294,6 +294,17 @@ sub fix_feature {
 			}
 		}
 
+                # remove all scores
+                if ( $feat->has_tag('score') || $feat->has_tag('Score') ) {
+                   my @scores = $feat->remove_tag('score') ;
+                }
+ 
+                for my $tag ($feat->get_all_tags) {                    
+                   for my $value ($feat->get_tag_values($tag)) {
+		       $feat->remove_tag($tag) if ( $value =~ /^\s*score\s*[=:]/i );
+                   }          
+                }       
+
 		return $feat;
 	}
 

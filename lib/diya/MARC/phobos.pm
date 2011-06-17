@@ -80,7 +80,7 @@ sub parse {
 	# Add any new features from phobos
 	for my $repeat ( @repeats ) {
 		my %tag;
-		$tag{locus_tag} = $seq->display_id . "_r" . ($LOCUS_TAG_NUMBER += 10);
+		$tag{rpt_type} = 'tandem';
 		$repeat->set_attributes(-tag => \%tag);
 		$repeat->source_tag('phobos');
 		$seq->add_SeqFeature($repeat);
@@ -112,7 +112,7 @@ sub parse_phobos {
 		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
     		                                    -end         => $2,
         		                                -strand      => 1,
-            		                            -primary_tag => 'Tandem repeat');
+            		                            -primary_tag => 'repeat_region');
         push @features,$feat;
     }
 
