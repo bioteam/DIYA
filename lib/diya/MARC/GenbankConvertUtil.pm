@@ -871,9 +871,9 @@ sub run_tbl2asn {
 
 	if ( $run > 1) {
 		for my $suffix ( qw( val sqn gbf ) ) {
-			system "mv $outdir/$id.$suffix $outdir/$id.$suffix.1" if ( -e "$outdir/$id.$suffix" );
+			system "mv $outdir/$id.$suffix $outdir/$id.$suffix.orig" if ( -e "$outdir/$id.$suffix" );
 		}
-		system "mv discrp discrp.1" if ( -e "discrp" );
+		system "mv discrp discrp.orig" if ( -e "discrp" );
 	}
 
 	if ( $outdir && $tmplt && $tbl2asn ) {
@@ -1151,7 +1151,7 @@ sub write_tbl {
 	my $id = $self->id;
 	my $namemap = $self->namemap;
 
-	system "mv $dir/$id.tbl $dir/$id.tbl.1" if ( -e "$dir/$id.tbl" );
+	system "mv $dir/$id.tbl $dir/$id.tbl.orig" if ( -e "$dir/$id.tbl" );
 
 	open MYOUT,">$dir/$id.tbl" or die "Cannot write to $dir/$id.tbl";
 	print "Writing to $dir/$id.tbl\n" if $self->debug;
@@ -1277,13 +1277,13 @@ sub cleanup {
 
 	#unlink "$template.sbt" if ( -e "$template.sbt" );
 
-	unlink "discrp.1" if -e "discrp.1";
+	unlink "discrp.orig" if -e "discrp.orig";
 	system "mv discrp $dir" if -e "discrp";
 
 	system "mv $id.agp $dir" if -e "$id.agp";
 
 	for my $suffix ( qw(gbf val tbl sqn) ) {
-		unlink "$dir/$id.$suffix.1" if -e "$dir/$id.$suffix.1";
+		unlink "$dir/$id.$suffix.orig" if -e "$dir/$id.$suffix.orig";
 	}
 
 }
