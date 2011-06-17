@@ -294,14 +294,16 @@ sub fix_feature {
 			}
 		}
 
-                # remove all scores
+                # remove all score tags
                 if ( $feat->has_tag('score') || $feat->has_tag('Score') ) {
                    my @scores = $feat->remove_tag('score') ;
                 }
- 
-                for my $tag ($feat->get_all_tags) {                    
-                   for my $value ($feat->get_tag_values($tag)) {
-		       $feat->remove_tag($tag) if ( $value =~ /^\s*score\s*[=:]/i );
+                # remove all score values
+                for my $tag ($feat->get_all_tags) {
+                   my @values = $feat->get_tag_values($tag);
+                   $feat->remove_tag($tag);
+                   for my $value ( @values ) {
+		       $feat->add_tag_value($tag,$value) if ( $value !~ /^\s*score\s*[=:]/i );
                    }          
                 }       
 
@@ -1275,12 +1277,10 @@ sub cleanup {
 	my $dir = $self->outdir;
 	my $template = $self->{template};
 
-	#unlink "$template.sbt" if ( -e "$template.sbt" );
-
-	unlink "discrp.orig" if -e "discrp.orig";
-	system "mv discrp $dir" if -e "discrp";
-
-	system "mv $id.agp $dir" if -e "$id.agp";
+	`rm $template.sbt` if -e "$template.sbt";
+	`rm discrp.orig`   if -e "discrp.orig";
+	`mv discrp $dir`   if -e "discrp";
+        `mv $id.agp $dir`  if -e "$id.agp";
 
 	for my $suffix ( qw(gbf val tbl sqn) ) {
 		unlink "$dir/$id.$suffix.orig" if -e "$dir/$id.$suffix.orig";
