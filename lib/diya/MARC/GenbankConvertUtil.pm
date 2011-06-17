@@ -61,7 +61,7 @@ sub new {
 
 	# defaults
 	$self->template('template');
-	$self->executable('/arch/bin/tbl2asn');
+	$self->executable('/usr/local/bin/tbl2asn');
 
 	$self->_initialize(@args);
 
@@ -1264,7 +1264,7 @@ sub cleanup {
 	my $dir = $self->outdir;
 	my $template = $self->{template};
 
-	unlink "$template.sbt" if ( -e "$template.sbt" );
+	#unlink "$template.sbt" if ( -e "$template.sbt" );
 
 	unlink "discrp.1" if -e "discrp.1";
 	system "mv discrp $dir" if -e "discrp";
