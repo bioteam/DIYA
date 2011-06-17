@@ -1,77 +1,83 @@
 Submit-block ::= {
   contact {
     contact {
-      name
-        name {
-          last "Last" ,
-          first "First" ,
-          initials "T.D." } ,
-      affil
-        std {
-          affil "Name of Center" ,
-          city "City" ,
-          sub "NE" ,
-          country "USA" ,
-          street "Address" ,
-          email "first.last@org.org" ,
-          fax "301 984 4979" ,
-          phone "301 984 4973" ,
-          postal-code "20852" } } } ,
+      name name {
+        last "Osborne",
+        first "Brian"
+      },
+      affil std {
+        affil "BioTeam",
+        div "Biology",
+        city "Lexington",
+        sub "MA",
+        country "United States",
+        street "52 Peacock Farm Road",
+        email "bobo@alum.rdu.edu",
+        fax "333-313-3301",
+        phone "333-313-3301",
+        postal-code "02173"
+      }
+    }
+  },
   cit {
     authors {
-      names
-        std {
-          {
-            name
-              name {
-                last "Last" ,
-                first "First" ,
-                initials "T." } } ,
-          {
-            name
-              name {
-                last "A" ,
-                first "A" ,
-                initials "A." } } ,
-      affil
-        std {
-          affil "Name of Center" ,
-          city "City" ,
-          sub "NE" ,
-          country "USA" ,
-          street "Address" ,
-          postal-code "20852" } } ,
-    date
-      std {
-        year 2008 ,
-        month 8 ,
-        day 25 } } ,
-  subtype new }
+      names std {
+        {
+          name name {
+            last "Osborne",
+            first "Brian",
+            initials "B.I.",
+            suffix ""
+          }
+        }
+      },
+      affil std {
+        affil "BioTeam",
+        div "Biology",
+        city "Lexington",
+        sub "MA",
+        country "United States",
+        street "52 Peacock Farm Road",
+        email "bobo@alum.rdu.edu",
+        fax "333-313-3301",
+        phone "333-313-3301",
+        postal-code "02173"
+      }
+    }
+  },
+  subtype new
+}
+
 Seqdesc ::= pub {
   pub {
     gen {
-      cit "unpublished" ,
+      cit "unpublished",
       authors {
-        names
-          std {
+        names std {
           {
-            name
-              name {
-                last "First" ,
-                first "Last" ,
-                initials "T." } } ,
-          {
-            name
-              name {
-                last "A" ,
-                first "A" ,
-                initials "A." } } ,
-        affil
-          std {
-            affil "Name of Center" ,
-            city "City" ,
-            sub "NE" ,
-            country "USA" ,
-            street "Address" ,
-            postal-code "20852" } } ,
-      title "Annotation of the <BACTERIALSPECIES> <BACTERIALSTRAIN> genome" } } }
+            name name {
+              last "Osborne",
+              first "Brian",
+              initials "B.I.",
+              suffix ""
+            }
+          }
+        },
+        affil std {
+          affil "BioTeam",
+          div "Biology",
+          city "Lexington",
+          sub "MA",
+          country "United States",
+          street "52 Peacock Farm Road",
+          email "bobo@alum.rdu.edu",
+          fax "333-313-3301",
+          phone "333-313-3301",
+          postal-code "02173"
+        }
+      },
+      title "Annotation of the <BACTERIALSPECIES> <BACTERIALSTRAIN> genome"
+    }
+  }
+}
+
