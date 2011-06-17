@@ -369,6 +369,7 @@ $parser->create_agp($infile) if $agp;
 # Run again
 $parser->run_tbl2asn($comment,2);
 
+$parser->cleanup;
 
 sub usage {
 	my ($message) = @_;
