@@ -315,6 +315,11 @@ sub fix_feature {
 		return $feat;
 	}
 
+	elsif ( $feat->primary_tag eq 'repeat_region' ) {
+
+		return $feat;
+	}
+
 	elsif ( $feat->primary_tag eq 'tRNA' ) {
 
 		# add inference tag
