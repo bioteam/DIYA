@@ -179,7 +179,7 @@ for my $feature ( @oldFeatures ) {
 		# skip any feature containing 'N'
 		next FEATURE if ( $feature->seq->seq =~ /N/i );
 
-		my @locus = $feature->get_tag_values('locus_tag');
+		my @locus = $feature->get_tag_values('locus_tag') if $feature->has_tag('locus_tag');
 
 		# skip a feature that starts in spacer ('cbt')
 		# next FEATURE if ( $feature->start >= $spacer_start && 
