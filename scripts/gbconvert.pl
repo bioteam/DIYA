@@ -174,7 +174,7 @@ for my $feature ( @oldFeatures ) {
 	}
 
 	# only submitting annotations for 4 primary features
-	elsif ( $primary_tag =~ /^(gene|CDS|tRNA|rRNA)$/ ) {
+	elsif ( $primary_tag =~ /^(gene|CDS|tRNA|rRNA|repeat_region)$/ ) {
 
 		# skip any feature containing 'N'
 		next FEATURE if ( $feature->seq->seq =~ /N/i );
