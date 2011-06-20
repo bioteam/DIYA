@@ -1,28 +1,32 @@
 #!/usr/bin/perl
-
-# Blast Runner
-# Chris Dwan (cdwan@bioteam.net)
-# August, 2004
-# 
-# The execution portion of btbatchblast
+#--------------------------------------------------------------------------
+# ©Copyright 2008
 #
-#$ -S /usr/bin/perl
+# This file is part of DIYA.
+#
+# DIYA is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# DIYA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with the diya package.  If not, see <http://www.gnu.org/licenses/>.
+#--------------------------------------------------------------------------
 
 use strict;
-use lib qw(/site/perl/lib/perl5);
 use Getopt::Long;
 use Bio::SeqIO;
 use File::Basename;
 
-unless (defined($ENV{BLASTMAT})) {
-  $ENV{BLASTMAT} = "/common/data/blastmat";
-}
+$ENV{BLASTMAT} = "/common/data/blastmat" unless (defined($ENV{BLASTMAT});
 
-#
-# Parse Arguments
-#
-my ($chunk_size, $query, $id, $blast_output, $db, $tmp_output, $localdata);
-$chunk_size = 1;
+my ($query, $id, $blast_output, $db, $localdata);
+my $chunk_size = 1;
 Getopt::Long::Configure(("pass_through", "no_auto_abbrev", "no_ignore_case"));
 GetOptions("chunk=i"      => \$chunk_size,
            "localdata=s"  => \$localdata,
@@ -35,10 +39,10 @@ my $more_args = join(" ", @ARGV);
 
 # SGE gives us the string "undefined" in the environment variable above if 
 # we're not running in a task array.
-unless ($id)         { $id = $ENV{SGE_TASK_ID};    }
-if ($id eq "undefined") { $id = 1; }
+$id = $ENV{SGE_TASK_ID} if ( ! $id );
+$id = 1 if ($id eq "undefined");
 
-$tmp_output= sprintf("/tmp/blastall.%05d.tmp", $$);
+my $tmp_output= sprintf("/tmp/blastall.%05d.tmp", $$);
 
 #
 # Fountain of debugging info

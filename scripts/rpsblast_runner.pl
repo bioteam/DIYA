@@ -25,24 +25,23 @@ use File::Basename;
 
 $ENV{BLASTMAT} = "/common/data/blastmat" unless (defined($ENV{BLASTMAT});
 
-my ($chunk_size, $query, $id, $blast_output, $db, $tmp_output, $localdata);
-$chunk_size = 1;
+my ($query, $id, $blast_output, $db, $localdata);
+my $chunk_size = 1;
 Getopt::Long::Configure(("pass_through", "no_auto_abbrev", "no_ignore_case"));
 GetOptions("chunk=i"      => \$chunk_size,
            "localdata=s"  => \$localdata,
            "id=i"         => \$id,
            "d=s"          => \$db,
            "i=s"          => \$query,
-           "o=s"          => \$blast_output
-          );
+           "o=s"          => \$blast_output );
 my $more_args = join(" ", @ARGV);
 
 # SGE gives us the string "undefined" in the environment variable above if 
 # we're not running in a task array.
-unless ($id)         { $id = $ENV{SGE_TASK_ID};    }
-if ($id eq "undefined") { $id = 1; }
+$id = $ENV{SGE_TASK_ID} if ( ! $id );
+$id = 1 if ($id eq "undefined");
 
-$tmp_output= sprintf("/tmp/blastall.%05d.tmp", $$);
+my $tmp_output= sprintf("/tmp/blastall.%05d.tmp", $$);
 
 #
 # Fountain of debugging info
