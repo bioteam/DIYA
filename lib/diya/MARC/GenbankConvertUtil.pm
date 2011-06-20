@@ -363,7 +363,7 @@ sub fix_feature {
                    my @values = $feat->get_tag_values($tag);
                    $feat->remove_tag($tag);
                    for my $value ( @values ) {
-		       $feat->add_tag_value($tag,$value) if ( $value !~ /^\s*score\s*[=:]/i );
+		       $feat->add_tag_value($tag,$value) if ( $value !~ /\s*score\s*[=:]/i );
                    }          
                 }       
 
@@ -392,6 +392,19 @@ sub fix_feature {
 		my @loci = $feat->remove_tag('locus_tag') if $feat->has_tag('locus_tag');
 
 		$genefeat->add_tag_value('locus_tag', $loci[0]);
+
+                # remove all score tags
+                if ( $feat->has_tag('score') || $feat->has_tag('Score') ) {
+                   my @scores = $feat->remove_tag('score') ;
+                }
+                # remove all score values
+                for my $tag ($feat->get_all_tags) {
+                   my @values = $feat->get_tag_values($tag);
+                   $feat->remove_tag($tag);
+                   for my $value ( @values ) {
+		       $feat->add_tag_value($tag,$value) if ( $value !~ /\s*score\s*[=:]/i );
+                   }          
+                }       
 
 		return ($feat,$genefeat);
 	}
