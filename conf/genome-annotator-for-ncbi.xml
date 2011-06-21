@@ -28,14 +28,10 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
 
 <conf>
   <order>
-<!--
-	 <names>assemble_pseudocontig make-single-fa MARC::glimmer3 extractCDS  
-	        MARC::blastpCDS  MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer 
-          MARC::CRT MARC::phobos gMARC::RNAsifter bconvert</names> 
--->
+   <!-- MARC::RNAsifter cleanup -->
    <names>assemble_pseudocontig make-single-fa MARC::glimmer3 extractCDS
    MARC::blastpCDS MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer MARC::CRT
-   MARC::phobos
+   MARC::phobos gbconvert
    </names> 
   </order>
     <script>
@@ -132,7 +128,15 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
     <command>-agp -q MYQUALFILE -t MYTAXID INPUTFILE.gbk</command>
     <home>/usr/local/share/DIYA/scripts</home>
     <inputformat></inputformat>
-    <inputfrom>MARC::rnammer</inputfrom>
+    <inputfrom>MARC::phobos</inputfrom>
+  </script>
+  <script>
+    <name>make-final-file</name>
+    <executable>make-final-file.sh</executable>
+    <command>MYSEQID INPUTFILE OUTPUTDIR</command>
+    <home>/site/home/briano/scriptorium/trunk/genbank-submission/Genome</home>
+    <inputformat></inputformat>
+    <inputfrom>PipeLineOne::rnammer</inputfrom>
   </script>
   <run>
     <mode>serial</mode>
