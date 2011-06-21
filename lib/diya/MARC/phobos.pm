@@ -64,8 +64,6 @@ use base 'diya';
 sub parse {
 	my ($self,$diya) = @_;
 
-	my $LOCUS_TAG_NUMBER = 0;
-
 	# Parse phobos output, get features back
 	my $out = $diya->_outputfile('MARC::phobos');
 	print "Parsing " . $out . "\n" if $diya->verbose;

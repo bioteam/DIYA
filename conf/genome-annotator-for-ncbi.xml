@@ -21,7 +21,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
 6. run rnammer
 7. run CRT
 8. run phobos
-9. run RNAsifter
+9. run sRNAscanner
 10. correct of annotation text
 11. create ASN and associated files for NCBI submission
 -->
@@ -107,10 +107,10 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
     <inputfrom></inputfrom>
   </parser>
   <parser>
-    <name>MARC::RNAsifter</name>
-    <executable>RNAsifter.pl</executable>
-    <command>--d /boris/user_data/RFAM/models/ --thresholdFile /boris/user_data/RFAM/Rfam.thr /boris/user_data/RFAM/ShapeIndex_Rfam9.1.store MYSEQID.fa</command>
-    <home>/usr/local/bin</home>
+    <name>MARC::sRNAscanner</name>
+    <executable>sRNAscanner</executable>
+    <command>Input.data</command>
+    <home>/usr/local/share/apps/sRNAscanner</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>

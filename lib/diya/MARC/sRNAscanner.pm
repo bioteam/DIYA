@@ -19,7 +19,7 @@
 
 =head1 NAME
 
-MARC::CRT
+sRNAscanner
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ Brian Osborne, briano@bioteam.net
 =cut
 
 # add the new module name here
-package diya::MARC::CRT;
+package diya::MARC::sRNAscanner;
 
 use strict;
 # simplest approach
@@ -64,23 +64,24 @@ use base 'diya';
 sub parse {
 	my ($self,$diya) = @_;
 
-	# Parse CRT output, get features back
-	my $out = $diya->_outputfile('MARC::CRT');
+	# Parse sRNAscanner output, get features back
+	my $out = $diya->_outputfile('MARC::sRNAscanner');
 	print "Parsing " . $out . "\n" if $diya->verbose;
-	my @crisprs = parse_crt($out);
-	print "Found CRISPRS\n" if ( $diya->verbose && @crisprs );
+	my @repeats = parse_phobos($out);
+	print "Found sRNAs\n" if ( $diya->verbose && @repeats );
 
-	my $gbkin = $diya->_outputfile("MARC::rnammer");
+	# Get the annotated sequence from the previous step
+	my $gbkin = $diya->_outputfile("MARC::phobos");
 	my $seqin = Bio::SeqIO->new(-file => "$gbkin.gbk", -format => 'genbank');
 	my $seq = $seqin->next_seq;
 
-	# Add any new features
-	for my $crispr ( @crisprs ) {
+	# Add any new features from sRNAscanner
+	for my $repeat ( @repeats ) {
 		my %tag;
-		$tag{note} = 'CRISPR';
-		$crispr->set_attributes(-tag => \%tag);
-		$crispr->source_tag('CRISPR Recognition Tool');
-		$seq->add_SeqFeature($crispr);
+		$tag{rpt_type} = 'tandem';
+		$repeat->set_attributes(-tag => \%tag);
+		$repeat->source_tag('phobos');
+		$seq->add_SeqFeature($repeat);
 	}
 
 	# Sort features by location
@@ -96,13 +97,12 @@ sub parse {
 
 }
 
-sub parse_crt {
+sub parse_sRNAscanner {
 	my $file = shift;
 	my $txt = read_file($file);
 	my @features;
 
-	# CRISPR 1   Range: 123524 - 124955
-	while ( $txt =~ /CRISPR\s+\d+\s+Range:\s+(\d+)\s+-\s+(\d+)/g ) {
+	while ( $txt =~ //g ) {
 
 		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
     		                                    -end         => $2,
@@ -118,13 +118,16 @@ sub parse_crt {
 
 sub read_file {
 	my $file = shift;
-	local $/ = undef;
+	my $txt;
+
 	open MYIN,$file;
-	my $txt = <MYIN>;
+	while (<MYIN>) {
+		$txt .= $_ if ( ! /^#/ );	
+	}
+
 	$txt;
 }
 
 1;
 
 __END__
-
