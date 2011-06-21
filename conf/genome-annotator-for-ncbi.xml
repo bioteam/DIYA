@@ -31,7 +31,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
    <!-- MARC::RNAsifter cleanup -->
    <names>assemble_pseudocontig make-single-fa MARC::glimmer3 extractCDS
    MARC::blastpCDS MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer MARC::CRT
-   MARC::phobos gbconvert
+   MARC::phobos MARC::sRNAscanner gbconvert
    </names> 
   </order>
     <script>
