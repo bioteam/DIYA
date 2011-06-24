@@ -40,6 +40,7 @@ Brian Osborne, briano@bioteam.net
 package diya::MARC::sRNAscanner;
 
 use strict;
+use Bio::SeqIO;
 # simplest approach
 use base 'diya';
 
@@ -64,11 +65,12 @@ use base 'diya';
 sub parse {
 	my ($self,$diya) = @_;
 
+	my $srnaoutput = '/usr/local/share/apps/sRNAscanner/output_files/sRNA.txt';
+
 	# Parse sRNAscanner output, get features back
-	my $out = $diya->_outputfile('MARC::sRNAscanner');
-	print "Parsing " . $out . "\n" if $diya->verbose;
-	my @repeats = parse_phobos($out);
-	print "Found sRNAs\n" if ( $diya->verbose && @repeats );
+	print "Parsing $srnaoutput\n" if $diya->verbose;
+	my @rnas = parse_sRNAscanner($srnaoutput);
+	print "Found " . scalar @rnas . " sRNAs\n" if ( $diya->verbose && @rnas );
 
 	# Get the annotated sequence from the previous step
 	my $gbkin = $diya->_outputfile("MARC::phobos");
@@ -76,12 +78,13 @@ sub parse {
 	my $seq = $seqin->next_seq;
 
 	# Add any new features from sRNAscanner
-	for my $repeat ( @repeats ) {
+	for my $rna ( @rnas ) {
 		my %tag;
-		$tag{rpt_type} = 'tandem';
-		$repeat->set_attributes(-tag => \%tag);
-		$repeat->source_tag('phobos');
-		$seq->add_SeqFeature($repeat);
+		$tag{note} = 'sRNA';
+		$tag{ncRNA_class} = 'other';
+		$rna->set_attributes(-tag => \%tag);
+		$rna->source_tag('sRNAscanner');
+		$seq->add_SeqFeature($rna);
 	}
 
 	# Sort features by location
@@ -90,6 +93,7 @@ sub parse {
 	$seq->add_SeqFeature(@features);
 
 	# Output to Genbank file
+	my $out = $diya->_outputfile('MARC::sRNAscanner');
 	my $gbkout = $out . ".gbk";
 	my $seqout = Bio::SeqIO->new(-format => 'genbank',
 				     -file   => ">$gbkout");
@@ -99,33 +103,28 @@ sub parse {
 
 sub parse_sRNAscanner {
 	my $file = shift;
-	my $txt = read_file($file);
 	my @features;
 
-	while ( $txt =~ //g ) {
+# >sRNA|39708|39888|
+# TTATGTCTCTGTTGTAAAAGTCACACCGGATAGCATGAAATTAATGAAACTTCGAATGGGAATAATCTC
+
+	my $in = Bio::SeqIO->new(-file => $file, -format => 'fasta');
+
+	while ( my $seq = $in->next_seq ) {
+
+		$seq->desc =~ /sRNA\|(\d+)\|(\d+)/;
 
 		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
     		                                    -end         => $2,
         		                                -strand      => 1,
-            		                            -primary_tag => 'repeat_region');
+            		                            -primary_tag => 'ncRNA');
         push @features,$feat;
+        print "Found sRNA at $1 and $2\n";
     }
 
 	return 0 if ( ! @features );
 
 	@features;
-}
-
-sub read_file {
-	my $file = shift;
-	my $txt;
-
-	open MYIN,$file;
-	while (<MYIN>) {
-		$txt .= $_ if ( ! /^#/ );	
-	}
-
-	$txt;
 }
 
 1;
