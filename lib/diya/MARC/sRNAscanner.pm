@@ -64,13 +64,17 @@ use base 'diya';
 
 sub parse {
 	my ($self,$diya) = @_;
-
-	my $srnaoutput = '/usr/local/share/apps/sRNAscanner/output_files/sRNA.txt';
+	my @rnas;
+	my $srnaoutput = 'output_files/sRNA.txt';
 
 	# Parse sRNAscanner output, get features back
-	print "Parsing $srnaoutput\n" if $diya->verbose;
-	my @rnas = parse_sRNAscanner($srnaoutput);
-	print "Found " . scalar @rnas . " sRNAs\n" if ( $diya->verbose && @rnas );
+	if ( -e $srnaoutput ) {
+	    print "Parsing $srnaoutput\n" if $diya->verbose;
+	    @rnas = parse_sRNAscanner($srnaoutput);
+	    print "Found " . scalar @rnas . " sRNAs\n" if ( $diya->verbose && @rnas );
+	} else {
+	    print "File $srnaoutput not found\n" if $diya->verbose;
+	}
 
 	# Get the annotated sequence from the previous step
 	my $gbkin = $diya->_outputfile("MARC::phobos");

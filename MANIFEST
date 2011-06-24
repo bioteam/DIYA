@@ -6,6 +6,7 @@ MANIFEST
 README
 docs/diya.html
 docs/conf.dtd
+conf/genome-annotator-for-ncbi.xml
 examples/download-and-format.conf
 examples/download-genome.pl
 examples/download-and-annotate.conf
@@ -25,7 +26,6 @@ lib/diya/MARC/blastpCDS.pm
 lib/diya/MARC/rpsblastCDS.pm
 lib/diya/MARC/glimmer3.pm
 lib/diya/MARC/CRT.pm
-lib/diya/MARC/RNAsifter.pm
 lib/diya/MARC/phobos.pm
 lib/diya/MARC/sRNAscanner.pm
 lib/diya/MARC/rnammer.pm

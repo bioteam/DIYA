@@ -117,7 +117,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
   <parser>
     <name>MARC::sRNAscanner</name>
     <executable>sRNAscanner</executable>
-    <command>Input.data</command>
+    <command>OUTPUTDIR/Input.data</command>
     <home>/usr/local/share/apps/sRNAscanner</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>

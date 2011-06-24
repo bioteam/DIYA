@@ -27,24 +27,22 @@ $outputdir = File::Spec->rel2abs($outputdir);
 print "Absolute path of OUTPUTDIR is $outputdir\n";
 
 # clean out the working directories
-`rm -fr $sRNAscannerdir/output_files/*`;
-`rm -fr $sRNAscannerdir/temp/*`;
+#`rm -fr $sRNAscannerdir/output_files/*`;
+#`rm -fr $sRNAscannerdir/temp/*`;
 
 my $pttfile = makePtt($id,$gbkinfile);
 
 makeInputdata($id,$pttfile);
 
-
-
 sub makePtt {
 	my ($id,$gbkinfile) = @_;
 	my @fs;
 
-	my $in = Bio::SeqIO->new(-file => $gbkinfile, -format => 'genbank');
+	my $in = Bio::SeqIO->new(-file => "$gbkinfile.gbk", -format => 'genbank');
 	# Get features from the preceding step
 	while (my $s = $in->next_seq) {
 	 	for my $f ($s->get_SeqFeatures) {
-			push @fs, $f;
+			push @fs, $f if ( $f->primary_tag eq 'CDS' );
 		}
 	}
 
@@ -72,14 +70,14 @@ sub makeInputdata {
 	print "Substituted path is $fastain\n";
 	print "Substituted path is $pttfile\n";
 
-	`rm $sRNAscannerdir/$inputdatafile` if ( -e "$sRNAscannerdir/$inputdatafile");
-	`cp $sRNAscannerdir/$inputdatafile.template $sRNAscannerdir/$inputdatafile`;
+	#`rm $sRNAscannerdir/$inputdatafile` if ( -e "$sRNAscannerdir/$inputdatafile");
+	`cp $sRNAscannerdir/$inputdatafile.template $outputdir/$inputdatafile`;
 
 	# Substitute strings in Input.data
-	`perl -pi.bak -e 's/$subfasta/$fastain/g' $sRNAscannerdir/$inputdatafile`;
-	`perl -pi.bak -e 's/$subptt/$pttfile/g' $sRNAscannerdir/$inputdatafile`;
-	`rm $sRNAscannerdir/*bak`;
-	print "Created $sRNAscannerdir/$inputdatafile\n";
+	`perl -pi.bak -e 's/$subfasta/$fastain/g' $outputdir/$inputdatafile`;
+	`perl -pi.bak -e 's/$subptt/$pttfile/g' $outputdir/$inputdatafile`;
+	`rm $outputdir/*.bak`;
+	print "Created $outputdir/$inputdatafile\n";
 }
 
 
