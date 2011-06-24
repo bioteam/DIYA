@@ -67,8 +67,8 @@ sub makeInputdata {
 	$fastain = File::Spec->rel2abs($fastain);
 	print "Absolute path of the input fasta is $fastain\n";
 
-	$fastain =~ s|/|\/|g;
-	$pttfile =~ s|/|\/|g;
+	$fastain =~ s|/|\\/|g;
+	$pttfile =~ s|/|\\/|g;
 	print "Substituted path is $fastain\n";
 	print "Substituted path is $pttfile\n";
 
