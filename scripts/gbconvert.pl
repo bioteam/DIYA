@@ -56,8 +56,8 @@ my $tblfn = "$outdir/$id.tbl";
 my $outfeat = FileHandle->new(">$tblfn") or warn ("$tblfn: $!");
 
 my $fsafn = "$outdir/$id.fsa";
-my $outfsa = Bio::SeqIO->new(-file   => ">$fsafn",
-									  -format => 'fasta') or warn ("$fsafn: $!");
+my $outfsa = Bio::SeqIO->new(-file => ">$fsafn",
+					         -format => 'fasta') or warn ("$fsafn: $!");
 
 $parser->make_namemap($infile);
 
@@ -148,7 +148,6 @@ for my $feature ( @oldFeatures ) {
 			$parser->set_feat_from_adj_contig();
 		}
 
-
 		# get coverage statistic
 		my $avg;
 		for my $note (@notes) {
@@ -174,9 +173,9 @@ for my $feature ( @oldFeatures ) {
 	}
 
 	# only submitting annotations for 4 primary features
-	elsif ( $primary_tag =~ /^(gene|CDS|tRNA|rRNA|repeat_region)$/ ) {
+	elsif ( $primary_tag =~ /^(gene|CDS|tRNA|rRNA|repeat_region|ncRNA)$/ ) {
 
-		# skip any feature containing 'N'
+		# skip any feature with sequence containing 'N'
 		next FEATURE if ( $feature->seq->seq =~ /N/i );
 
 		my @locus = $feature->get_tag_values('locus_tag') if $feature->has_tag('locus_tag');

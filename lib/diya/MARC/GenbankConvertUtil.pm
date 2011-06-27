@@ -73,7 +73,7 @@ sub list_primary_tags {
 	my $file = $self->{file};
 
 	my $in = Bio::SeqIO->new(-file => $file,
-									 -format => 'genbank');
+						     -format => 'genbank');
 	my $seq = $in->next_seq;
 
 	my %tags;
@@ -316,6 +316,11 @@ sub fix_feature {
 	}
 
 	elsif ( $feat->primary_tag eq 'repeat_region' ) {
+
+		return $feat;
+	}
+
+	elsif ( $feat->primary_tag eq 'ncRNA' ) {
 
 		return $feat;
 	}
