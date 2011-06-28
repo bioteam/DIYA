@@ -41,6 +41,7 @@ package diya::MARC::cmsearch;
 
 use strict;
 use Bio::SeqIO;
+use Bio::SeqFeature::Generic;
 # simplest approach
 use base 'diya';
 
@@ -79,7 +80,7 @@ sub parse {
 
 	# Add any new features from cmsearch
 	for my $rna ( @rnas ) {
-		$rna->source_tag('cmsearch');
+		# $rna->source_tag('cmsearch');
 		$seq->add_SeqFeature($rna);
 	}
 
@@ -111,20 +112,19 @@ sub parse_cmsearch {
 
 		if ( $1 && $2 && $3 ) {
 
-			my $feat = new Bio::SeqFeature::Generic(-start       => $1,
-    		                                        -end         => $2,
-        		                                    -strand      => 1,
-        		                                    -tag         => { note => "$3 sRNA",
-        		                                				      ncRNA_class => 'other' },
-            		                                -primary_tag => 'ncRNA');
+			my $feat = new Bio::SeqFeature::Generic(
+					     -start       => $2,
+    		                             -end         => $3,
+        		                     -strand      => 1,
+        		                     -tag         => { note => "$1 sRNA",
+        		                                       ncRNA_class => 'other' },
+            		                     -primary_tag => 'ncRNA');
         	push @features,$feat;
-        	print "Found sRNA at $1 and $2\n";
+        	print "Found $1 sRNA at $2 and $3\n";
     	}
     }
 
-	return 0 if ( ! @features );
-
-	@features;
+   @features;
 }
 
 1;

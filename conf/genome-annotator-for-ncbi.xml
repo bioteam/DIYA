@@ -28,10 +28,10 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
 
 <conf>
   <order>
-   <!-- MARC::RNAsifter cleanup -->
+   <!-- cleanup -->
    <names>assemble_pseudocontig make-single-fa MARC::glimmer3 extractCDS
    MARC::blastpCDS MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer MARC::CRT
-   MARC::phobos create-Inputdata MARC::sRNAscanner gbconvert
+   MARC::phobos MARC::cmsearch gbconvert
    </names> 
   </order>
     <script>
@@ -144,7 +144,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
     <command>-agp -q MYQUALFILE -t MYTAXID INPUTFILE.gbk</command>
     <home>/usr/local/share/DIYA/scripts</home>
     <inputformat></inputformat>
-    <inputfrom>MARC::sRNAscanner</inputfrom>
+    <inputfrom>MARC::cmsearch</inputfrom>
   </script>
   <script>
     <name>make-final-file</name>

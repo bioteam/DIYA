@@ -28,7 +28,7 @@ use_ok("diya::MARC::blastpCDS");
 use_ok("diya::MARC::glimmer3");
 use_ok("diya::MARC::blastall");
 use_ok("diya::MARC::tRNAscanSE");
-use_ok("diya::MARC::sRNAscanner");
+use_ok("diya::MARC::cmsearch");
 
 my $diya = diya->new();
 isa_ok($diya,'diya');

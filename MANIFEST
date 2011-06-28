@@ -27,7 +27,7 @@ lib/diya/MARC/rpsblastCDS.pm
 lib/diya/MARC/glimmer3.pm
 lib/diya/MARC/CRT.pm
 lib/diya/MARC/phobos.pm
-lib/diya/MARC/sRNAscanner.pm
+lib/diya/MARC/cmsearch.pm
 lib/diya/MARC/rnammer.pm
 lib/diya/MARC/tRNAscanSE.pm
 lib/diya/MARC/blastall.pm
