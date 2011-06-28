@@ -111,55 +111,9 @@ sub fix_feature {
 
 			$product[0] =~ s/^\s*//;
 
-			# If the product comes from UniRef, something like:
-			# "UPF0076 protein yjgF n=146 Tax=Bacteria RepID=YJGF_ECOL6" or
-			# "Putative Orf27; P2 LysB homolog; control of lysis [Ente. n=2 Tax=Yersinia RepID=Q66BL7_YERPS"
-			if ( $product[0] =~ /(.+?)\s+n=\d+\s+Tax=(.+)/ ) {
+			($product[0],$feat) = fix_uniref($product[0]);
 
-				my ($newProduct,$species) = ($1,$2);
-				$species =~ s/RepID/UniRef RepID/;
-
-				my $note = "similar to $newProduct of $species";
-				$note =~ s/\sn=\d+\s/ /;
-				# 'protein protein'
-				$note =~ s/protein protein/protein/;
-				$note =~ s/similar to Similar/similar/i;
-
-				# Remove COG or FOG ids found in the UniRef headers, e.g.:
-				# FOG: TPR repeat n=1 Tax=Vibrio vulnificus RepID=Q8DF47_VIBVU
-				# COG0784: FOG: CheY-like receiver n=1 Tax=Bacillus anthracis RepID=UPI00
-				$newProduct =~ s/^(FOG:\s+|COG\d+:\s+FOG:\s+|COG\d+:\s*)//;
-
-				$feat->add_tag_value('note',$note);
-
-				# TIGR ids
-				if ( $newProduct =~ /^UPF\d+\s+(zinc-binding protein|ATP-binding protein)/ ) {
-					$newProduct = $1;
-				}
-
-				# Add back the product but do not use locus tags from other 
-				# genomes, e.g. product="hypothetical protein YPO0973
-				if ( $newProduct =~ /^hypothetical protein\s+.*/i ) {
-					$product[0] = 'hypothetical protein';
-				} else {
-					$product[0] = $newProduct;
-				}
-
-				$feat->remove_tag('score') if $feat->has_tag('score');
-
-				# 'protein protein'
-				$product[0] =~ s/protein protein/protein/;
-
-			}
-
-			# if product name comes from match to COG, not UniRef
-			if ( $product[0] =~ /^(COG\d+):\s+(.+)/ ) {
-				$product[0] = $2;
-				my $note = "similar to $1";
-				$feat->add_tag_value('note',$note) if (! $1 eq 'family' );
-
-				#$product[0] =~ s/^Predicted/hypothetical protein/;
-			}
+			($product[0],$feat) = fix_cog($product[0],$feat);
 
 			# if product looks something like:
 			# "GpL [Enterobacteria phage P2] ..." then correct
@@ -418,6 +372,67 @@ sub fix_feature {
 
 		return ($feat,$genefeat);
 	}
+
+}
+
+sub fix_cog {
+	my ($product,$feat) = @_;
+	
+			# if product name comes from match to COG, not UniRef
+			if ( $product =~ /^(COG\d+):\s+(.+)/ ) {
+				$product = $2;
+				my $note = "similar to $1";
+				$feat->add_tag_value('note',$note) if (! $1 eq 'family' );
+			}
+
+			($product,$feat);	
+}
+
+sub fix_uniref {
+	my ($product,$feat) = @_;
+
+				# If the product comes from UniRef, something like:
+			# "UPF0076 protein yjgF n=146 Tax=Bacteria RepID=YJGF_ECOL6" or
+			# "Putative Orf27; P2 LysB homolog; control of lysis [Ente. n=2 Tax=Yersinia RepID=Q66BL7_YERPS"
+			if ( $product =~ /(.+?)\s+n=\d+\s+Tax=(.+)/ ) {
+
+				my ($newProduct,$species) = ($1,$2);
+				$species =~ s/RepID/UniRef RepID/;
+
+				my $note = "similar to $newProduct of $species";
+				$note =~ s/\sn=\d+\s/ /;
+				# 'protein protein'
+				$note =~ s/protein protein/protein/;
+				$note =~ s/similar to Similar/similar/i;
+
+				# Remove COG or FOG ids found in the UniRef headers, e.g.:
+				# FOG: TPR repeat n=1 Tax=Vibrio vulnificus RepID=Q8DF47_VIBVU
+				# COG0784: FOG: CheY-like receiver n=1 Tax=Bacillus anthracis RepID=UPI00
+				$newProduct =~ s/^(FOG:\s+|COG\d+:\s+FOG:\s+|COG\d+:\s*)//;
+
+				$feat->add_tag_value('note',$note);
+
+				# TIGR ids
+				if ( $newProduct =~ /^UPF\d+\s+(zinc-binding protein|ATP-binding protein)/ ) {
+					$newProduct = $1;
+				}
+
+				# Add back the product but do not use locus tags from other 
+				# genomes, e.g. product="hypothetical protein YPO0973
+				if ( $newProduct =~ /^hypothetical protein\s+.*/i ) {
+					$product = 'hypothetical protein';
+				} else {
+					$product = $newProduct;
+				}
+
+				$feat->remove_tag('score') if $feat->has_tag('score');
+
+				# 'protein protein'
+				$product =~ s/protein protein/protein/;
+
+			}
+
+			($product,$feat);
 
 }
 
