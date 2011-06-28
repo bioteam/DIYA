@@ -4,7 +4,7 @@ This Diya conf file can be used to take 454 assemblies and a *qual file as input
 and output an annotated Genbank file and corresponding ASN.1 that can be submitted to 
 NCBI.
 
-Example commands:
+Example command:
 
 nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml \
 -set MYUNIREFD=/boris/user_data/swissprot/uniref50.fasta -set MYSTRAIN=test0001 \
@@ -12,15 +12,6 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
 -set MYCLUSTERS=/boris/user_data/ncbi/CDD/Clusters.bcp \
 -set MYCDD=/boris/user_data/ncbi/CDD/cddid_all.tbl -set MYQUALFILE=454MiniContigs.qual \
 -set MYTAXID=12345 454MiniContigs.fna > test0001.out &
-
-nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml \
--set MYUNIREFD=/boris/user_data/swissprot/uniref50.fasta -set MYSTRAIN=test0001 \
--set MYSPECIES='Test test' -set MYRPSD=/boris/user_data/ncbi/CDD/Cdd -set MYSEQID=test0001 \
--set MYCLUSTERS=/boris/user_data/ncbi/CDD/Clusters.bcp \
--set MYCDD=/boris/user_data/ncbi/CDD/cddid_all.tbl -set MYQUALFILE=/boris/user_data/smith/mann2B/assembly/454LargeContigs.qual \
--set MYTAXID=12345 /boris/user_data/smith/mann2B/assembly/454LargeContigs.fna > test0001.out &
-
-
 
 1. copy all relevant files to a working directory
 2. run glimmer3
@@ -30,7 +21,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
 6. run rnammer
 7. run CRT
 8. run phobos
-9. run sRNAscanner
+9. run cmsearch
 10. correct of annotation text
 11. create ASN and associated files for NCBI submission
 -->
@@ -128,6 +119,14 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
     <executable>sRNAscanner</executable>
     <command>OUTPUTDIR/Input.data</command>
     <home>/usr/local/share/apps/sRNAscanner</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <parser>
+    <name>MARC::cmsearch</name>
+    <executable>cmsearch</executable>
+    <command>--tabfile OUTPUTFILE -T 1.0e-20 /boris/user_data/Rfam-10.0/sRNAs.cm MYSEQID.fa</command>
+    <home>/usr/local/share/infernal-1.0.1/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
