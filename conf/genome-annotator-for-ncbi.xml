@@ -125,7 +125,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
   <parser>
     <name>MARC::cmsearch</name>
     <executable>cmsearch</executable>
-    <command>--tabfile OUTPUTFILE -T 1.0e-20 /boris/user_data/Rfam-10.0/sRNAs.cm MYSEQID.fa</command>
+    <command>--tabfile OUTPUTFILE -E 1.0e-20 -o MYSEQID.cmsearch /boris/user_data/Rfam-10.0/sRNAs.cm MYSEQID.fa</command>
     <home>/usr/local/share/infernal-1.0.1/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>

@@ -111,7 +111,7 @@ sub fix_feature {
 
 			$product[0] =~ s/^\s*//;
 
-			($product[0],$feat) = fix_uniref($product[0]);
+			($product[0],$feat) = fix_uniref($product[0],$feat);
 
 			($product[0],$feat) = fix_cog($product[0],$feat);
 
@@ -389,51 +389,50 @@ sub fix_cog {
 }
 
 sub fix_uniref {
-	my ($product,$feat) = @_;
+    my ($product,$feat) = @_;
 
-				# If the product comes from UniRef, something like:
-			# "UPF0076 protein yjgF n=146 Tax=Bacteria RepID=YJGF_ECOL6" or
-			# "Putative Orf27; P2 LysB homolog; control of lysis [Ente. n=2 Tax=Yersinia RepID=Q66BL7_YERPS"
-			if ( $product =~ /(.+?)\s+n=\d+\s+Tax=(.+)/ ) {
+    # If the product comes from UniRef, something like:
+    # "UPF0076 protein yjgF n=146 Tax=Bacteria RepID=YJGF_ECOL6" or
+    # "Putative Orf27; P2 LysB homolog; control of lysis [Ente. n=2 Tax=Yersinia RepID=Q66BL7_YERPS"
+    if ( $product =~ /(.+?)\s+n=\d+\s+Tax=(.+)/ ) {
 
-				my ($newProduct,$species) = ($1,$2);
-				$species =~ s/RepID/UniRef RepID/;
+	my ($newProduct,$species) = ($1,$2);
+	$species =~ s/RepID/UniRef RepID/;
 
-				my $note = "similar to $newProduct of $species";
-				$note =~ s/\sn=\d+\s/ /;
-				# 'protein protein'
-				$note =~ s/protein protein/protein/;
-				$note =~ s/similar to Similar/similar/i;
+	my $note = "similar to $newProduct of $species";
+	$note =~ s/\sn=\d+\s/ /;
+	# 'protein protein'
+	$note =~ s/protein protein/protein/;
+	$note =~ s/similar to Similar/similar/i;
 
-				# Remove COG or FOG ids found in the UniRef headers, e.g.:
-				# FOG: TPR repeat n=1 Tax=Vibrio vulnificus RepID=Q8DF47_VIBVU
-				# COG0784: FOG: CheY-like receiver n=1 Tax=Bacillus anthracis RepID=UPI00
-				$newProduct =~ s/^(FOG:\s+|COG\d+:\s+FOG:\s+|COG\d+:\s*)//;
+	# Remove COG or FOG ids found in the UniRef headers, e.g.:
+	# FOG: TPR repeat n=1 Tax=Vibrio vulnificus RepID=Q8DF47_VIBVU
+	# COG0784: FOG: CheY-like receiver n=1 Tax=Bacillus anthracis RepID=UPI00
+	$newProduct =~ s/^(FOG:\s+|COG\d+:\s+FOG:\s+|COG\d+:\s*)//;
 
-				$feat->add_tag_value('note',$note);
+	$feat->add_tag_value('note',$note);
 
-				# TIGR ids
-				if ( $newProduct =~ /^UPF\d+\s+(zinc-binding protein|ATP-binding protein)/ ) {
-					$newProduct = $1;
-				}
+	# TIGR ids
+	if ( $newProduct =~ /^UPF\d+\s+(zinc-binding protein|ATP-binding protein)/ ) {
+	    $newProduct = $1;
+	}
 
-				# Add back the product but do not use locus tags from other 
-				# genomes, e.g. product="hypothetical protein YPO0973
-				if ( $newProduct =~ /^hypothetical protein\s+.*/i ) {
-					$product = 'hypothetical protein';
-				} else {
-					$product = $newProduct;
-				}
+	# Add back the product but do not use locus tags from other 
+	# genomes, e.g. product="hypothetical protein YPO0973
+	if ( $newProduct =~ /^hypothetical protein\s+.*/i ) {
+	    $product = 'hypothetical protein';
+	} else {
+	    $product = $newProduct;
+	}
 
-				$feat->remove_tag('score') if $feat->has_tag('score');
+	$feat->remove_tag('score') if $feat->has_tag('score');
 
-				# 'protein protein'
-				$product =~ s/protein protein/protein/;
+	# 'protein protein'
+	$product =~ s/protein protein/protein/;
 
-			}
+    }
 
-			($product,$feat);
-
+    ($product,$feat);
 }
 
 sub correct_spelling {
