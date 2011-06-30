@@ -62,6 +62,7 @@ sub new {
 	# defaults
 	$self->template('template');
 	$self->executable('/usr/local/bin/tbl2asn');
+	$self->accession_prefix('nmrcread');
 
 	$self->_initialize(@args);
 
@@ -96,105 +97,76 @@ sub fix_feature {
 		# edit product tag and a note tag
 		if ( $feat->has_tag('product') ) {
 
-			my @product = $feat->remove_tag("product");
+			my @products = $feat->remove_tag("product");
+			my $product = $products[0];
 
 			# if 'note' and 'product' are duplicated
 			if ( $feat->has_tag('note') ) {
 				my @notes = $feat->remove_tag('note');
 				for my $note (@notes) {
 					$note =~ s/\s+$//;
-					my $str = "similar to " . $product[0];
+					my $str = "similar to " . $product;
 					$feat->add_tag_value('note',$note) unless
 					  ( $note eq $str );
 				}
 			}
 
-			$product[0] =~ s/^\s*//;
+			$product =~ s/^\s*//;
 
-			($product[0],$feat) = fix_uniref($product[0],$feat);
+			($product,$feat) = fix_uniref($product,$feat);
 
-			($product[0],$feat) = fix_cog($product[0],$feat);
+			($product,$feat) = fix_cog($product,$feat);
 
-			($product[0],$feat) = remove_coli($product[0],$feat);
+			($product,$feat) = remove_coli($product,$feat);
 
-			# if the product looks something like:
-			# "ABC protein [Yersinia pestis CO92]." then correct
-			if ( $product[0] =~ /(.+)\s+(\[.+?\])\.$/ ) {
+			($product,$feat) = move_species($product,$feat);
 
-				my ($newProduct,$species) = ($1,$2);
-
-				# Add back the product but do not use locus tags from other 
-				# genomes, e.g. product="hypothetical protein YPO0973
-				if ( $newProduct =~ /^hypothetical protein\s+.*/i ) {
-					$product[0] = 'hypothetical protein';
-				} else {
-					$product[0] = $newProduct;
-				}
-
-				my @score = $feat->remove_tag('score') if $feat->has_tag('score');
-
-				if ( $score[0] ) {
-					my $note = "similar to $newProduct $species";
-					$feat->add_tag_value('note',$note);
-
-					#$note = "BLAST score=" . $score[0];
-					#$feat->add_tag_value('note',$note);
-				}
+			if ( $product =~ /^(similar|similarities) (to|with) (unknown|putative|probable|C-terminal)/i ) {
+				$feat->add_tag_value('note', $product);
+				$product = 'hypothetical protein';
 			}
 
-			if ( $product[0] =~ /^(similar|similarities) (to|with) (unknown|putative|probable|C-terminal)/i ) {
-				$feat->add_tag_value('note', $product[0]);
-				$product[0] = 'hypothetical protein';
-			}
+			$product = correct_spelling($product);
 
-			$product[0] = correct_spelling($product[0]);
+			$product = add_trailing($product);
 
-			$product[0] = add_trailing($product[0]);
+			$product = remove_trailing($product);
 
-			$product[0] = remove_trailing($product[0]);
+			$product = make_singular($product);
 
-			$product[0] = make_singular($product[0]);
+			$product = remove_banned($product);
 
-			$product[0] = remove_banned($product[0]);
+			$product = 'hypothetical protein' if ( is_hypothetical($product) );
 
-			$product[0] = 'hypothetical protein' if ( is_hypothetical($product[0]) );
+			$product = remove_similar($product);
 
-			$product[0] = remove_similar($product[0]);
-
-			$product[0] = remove_loci($product[0]);
+			$product = remove_loci($product);
 
 			# Too long, too many ()'s
-			if ( $product[0] =~ /^([^()]+ \([^)]+\)) \([^)]+\)/ ) {
-				$product[0] = $1;
-			}
+			$product = $1 if ( $product =~ /^([^()]+ \([^)]+\)) \([^)]+\)/ );
 
 			# remove '...-like'
-			if ( $product[0] =~ /-like$/i ) {
-				$feat->add_tag_value('note', $product[0]);
-				$product[0] = 'hypothetical protein';
+			if ( $product =~ /-like$/i ) {
+				$feat->add_tag_value('note', $product);
+				$product = 'hypothetical protein';
 			}
 
-			# remove clauses with semicolons from 'product', add to a 'note'
-			if ( $product[0] =~ /^([^;]+);\s*(.+)/ ) {
-				$product[0] = $1;
-				$feat->add_tag_value('note', $2);
-			}
+			($product,$feat) = remove_semicolon($product,$feat);
 
 			# finally add it back
-			$feat->add_tag_value('product', $product[0]);
+			$feat->add_tag_value('product', $product);
 
 		} else {
 
-			# if there is no 'product' then it's a 'hypothetical...'
+			# if there is no 'product' then it's a 'hypothetical protein'
 			$feat->add_tag_value('product','hypothetical protein');
 
 		}
 
-
 		# change locus_tag to protein_id
 		if ( $feat->has_tag('locus_tag') ) {
 			my @loci = $feat->remove_tag('locus_tag');
-			my $protein_id = 'gnl|nmrcread|' . $loci[0];
+			my $protein_id = 'gnl|' . $self->accession_prefix . '|' . $loci[0];
 			$feat->add_tag_value('protein_id', $protein_id);
 		}
 
@@ -208,47 +180,9 @@ sub fix_feature {
 			}
 		}
 
-		# features with 'rps_gi' tag need to be rearranged
-		if ( $feat->has_tag('rps_gi') ) {
-			my @ids = $feat->remove_tag('rps_gi') ;
+		$feat = fix_rps($feat);
 
-			for my $id ( @ids ) {
-				my $note = "similar to motif $id";
-				$feat->add_tag_value('note',$note) unless ( $id eq 'family' );
-			}
-
-			# these matches have no other information
-			if ( $ids[0] =~ /^(pfam|COG|cd)/ ) {
-            $feat->remove_tag('product');
-            $feat->add_tag_value('product','hypothetical protein');
-			}
-
-			# change cluster, score, and group tags to a note tag if there's data
-			my @clusters = $feat->remove_tag('cluster') if $feat->has_tag('cluster');
-			my @groups = $feat->remove_tag('group') if $feat->has_tag('group');
-			my @scores = $feat->remove_tag('score') if $feat->has_tag('score');
-
-			if ( $clusters[0] && $groups[0] && $scores[0] ) {
-				my $note = "similar to CDD " . $clusters[0] . ", group " . $groups[0];
-				$feat->add_tag_value('note',$note);
-
-				#$note = "RPS BLAST score=" . $scores[0];
-				#$feat->add_tag_value('note',$note);
-			}
-		}
-
-                # remove all score tags
-                if ( $feat->has_tag('score') || $feat->has_tag('Score') ) {
-                   my @scores = $feat->remove_tag('score') ;
-                }
-                # remove all score values
-                for my $tag ($feat->get_all_tags) {
-                   my @values = $feat->get_tag_values($tag);
-                   $feat->remove_tag($tag);
-                   for my $value ( @values ) {
-		       $feat->add_tag_value($tag,$value) if ( $value !~ /^\s*score\s*[=:]/i );
-                   }          
-                }       
+		$feat = remove_scores($feat);
 
 		return $feat;
 	}
@@ -362,6 +296,103 @@ sub fix_feature {
 		return ($feat,$genefeat);
 	}
 
+}
+
+sub remove_scores {
+	my $feat = shift;
+
+                # remove all score tags
+                if ( $feat->has_tag('score') || $feat->has_tag('Score') ) {
+                   my @scores = $feat->remove_tag('score') ;
+                }
+                # remove all score values
+                for my $tag ($feat->get_all_tags) {
+                   my @values = $feat->get_tag_values($tag);
+                   $feat->remove_tag($tag);
+                   for my $value ( @values ) {
+		       $feat->add_tag_value($tag,$value) if ( $value !~ /^\s*score\s*[=:]/i );
+                   }          
+                }       
+    $feat;
+}
+
+sub move_species {
+		my ($product,$feat) = @_;
+	
+			# if the product looks something like:
+			# "ABC protein [Yersinia pestis CO92]." then correct
+			if ( $product =~ /(.+)\s+(\[.+?\])\.$/ ) {
+
+				my ($newProduct,$species) = ($1,$2);
+
+				# Add back the product but do not use locus tags from other 
+				# genomes, e.g. product="hypothetical protein YPO0973
+				if ( $newProduct =~ /^hypothetical protein\s+.*/i ) {
+					$product = 'hypothetical protein';
+				} else {
+					$product = $newProduct;
+				}
+
+				my @score = $feat->remove_tag('score') if $feat->has_tag('score');
+
+				if ( $score[0] ) {
+					my $note = "similar to $newProduct $species";
+					$feat->add_tag_value('note',$note);
+
+					#$note = "BLAST score=" . $score[0];
+					#$feat->add_tag_value('note',$note);
+				}
+			}
+
+	($product,$feat);
+}
+
+
+sub fix_rps {
+	my $feat = shift;
+
+		# features with 'rps_gi' tag need to be rearranged
+		if ( $feat->has_tag('rps_gi') ) {
+			my @ids = $feat->remove_tag('rps_gi') ;
+
+			for my $id ( @ids ) {
+				my $note = "similar to motif $id";
+				$feat->add_tag_value('note',$note) unless ( $id eq 'family' );
+			}
+
+			# these matches have no other information
+			if ( $ids[0] =~ /^(pfam|COG|cd)/ ) {
+            $feat->remove_tag('product');
+            $feat->add_tag_value('product','hypothetical protein');
+			}
+
+			# change cluster, score, and group tags to a note tag if there's data
+			my @clusters = $feat->remove_tag('cluster') if $feat->has_tag('cluster');
+			my @groups = $feat->remove_tag('group') if $feat->has_tag('group');
+			my @scores = $feat->remove_tag('score') if $feat->has_tag('score');
+
+			if ( $clusters[0] && $groups[0] && $scores[0] ) {
+				my $note = "similar to CDD " . $clusters[0] . ", group " . $groups[0];
+				$feat->add_tag_value('note',$note);
+
+				#$note = "RPS BLAST score=" . $scores[0];
+				#$feat->add_tag_value('note',$note);
+			}
+		}
+
+		$feat;
+}
+
+sub remove_semicolon {
+		my ($product,$feat) = @_;
+	
+				# remove clauses with semicolons from 'product', add to a 'note'
+			if ( $product =~ /^([^;]+);\s*(.+)/ ) {
+				$product = $1;
+				$feat->add_tag_value('note', $2);
+			}
+
+			($product,$feat);	
 }
 
 sub remove_coli {
@@ -1617,6 +1648,17 @@ sub lastBase {
 		return $self->{lastBase};
 	} else {
 		return $self->{lastBase};
+	}
+}
+
+sub accession_prefix {
+	my ($self,$pref) = @_;
+
+	if ($pref) {
+		$self->{accession_prefix} = $pref;
+		return $self->{accession_prefix};
+	} else {
+		return $self->{accession_prefix};
 	}
 }
 
