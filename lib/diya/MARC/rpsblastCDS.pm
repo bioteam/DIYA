@@ -139,6 +139,7 @@ sub parse {
 
 					$tags->{'score'} = $hit->significance;
 					$tags->{'rps_gi'} = $cid;
+					$tags->{'inference'} = 'rpsblast';
 
 					# set cluster
 					$tags->{'cluster'} = $clustermap->{$cid}->{'entry'};

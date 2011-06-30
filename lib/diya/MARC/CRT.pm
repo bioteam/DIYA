@@ -107,6 +107,7 @@ sub parse_crt {
 		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
     		                                    -end         => $2,
         		                                -strand      => 1,
+        		                                -tag         => {inference => 'CRT'},
             		                            -primary_tag => 'repeat_region');
         push @features,$feat;
     }

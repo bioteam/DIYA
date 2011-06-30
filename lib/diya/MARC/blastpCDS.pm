@@ -99,6 +99,8 @@ sub parse {
 				( $tags{locus_tag}, $tags{score}, $tags{product} ) = 
 				  ($locus[0], $hsp->bits, $hit->description);
 
+				$tags{inference} = 'blastp';
+
 				my $CDSfeat = new Bio::SeqFeature::Generic(-primary => 'CDS',
 																	 -start	 => $feat->start,
 																	 -end		 => $feat->end,

@@ -117,7 +117,8 @@ sub parse_cmsearch {
     		                             -end         => $3,
         		                     -strand      => 1,
         		                     -tag         => { note => "$1 sRNA",
-        		                                       ncRNA_class => 'other' },
+        		                                       ncRNA_class => 'other',
+        		                                       inference => 'cmsearch' },
             		                     -primary_tag => 'ncRNA');
         	push @features,$feat;
         	print "Found $1 sRNA at $2 and $3\n";
