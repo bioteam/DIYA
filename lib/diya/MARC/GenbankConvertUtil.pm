@@ -115,11 +115,7 @@ sub fix_feature {
 
 			($product[0],$feat) = fix_cog($product[0],$feat);
 
-			# if product looks something like:
-			# "GpL [Enterobacteria phage P2] ..." then correct
-			if ( $product[0] =~ /(\w+)\s+\[(Enterobacteria[^]]+)\]/ ) {
-				$product[0] = "$2 $1";
-			}
+			($product[0],$feat) = remove_coli($product[0],$feat);
 
 			# if the product looks something like:
 			# "ABC protein [Yersinia pestis CO92]." then correct
@@ -144,14 +140,6 @@ sub fix_feature {
 					#$note = "BLAST score=" . $score[0];
 					#$feat->add_tag_value('note',$note);
 				}
-			}
-
-			# no species names allowed in product/
-			if ( $product[0] =~ /^Similar to\s+(.+?)\s+of\s+Escherichia\s+coli/ ) {
-				my $note = $product[0];
-				$product[0] = $1;
-				$product[0] =~ s/^(putative|probable)\s+//;
-				$feat->add_tag_value('note',$note);
 			}
 
 			if ( $product[0] =~ /^(similar|similarities) (to|with) (unknown|putative|probable|C-terminal)/i ) {
@@ -201,6 +189,7 @@ sub fix_feature {
 			$feat->add_tag_value('product','hypothetical protein');
 
 		}
+
 
 		# change locus_tag to protein_id
 		if ( $feat->has_tag('locus_tag') ) {
@@ -374,6 +363,27 @@ sub fix_feature {
 	}
 
 }
+
+sub remove_coli {
+		my ($product,$feat) = @_;
+
+			# if product looks something like:
+			# "GpL [Enterobacteria phage P2] ..." then correct
+			if ( $product =~ /(\w+)\s+\[(Enterobacteria[^]]+)\]/ ) {
+				$product = "$2 $1";
+			}
+
+ 			# no species names allowed in product/
+			if ( $product =~ /^Similar to\s+(.+?)\s+of\s+Escherichia\s+coli/ ) {
+				my $note = $product;
+				$product = $1;
+				$product =~ s/^(putative|probable)\s+//;
+				$feat->add_tag_value('note',$note);
+			}
+
+			($product,$feat);	
+}
+
 
 sub fix_cog {
 	my ($product,$feat) = @_;
@@ -619,6 +629,7 @@ sub remove_trailing {
 	$product =~ s/\s+\(Diaminohydroxyphosphoribosylaminopyrimidine deaminase \(Riboflavin-specific deaminase\) and 5-amino-6-\(5-phosphoribosylamino\)uracil reductase\)$//i;
 	$product =~ s/\s+\(Probable\), IS891\/IS1136\/IS1341:Transposase, IS605 OrfB$//i;
 	$product =~ s/\s+and inactivated derivatives-like protein$//i;
+	$product =~ s/\[cytochrome\]\s*$//;
 
 	$product;
 }
