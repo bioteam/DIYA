@@ -77,9 +77,6 @@ sub parse {
 
 	# Add any new features from phobos
 	for my $repeat ( @repeats ) {
-		my %tag;
-		$tag{rpt_type} = 'tandem';
-		$repeat->set_attributes(-tag => \%tag);
 		$repeat->source_tag('phobos');
 		$seq->add_SeqFeature($repeat);
 	}
@@ -92,7 +89,7 @@ sub parse {
 	# Output to Genbank file
 	my $gbkout = $out . ".gbk";
 	my $seqout = Bio::SeqIO->new(-format => 'genbank',
-				     -file   => ">$gbkout");
+				                 -file   => ">$gbkout");
 	$seqout->write_seq($seq);
 
 }
@@ -102,6 +99,8 @@ sub parse_phobos {
 	my $txt = read_file($file);
 	my @features;
 
+	my ($version) = $txt =~ /version\s+(\S+)/;
+
 # contig00007	Phobos	tandem-repeat	8849	8866	100.00	.	.	Name="repeat_region 8849-8
 # 866 unit_size 9 repeat_number 2.000 perfection 100.000 unit ATCGCCGCC"
 
@@ -110,7 +109,8 @@ sub parse_phobos {
 		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
     		                                    -end         => $2,
         		                                -strand      => 1,
-        		                                -tag         => {inference => 'phobos' },
+        		                                -tag         => {inference => "similar to DNA sequence:phobos:$version",
+        		                                				 rpt_type  => 'tandem' },
             		                            -primary_tag => 'repeat_region');
         push @features,$feat;
     }
