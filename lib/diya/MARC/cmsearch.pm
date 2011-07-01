@@ -113,13 +113,14 @@ sub parse_cmsearch {
 		if ( $1 && $2 && $3 ) {
 
 			my $feat = new Bio::SeqFeature::Generic(
-					     -start       => $2,
-    		                             -end         => $3,
-        		                     -strand      => 1,
-        		                     -tag         => { note => "$1 sRNA",
-        		                                       ncRNA_class => 'other',
-        		                                       inference => 'cmsearch' },
-            		                     -primary_tag => 'ncRNA');
+					     -start  => $2,
+    		             -end    => $3,
+        		         -strand => 1,
+        		         -tag    => { note        => "$1 sRNA",
+        		                      ncRNA_class => 'other',
+        		                      inference   => "profile:cmsearch:1.0.1" },
+            		     -primary_tag => 'ncRNA');
+
         	push @features,$feat;
         	print "Found $1 sRNA at $2 and $3\n";
     	}

@@ -88,8 +88,11 @@ sub parse {
 			}
 
 			my $blast_report = Bio::SearchIO->new(-noclose => 1,
-															  -format  => 'blast',
-															  -fh      => $fh);
+												  -format  => 'blast',
+												  -fh      => $fh);
+			my $version = $blast_report->version;
+			my $program = $blast_report->program;
+
 			my $result = $blast_report->next_result;
 
 			if ( my $hit = $result->next_hit ) {
@@ -99,13 +102,13 @@ sub parse {
 				( $tags{locus_tag}, $tags{score}, $tags{product} ) = 
 				  ($locus[0], $hsp->bits, $hit->description);
 
-				$tags{inference} = 'blastp';
+				$tags{inference} = "similar to AA sequence:$program:$version";
 
 				my $CDSfeat = new Bio::SeqFeature::Generic(-primary => 'CDS',
-																	 -start	 => $feat->start,
-																	 -end		 => $feat->end,
-																	 -strand	 => $feat->strand,
-																	 -tag		 => { %tags }	);
+														   -start	=> $feat->start,
+														   -end	    => $feat->end,
+														   -strand  => $feat->strand,
+														   -tag	    => { %tags }	);
 				$seq->add_SeqFeature($CDSfeat);
 				$seq->add_SeqFeature($feat);
 
@@ -114,9 +117,9 @@ sub parse {
 				$tags{locus_tag} = $locus[0];
 				my $CDSfeat = new Bio::SeqFeature::Generic(-primary => 'CDS',
 																	 -start	 => $feat->start,
-																	 -end		 => $feat->end,
-																	 -strand	 => $feat->strand,
-																	 -tag     => { %tags }  );
+																	 -end	 => $feat->end,
+																	 -strand => $feat->strand,
+																	 -tag    => { %tags }  );
 				$seq->add_SeqFeature($CDSfeat);
 				$seq->add_SeqFeature($feat);
 

@@ -119,8 +119,11 @@ sub parse {
 			}
 
 			my $blast_report = Bio::SearchIO->new(-noclose => 1,
-															  -format  => 'blast',
-															  -fh      => $fh );
+												  -format  => 'blast',
+												  -fh      => $fh );
+			my $version = $blast_report->version;
+			my $program = $blast_report->program;
+
 			my $result = $blast_report->next_result;
 
 			if ( $result->num_hits > 0 ) {
@@ -139,12 +142,12 @@ sub parse {
 
 					$tags->{'score'} = $hit->significance;
 					$tags->{'rps_gi'} = $cid;
-					$tags->{'inference'} = 'rpsblast';
+					$tags->{'inference'} = "protein motif:$program:$version";
 
 					# set cluster
 					$tags->{'cluster'} = $clustermap->{$cid}->{'entry'};
 					$tags->{'product'} = $clustermap->{$cid}->{'definition'};
-					$tags->{'group'}	 = $clustermap->{$cid}->{'group'};
+					$tags->{'group'}   = $clustermap->{$cid}->{'group'};
 
 			   } elsif ( defined $cddmap->{$cid} ) {
 

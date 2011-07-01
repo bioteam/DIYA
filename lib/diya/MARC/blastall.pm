@@ -55,7 +55,9 @@ sub parse {
 	print "Parsing \'" . $blastout . "\'\n" if $diya->verbose;
 
 	my $blastparser = Bio::SearchIO->new(-file => $OUTPUT,
-													 -format => 'blast' );
+									     -format => 'blast' );
+	my $version = $blastparser->version;
+	my $program = $blastparser->program;
 
 	my $seq = $diya->_sequence;
 
@@ -72,7 +74,7 @@ sub parse {
 			( $tags{locus_tag}, $tags{score}, $tags{product} ) = 
 			   get_match_data($blastparser, $locus[0]);
 		
-			$tags{inference} = 'blastp';
+			$tags{inference} = "similar to AA sequence:$program:$version";
 
 			my $feat = new Bio::SeqFeature::Generic(-primary => 'CDS',
 																 -start	 => $feat->start,
