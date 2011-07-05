@@ -84,7 +84,7 @@ sub parse {
 		}
 
 		my $in = Bio::SeqIO->new(-file => "$gbk",
-										 -format => 'genbank' );
+								 -format => 'genbank' );
 		$seq = $in->next_seq;
 
 		# print Dumper $seq; OK
@@ -95,15 +95,15 @@ sub parse {
 
 	while ( my $feature = $parser->next_feature ) {
 		my %tags;
-		$tags{locus_tag}	= $MYSEQID . "_" . ($LOCUS_TAG_NUMBER += 10);
+		$tags{locus_tag} = $MYSEQID . "_" . ($LOCUS_TAG_NUMBER += 10);
+		$tags{inference} = 'ab initio:glimmer3:3.0.2';
 
-		my $feat = Bio::SeqFeature::Generic->new(-primary		=> $PRIMARY_TAG,
-															  -source_tag	=> 'glimmer3',
-															  -start 		=> $feature->start,
-															  -end			=> $feature->end,
-															  -strand		=> $feature->strand,
-															  -tag			=> { %tags },
-															 );
+		my $feat = Bio::SeqFeature::Generic->new(-primary    => $PRIMARY_TAG,
+												 -source_tag => 'glimmer3',
+											     -start 	 => $feature->start,
+												 -end		 => $feature->end,
+											     -strand	 => $feature->strand,
+											     -tag		 => { %tags } );
 
 		# Add feature to seq object
 		$seq->add_SeqFeature($feat);
@@ -120,7 +120,7 @@ sub parse {
 	my $outfile = $diya->_outputfile('MARC::glimmer3');
 
 	my $seqo = Bio::SeqIO->new(-format	=> 'genbank',
-										-file	=> ">$outfile.gbk");
+							   -file	=> ">$outfile.gbk");
 	$seqo->write_seq($seq);
 	$diya->_sequence($seq);
 

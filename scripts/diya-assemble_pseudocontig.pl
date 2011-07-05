@@ -1,5 +1,4 @@
 #!/usr/bin/perl 
-# $Id: diya-assemble_pseudocontig.pl 348 2009-07-07 15:45:47Z briano $
 #--------------------------------------------------------------------------
 # ©Copyright 2008
 #
@@ -135,7 +134,7 @@ excluded.
 
 =item --readlen 
 
-The average readlength of the reads in the assembly.  Default value is 105 nt.
+The average readlength of the reads in the assembly.  Default value is 369 nt.
 
 =item --clean
 
@@ -167,7 +166,7 @@ use Bio::SeqFeature::Generic;
 # Variables with default settings
 my $SPACER = 'NNNTTAATTAATTAANNN'; # 6-frame translational stop
 my $startcoord = 1;
-my $READLEN = 105;
+my $READLEN = 369;
 my $GCODE = 11;
 
 # Variables that are used to create the Genbank output file 
