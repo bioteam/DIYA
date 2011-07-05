@@ -93,6 +93,7 @@ sub parse {
 
 			my $result  = $blast_report->next_result;
 			my $version = $result->algorithm_version;
+			($version )= $version =~ /^([\d\.]+)/;
 			my $program = $result->algorithm;
 
 			if ( my $hit = $result->next_hit ) {

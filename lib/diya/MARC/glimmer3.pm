@@ -96,7 +96,7 @@ sub parse {
 	while ( my $feature = $parser->next_feature ) {
 		my %tags;
 		$tags{locus_tag} = $MYSEQID . "_" . ($LOCUS_TAG_NUMBER += 10);
-		$tags{inference} = 'ab initio:glimmer3:3.0.2';
+		$tags{inference} = 'ab initio prediction:glimmer3:3.0.2';
 
 		my $feat = Bio::SeqFeature::Generic->new(-primary    => $PRIMARY_TAG,
 												 -source_tag => 'glimmer3',
