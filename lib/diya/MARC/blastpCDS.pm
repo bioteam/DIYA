@@ -90,10 +90,10 @@ sub parse {
 			my $blast_report = Bio::SearchIO->new(-noclose => 1,
 												  -format  => 'blast',
 												  -fh      => $fh);
-			my $version = $blast_report->version;
-			my $program = $blast_report->program;
 
-			my $result = $blast_report->next_result;
+			my $result  = $blast_report->next_result;
+			my $version = $result->algorithm_version;
+			my $program = $result->algorithm;
 
 			if ( my $hit = $result->next_hit ) {
 

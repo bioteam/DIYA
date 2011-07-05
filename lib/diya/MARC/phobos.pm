@@ -96,10 +96,8 @@ sub parse {
 
 sub parse_phobos {
 	my $file = shift;
-	my $txt = read_file($file);
+	my ($txt,$version) = read_file($file);
 	my @features;
-
-	my ($version) = $txt =~ /version\s+(\S+)/;
 
 # contig00007	Phobos	tandem-repeat	8849	8866	100.00	.	.	Name="repeat_region 8849-8
 # 866 unit_size 9 repeat_number 2.000 perfection 100.000 unit ATCGCCGCC"
@@ -122,14 +120,15 @@ sub parse_phobos {
 
 sub read_file {
 	my $file = shift;
-	my $txt;
+	my ($txt,$version);
 
 	open MYIN,$file;
 	while (<MYIN>) {
-		$txt .= $_ if ( ! /^#/ );	
+	    $version = $1 if /version\s+(\S+)/;
+	    $txt .= $_ if ( ! /^#/ );	
 	}
 
-	$txt;
+	($txt,$version);
 }
 
 1;

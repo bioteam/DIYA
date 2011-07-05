@@ -121,10 +121,10 @@ sub parse {
 			my $blast_report = Bio::SearchIO->new(-noclose => 1,
 												  -format  => 'blast',
 												  -fh      => $fh );
-			my $version = $blast_report->version;
-			my $program = $blast_report->program;
 
-			my $result = $blast_report->next_result;
+			my $result  = $blast_report->next_result;
+			my $version = $result->algorithm_version;
+			my $program = $result->algorithm;
 
 			if ( $result->num_hits > 0 ) {
 
@@ -142,7 +142,7 @@ sub parse {
 
 					$tags->{'score'} = $hit->significance;
 					$tags->{'rps_gi'} = $cid;
-					$tags->{'inference'} = "protein motif:$program:$version";
+					$tags->{'inference'} = "protein motif:RPS-BLAST:2.2.21";
 
 					# set cluster
 					$tags->{'cluster'} = $clustermap->{$cid}->{'entry'};
