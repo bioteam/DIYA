@@ -28,10 +28,9 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
 
 <conf>
   <order>
-   <!-- cleanup -->
    <names>assemble_pseudocontig make-single-fa MARC::glimmer3 extractCDS
    MARC::blastpCDS MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer MARC::CRT
-   MARC::phobos MARC::cmsearch gbconvert
+   MARC::phobos MARC::cmsearch gbconvert cleanup
    </names> 
   </order>
     <script>
@@ -106,14 +105,6 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
-  <script>
-    <name>create-Inputdata</name>
-    <executable>create-Inputdata.pl</executable>
-    <command>MYSEQID INPUTFILE OUTPUTDIR</command>
-    <home>/usr/local/share/DIYA/scripts</home>
-    <inputformat></inputformat>
-    <inputfrom>MARC::phobos</inputfrom>
-  </script>
   <parser>
     <name>MARC::sRNAscanner</name>
     <executable>sRNAscanner</executable>
@@ -147,12 +138,12 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
     <inputfrom>MARC::cmsearch</inputfrom>
   </script>
   <script>
-    <name>make-final-file</name>
-    <executable>make-final-file.sh</executable>
-    <command>MYSEQID INPUTFILE OUTPUTDIR</command>
-    <home>/site/home/briano/scriptorium/trunk/genbank-submission/Genome</home>
+    <name>cleanup</name>
+    <executable>cleanup.sh</executable>
+    <command>MYSEQID OUTPUTDIR</command>
+    <home>/usr/local/share/DIYA/scripts</home>
     <inputformat></inputformat>
-    <inputfrom>PipeLineOne::rnammer</inputfrom>
+    <inputfrom></inputfrom>
   </script>
   <run>
     <mode>serial</mode>

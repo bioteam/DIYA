@@ -8,8 +8,8 @@ then
   exit
 fi
 
-DIR=$1
-ID=$2
+ID=$1
+DIR=$2
 
-mv $ID.* $DIR
-rm *err *out
+mv -f $ID.* $DIR
+rm -fr *err *out
