@@ -62,7 +62,7 @@ sub parse {
 	my ($self,$diya) = @_;
 
 	my $PRIMARY_TAG = "gene";
-	my $LOCUS_TAG_NUMBER = 0;		# starting number
+	my $LOCUS_TAG_NUMBER = 0; # starting number
 	my ($seq,$out);
 
 	if ( defined $MYSEQID ) {
@@ -72,8 +72,8 @@ sub parse {
 	}
 	print "Parsing $out.predict\n" if $diya->verbose;
 
-	my $parser = Bio::Tools::Glimmer->new(-file => "$out.predict",
-													  -format 	=> 'Glimmer');
+	my $parser = Bio::Tools::Glimmer->new(-file   => "$out.predict",
+										  -format => 'Glimmer');
 
 	if ( defined $MYSEQID ) {
 		my $gbk = "$MYSEQID.gbk";
@@ -87,15 +87,15 @@ sub parse {
 								 -format => 'genbank' );
 		$seq = $in->next_seq;
 
-		# print Dumper $seq; OK
 		print "Sequence is $gbk\n" if $diya->verbose;
+
 	} else {
 		$seq = $diya->_sequence;
 	}
 
 	while ( my $feature = $parser->next_feature ) {
 		my %tags;
-		$tags{locus_tag} = $MYSEQID . "_" . ($LOCUS_TAG_NUMBER += 10);
+		$tags{locus_tag} = $MYSEQID . '_' . ($LOCUS_TAG_NUMBER += 10);
 		$tags{inference} = 'ab initio prediction:glimmer3:3.0.2';
 
 		my $feat = Bio::SeqFeature::Generic->new(-primary    => $PRIMARY_TAG,
@@ -119,12 +119,11 @@ sub parse {
 	# Output
 	my $outfile = $diya->_outputfile('MARC::glimmer3');
 
-	my $seqo = Bio::SeqIO->new(-format	=> 'genbank',
-							   -file	=> ">$outfile.gbk");
+	my $seqo = Bio::SeqIO->new(-format => 'genbank',
+							   -file   => ">$outfile.gbk");
 	$seqo->write_seq($seq);
 	$diya->_sequence($seq);
 
-	# print Dumper $diya->_sequence; OK
 }
 
 1;
