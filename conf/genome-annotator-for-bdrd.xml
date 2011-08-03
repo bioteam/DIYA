@@ -8,9 +8,9 @@ Example command:
 
 nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
 -set MYUNIREFD=/site/data/blast/uniref50.fasta -set MYSTRAIN=test0001 \
--set MYSPECIES='Test test' -set MYRPSD=/site/data/CDD/Cdd -set MYSEQID=test0001 \
--set MYCLUSTERS=/site/data/CDD/Clusters.bcp \
--set MYCDD=/site/data/CDD/cddid_all.tbl -set MYQUALFILE=454MiniContigs.qual \
+-set MYSPECIES='Test test' -set MYRPSD=/site/data/Cdd -set MYSEQID=test0001 \
+-set MYCLUSTERS=/site/data/Clusters.bcp \
+-set MYCDD=/site/data/cddid_all.tbl -set MYQUALFILE=454MiniContigs.qual \
 -set MYTAXID=12345 454MiniContigs.fna > test0001.out &
 
 1. copy all relevant files to a working directory
@@ -100,8 +100,8 @@ nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
   <parser>
     <name>BDRD::CRT</name>
     <executable>java</executable>
-    <command>-cp /usr/local/share/apps/CRT/CRT1.2-CLI.jar crt MYSEQID.fa OUTPUTFILE</command>
-    <home>/usr/java/jre1.6.0_14/bin</home>
+    <command>-cp /site/CRT/CRT1.2-CLI.jar crt MYSEQID.fa OUTPUTFILE</command>
+    <home>/usr/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
