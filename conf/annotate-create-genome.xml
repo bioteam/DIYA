@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- $Id: genome-simple-w-alert.conf 261 2009-05-29 17:53:33Z briano $
+
+This configuration file is used to annotate sequence in plain fasta
+format. It does not create files for NCBI, it moves the output files to
+/massive after annotation is done, and it creates a Genome page.
+
+An example:
+
+nohup /site/perl/diya.pl -conf annotate-create-genome.conf -set MYSEQID=52 -set MYCLUSTERS=/site/data/Clusters.bcp -set MYCDD=/site/data/cddid_all.tbl 52.fa > 52.out &
+
+Note that this has only been tested against UniRef databases, the
+outcome when used with some other database can't be predicted.
+
+-->
+
+<conf>
+  <order>
+    <names>assemble_pseudocontig make-single-fa BDRD::glimmer3 extractCDS  BDRD::blastpCDS 
+    BDRD::rpsblastCDS BDRD::tRNAscanSE
+  BDRD::rnammer create-genome move-to-massive</names>
+  </order>
+  <script>
+    <name>assemble_pseudocontig</name>
+    <executable>diya-assemble_pseudocontig.pl</executable>
+    <command>-bin /arch/bin -infile INPUTFILE -species MYSEQID -strain MYSEQID -seqid MYSEQID -outdir OUTPUTDIR</command>
+    <home>/site/diya/scripts</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </script>
+  <script>
+    <name>make-single-fa</name>
+    <executable>make-single-fa.pl</executable>
+    <command>MYSEQID.gbk OUTPUTDIR</command>
+    <home>/site/diya/scripts</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </script>
+  <parser> 
+    <name>BDRD::glimmer3</name>
+    <executable>g3-from-scratch.diya.csh</executable>
+    <command>MYSEQID.fa MYSEQID</command>
+    <home>/site/glimmer3/scripts</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </parser>
+  <script>
+    <name>extractCDS</name>
+    <executable>extractCDS.pl</executable>
+    <command>INPUTFILE OUTPUTFILE</command>
+    <home>/site/diya/scripts</home>
+    <inputfrom>BDRD::glimmer3</inputfrom>
+    <inputformat></inputformat>
+  </script>
+  <parser>
+    <name>BDRD::blastpCDS</name>
+    <executable>btbatchblast</executable>
+	 <command>-arch lx24-amd64 -i INPUTFILE -p blastx -d /site/data/uniref50.fasta -o OUTPUTFILE -e .001 -v 1 -b 1 --sync</command>
+    <home>/common/bin/</home>
+    <inputformat></inputformat>
+    <inputfrom>extractCDS</inputfrom>
+  </parser>
+  <parser>
+    <name>BDRD::rpsblastCDS</name>
+    <executable>btrpsblast</executable>
+    <command>-arch lx24-amd64 -d /site/data/Cdd -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1 --sync</command>
+    <home>/common/bin/</home>
+    <inputformat></inputformat>
+    <inputfrom>extractCDS</inputfrom>
+  </parser>
+  <parser>
+    <name>BDRD::tRNAscanSE</name>
+    <executable>tRNAscan-SE</executable>
+    <command>-B -o OUTPUTFILE MYSEQID.fa</command>
+    <home>/arch/bin</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <parser>
+    <name>BDRD::rnammer</name>
+    <executable>rnammer</executable>
+    <command>-S bac --gff OUTPUTFILE MYSEQID.fa</command>
+    <home>/site/rnammer-1.2.Linux</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <script>
+    <name>move-to-massive</name>
+    <executable>move-to-massive.sh</executable>
+    <command>OUTPUTDIR MYSEQID</command>
+    <home>/site/diya/scripts</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </script>
+  <script>
+    <name></name>
+    <executable>create-genome</executable>
+    <command></command>
+    <home>/site/diya/scripts</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </script>
+  <run>
+    <mode>serial</mode>
+  </run>
+</conf>
