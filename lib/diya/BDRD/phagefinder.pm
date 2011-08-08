@@ -1,6 +1,5 @@
-# $Id: tRNAscanSE.pm 297 2008-12-18 15:36:01Z briano $
 #--------------------------------------------------------------------------
-# ©Copyright 2008
+# ©Copyright 2011
 #
 # This file is part of DIYA.
 #
@@ -20,7 +19,7 @@
 
 =head1 NAME
 
-tRNAscanSE.pm
+phagefinder.pm
 
 =head1 SYNOPSIS
 
@@ -29,21 +28,20 @@ runs a pipeline.
 
 =head1 DESCRIPTION
 
-A tRNA finding component of the diya project which serves
-as a wrapper and result parser for tRNAscan-SE.
+A phage finding component of the diya project which serves
+as a wrapper and result parser for PhageFinder.
 
 =head1 AUTHOR
 
-Andrew Stewart, andrew.stewart@med.navy.mil
+Mohit Patel
 
 =head1 CONTRIBUTORS
 
-Tim Read, timothy.read@med.navy.mil
 Brian Osborne, briano@bioteam.net
 
 =cut
 
-package diya::PipeLineOne::phagefinder;
+package diya::BDRD::phagefinder;
 
 use strict;
 use base 'diya'; 
@@ -53,28 +51,20 @@ sub parse {
 
 	my $LOCUS_TAG_NUMBER = 0;
 
-	my $out = $diya->_outputfile('PipeLineOne::phagefinder');
+	my $out = $diya->_outputfile('BDRD::phagefinder');
 	print "Parsing " . $out . "\n" if $diya->verbose;
 
-	# Retrieve Phage_Finder output
-#	my $parser = Bio::Tools::tRNAscanSE->new(-file => "$out",
-#								             -genetag	=> 'tRNA');
-
-	open INFILE, $out;
-	my @tabfile = <INFILE>;
-#	my $outdir = $MYSEQID . '_dir';
-#	my @tabfile = `cat $outdir/*.tab`;
-
-	my $gbk = $diya->_outputfile("PipeLineOne::rnammer"); # TODO
+	my $gbk = $diya->_outputfile("BDRD::phobos");
 	my $in = Bio::SeqIO->new(
 		-file => "$gbk.gbk", 
 		-format => 'genbank',
 	);
 	my $seq = $in->next_seq;
 
-	# my $seq = $diya->_sequence;
+	# Retrieve Phage_Finder output
+	open INFILE, $out;
+	my @tabfile = <INFILE>;
 
-	# parse the results
 	for my $line (@tabfile) {
 	
 		my @col = split "\t", $line;
@@ -111,11 +101,10 @@ sub parse {
 	$seq->add_SeqFeature(@features);
 
 	# Output
-
 	my $outfile = $out . ".gbk";
 
-	my $seqo = Bio::SeqIO->new(-format	=> 'genbank',
-							   -file	=> ">$outfile");
+	my $seqo = Bio::SeqIO->new(-format => 'genbank',
+							   -file   => ">$outfile");
 	$seqo->write_seq($seq);
 
 }
@@ -123,64 +112,3 @@ sub parse {
 1;
 
 __END__
-
-
-
-my $INFILE;
-my $OUTFILE;
-my $CONF;
-my $setup;
-my $FLAG_B = 1;
-my $CLEANUP;
-my $VERBOSE;
-my $LOCUS_TAG_NUMBER = 0;
-my $BIN;
-
-GetOptions(	"conf=s"		=> \$CONF,
-			"outfile=s"		=> \$OUTFILE,
-			"bin=s"			=> \$BIN,
-			"cleanup|c"		=> \$CLEANUP,
-			"verbose|v"		=> \$VERBOSE,
-			"bacterial"		=> \$FLAG_B,
-);
-
-# import configuration directly
-if ($CONF && -e $CONF) {
-	$setup = XMLin($CONF);
-}
-
-$INFILE = shift @ARGV;
-$OUTFILE = $INFILE unless ($OUTFILE);
-my $fileroot = $INFILE;
-$fileroot =~ s/\.gbk//;
-
-if($BIN) {
-	$BIN .= '/' unless ($BIN =~ /$\//);
-}
-
-#-------------------------------------------------------------------------------
-# INPUT
-# Input genbank file
-my $seqi = Bio::SeqIO->new(
-	-format	=> 'genbank',
-	-file	=> $INFILE);
-my $seq = $seqi->next_seq;
-
-# Convert to a temporary fasta file
-unless (-e "$fileroot.fsa") {
-	my $temp_fasta = Bio::SeqIO->new(
-		-format => 'fasta',
-		-file	=> ">$fileroot.fsa");
-	$temp_fasta->write_seq($seq);
-}
-
-#-------------------------------------------------------------------------------
-# Execute tRNAscan on temp fasta file with parameters
-my $command = $BIN || $setup->{conf}->{trnascan}->{bin} || "tRNAscan-SE";
-my @params = (
-	'-B',
-	-o	=> "$fileroot.trnascan",
-	" $fileroot.fsa",
-);
-
-

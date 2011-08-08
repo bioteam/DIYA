@@ -121,6 +121,22 @@ nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
+<script>
+    <name>phagefinder_prep</name>
+    <executable>phagefinder_prep.pl</executable>
+    <command>OUTPUTDIR MYSEQID</command>
+    <home>/var/www/phage/sw/phage_finder_integration/scripts</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </script>  
+  <parser>
+    <name>PipeLineOne::phagefinder</name>
+    <executable>Phage_Finder.sh</executable>
+    <command>MYSEQID OUTPUTDIR ; cat MYSEQID_dir/*.tab > OUTPUTFILE</command>
+    <home>/var/www/phage/sw/phage_finder/bin</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
   <script>
     <name>gbconvert</name>
     <executable>gbconvert.pl</executable>
