@@ -54,7 +54,7 @@ sub parse {
 	my $out = $diya->_outputfile('BDRD::phagefinder');
 	print "Parsing " . $out . "\n" if $diya->verbose;
 
-	my $gbk = $diya->_outputfile("BDRD::phobos");
+	my $gbk = $diya->_outputfile("BDRD::cmsearch");
 	my $in = Bio::SeqIO->new(
 		-file => "$gbk.gbk", 
 		-format => 'genbank',
@@ -66,9 +66,9 @@ sub parse {
 	my @tabfile = <INFILE>;
 
 	for my $line (@tabfile) {
-	
+
 		my @col = split "\t", $line;
-	
+
 		my ($start, $end, $strand);
 		if ($col[3] <= $col[4]) {
 			$start = $col[3];
@@ -79,16 +79,18 @@ sub parse {
 			$end = $col[3];
 			$strand = '-';
 		}
-	
-		my %tag;		
+
+		my %tag;
 		$tag{locus_tag} = $seq->display_id . "_p" . ($LOCUS_TAG_NUMBER += 10);
-		my $feat = Bio::SeqFeature::Generic->new( 
-            -start        => $start, 
+		my $feat = Bio::SeqFeature::Generic->new(
+            -start        => $start,
             -end          => $end,
             -strand       => $strand,
-            -primary      => $col[7], # -primary_tag is a synonym
+            -tag          => {inference => "profile:Phage_Finder:1.0"},
+            -primary_tag  => 'misc_feature',
+				-note         => 'bacteriophage',
             -source_tag   => 'Phage_Finder',
-            -display_name => "$col[6] $col[7]",
+            -display_name => $col[6] . ' ' . $col[7],
         );
 		$feat->set_attributes(-tag => \%tag);
 		$seq->add_SeqFeature($feat);

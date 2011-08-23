@@ -6,32 +6,32 @@ NCBI.
 
 Example command:
 
-nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
+nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-bdrd.xml \
 -set MYUNIREFD=/site/data/blast/uniref50.fasta -set MYSTRAIN=test0001 \
 -set MYSPECIES='Test test' -set MYRPSD=/site/data/Cdd -set MYSEQID=test0001 \
 -set MYCLUSTERS=/site/data/Clusters.bcp \
--set MYCDD=/site/data/cddid_all.tbl -set MYQUALFILE=454MiniContigs.qual \
--set MYTAXID=12345 454MiniContigs.fna > test0001.out &
+-set MYCDD=/site/data/cddid_all.tbl -set MYQUALFILE=test-files/454MiniContigs.qual \
+-set MYTAXID=12345 test-files/454MiniContigs.fna > test0001.out &
 
-1. copy all relevant files to a working directory
-2. run glimmer3
-3. run blastp of predicted peptides against UniRef50 (SGE)
-4. run rpsblast of predicted peptides against CDD (SGE)
-5. run tRNAscanSE
-6. run rnammer
-7. run CRT
-8. run phobos
-9. run cmsearch
-10. correct of annotation text
-11. create ASN and associated files for NCBI submission
+1.  copy all relevant files to a working directory
+2.  run glimmer3
+3.  run blastp of predicted peptides against UniRef50 (SGE)
+4.  run rpsblast of predicted peptides against CDD (SGE)
+5.  run tRNAscanSE
+6.  run rnammer
+7.  run CRT
+8.  run phobos
+9.  run cmsearch
+10. run PhageFinder
+11. correct of annotation text
+12. create ASN and associated files for NCBI submission
 -->
 
 <conf>
   <order>
    <names>assemble_pseudocontig make-single-fa BDRD::glimmer3 extractCDS
-   BDRD::blastpCDS BDRD::rpsblastCDS BDRD::tRNAscanSE BDRD::rnammer BDRD::CRT
-   BDRD::phobos BDRD::cmsearch gbconvert cleanup
-   </names> 
+          BDRD::blastpCDS BDRD::rpsblastCDS BDRD::tRNAscanSE BDRD::rnammer BDRD::CRT
+          BDRD::phobos BDRD::cmsearch phagefinder_prep BDRD::phagefinder gbconvert cleanup</names> 
   </order>
     <script>
     <name>assemble_pseudocontig</name>
@@ -53,7 +53,7 @@ nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
     <name>BDRD::glimmer3</name>
     <executable>g3-from-scratch.csh</executable>
     <command>MYSEQID.fa MYSEQID</command>
-    <home>/usr/local/share/apps/glimmer3.02/scripts</home>
+    <home>/site/diya/scripts</home>
     <inputfrom></inputfrom>
     <inputformat></inputformat>
   </parser>
@@ -65,6 +65,23 @@ nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
     <inputfrom>BDRD::glimmer3</inputfrom>
     <inputformat></inputformat>
   </script>
+  <parser>
+    <name>BDRD::blastpCDS</name>
+    <executable>btbatchblast</executable>
+   <command>-arch lx24-amd64 -i INPUTFILE -p blastx -d /site/data/blast/uniref50.fasta -o OUTPUTFILE -e .001 -v 1 -b 1 --sync</command>
+    <home>/common/bin/</home>
+    <inputformat></inputformat>
+    <inputfrom>extractCDS</inputfrom>
+  </parser>
+  <parser>
+    <name>BDRD::rpsblastCDS</name>
+    <executable>btrpsblast</executable>
+    <command>-arch lx24-amd64 -d /site/data/Cdd -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1 --sync</command>
+    <home>/common/bin/</home>
+    <inputformat></inputformat>
+    <inputfrom>extractCDS</inputfrom>
+  </parser>
+<!--  
   <parser>
     <name>BDRD::blastpCDS</name>
     <executable>blastall</executable>
@@ -80,7 +97,8 @@ nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
     <home>/arch/bin</home>
     <inputformat></inputformat>
     <inputfrom>extractCDS</inputfrom>
-  </parser>
+  </parser> 
+-->
   <parser>
     <name>BDRD::tRNAscanSE</name>
     <executable>tRNAscan-SE</executable>
@@ -93,7 +111,7 @@ nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
     <name>BDRD::rnammer</name>
     <executable>rnammer</executable>
     <command>-S bac --gff OUTPUTFILE MYSEQID.fa</command>
-    <home>/arch/bin</home>
+    <home>/common/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
@@ -108,14 +126,14 @@ nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
   <parser>
     <name>BDRD::cmsearch</name>
     <executable>cmsearch</executable>
-    <command>--tabfile OUTPUTFILE -E 1.0e-20 -o MYSEQID.cmsearch /boris/user_data/Rfam-10.0/sRNAs.cm MYSEQID.fa</command>
+    <command>--tabfile OUTPUTFILE -E 1.0e-20 -o MYSEQID.cmsearch /site/data/Rfam-10.0/sRNAs.cm MYSEQID.fa</command>
     <home>/arch/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
   <parser>
     <name>BDRD::phobos</name>
-    <executable>phobos</executable>
+    <executable>phobos-linux-gcc4.1.2</executable>
     <command>-M exact -u 9 -U 1000 --outputFormat 2 MYSEQID.fa OUTPUTFILE</command>
     <home>/arch/bin</home>
     <inputformat></inputformat>
@@ -125,15 +143,15 @@ nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
     <name>phagefinder_prep</name>
     <executable>phagefinder_prep.pl</executable>
     <command>OUTPUTDIR MYSEQID</command>
-    <home>/var/www/phage/sw/phage_finder_integration/scripts</home>
+    <home>/site/phage_finder/phage_finder_integration/scripts</home>
     <inputfrom></inputfrom>
     <inputformat></inputformat>
   </script>  
   <parser>
-    <name>PipeLineOne::phagefinder</name>
+    <name>BDRD::phagefinder</name>
     <executable>Phage_Finder.sh</executable>
-    <command>MYSEQID OUTPUTDIR ; cat MYSEQID_dir/*.tab > OUTPUTFILE</command>
-    <home>/var/www/phage/sw/phage_finder/bin</home>
+    <command>MYSEQID OUTPUTDIR ; touch MYSEQID_dir/null.tab; cat MYSEQID_dir/*.tab > OUTPUTFILE</command>
+    <home>/site/phage_finder/bin</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
@@ -143,7 +161,7 @@ nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-ncbi.xml \
     <command>-agp -q MYQUALFILE -t MYTAXID INPUTFILE.gbk</command>
     <home>/site/diya/scripts</home>
     <inputformat></inputformat>
-    <inputfrom>BDRD::cmsearch</inputfrom>
+    <inputfrom>BDRD::phagefinder</inputfrom>
   </script>
   <script>
     <name>cleanup</name>

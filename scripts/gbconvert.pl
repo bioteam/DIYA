@@ -13,7 +13,7 @@ that NCBI wants.
 =cut
 
 use strict;
-use diya::MARC::GenbankConvertUtil;
+use diya::BDRD::GenbankConvertUtil;
 use Getopt::Long;
 use Bio::SeqIO;
 use FileHandle;
@@ -32,7 +32,7 @@ GetOptions("project|p=i"  => \$project,
 
 usage() if $help;
 
-my $parser = diya::MARC::GenbankConvertUtil->new(-debug => $debug );
+my $parser = diya::BDRD::GenbankConvertUtil->new(-debug => $debug );
 
 my $infile = shift @ARGV or usage('Need a Genbank format file');
 

@@ -15,27 +15,24 @@ if ($#argv < 2) then
   echo ""
   echo "If the 6th argument is filled in, then jump to that step"
   echo "If the 7th argument is also set to 'only', then do only that step"
-
   exit -1;
 endif
-
 
 set genome = $1
 set tag = $2
 set step = $3
 set onestep = $4
 
-set awkpath = /fs/szgenefinding/Glimmer3/scripts
-set glimmerpath = /fs/szgenefinding/Glimmer3/bin
+# set awkpath = /fs/szgenefinding/Glimmer3/scripts
+set glimmerpath = /arch/bin
 
 # add/change glimmer options here
-set glimmeropts = "-o50 -g110 -t30"
+set glimmeropts = "-l -o50 -g110 -t30"
 
 set numsteps = 4
 
 if  ($step != "")  goto $step
     
-
 step1:
 # Find long, non-overlapping orfs to use as a training set
 echo "Step 1 of ${numsteps}:  Finding long orfs for training"
@@ -57,7 +54,6 @@ if  ($status != 0)  then
 endif
 if  ($onestep == "only")  exit
 
-
 step3:
 # Build the icm from the training sequences
 echo "Step 3 of ${numsteps}:  Building ICM"
@@ -67,7 +63,6 @@ if  ($status != 0)  then
   exit
 endif
 if  ($onestep == "only")  exit
-
 
 step4:
 # Run Glimmer
