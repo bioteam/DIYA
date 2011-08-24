@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-This Diya conf file can be used to take 454 assemblies and a *qual file as input
-and output an annotated Genbank file and corresponding ASN.1 that can be submitted to 
-NCBI.
+This Diya conf file can be used to take plain multiple fasta files as input
+and output annotated sequence in Genbank format.
 
 Example command:
 
-nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-bdrd.xml \
+nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-bdrd-simple.xml \
 -set MYUNIREFD=/site/data/blast/uniref50.fasta -set MYSTRAIN=test0001 \
 -set MYSPECIES='Test test' -set MYRPSD=/site/data/Cdd -set MYSEQID=test0001 \
 -set MYCLUSTERS=/site/data/Clusters.bcp \
--set MYCDD=/site/data/cddid_all.tbl -set MYQUALFILE=test-files/454MiniContigs.qual \
--set MYTAXID=12345 test-files/454MiniContigs.fna > test0001.out &
+-set MYCDD=/site/data/cddid_all.tbl -set MYTAXID=12345 MiniContigs.fna > test0001.out &
 
 1.  copy all relevant files to a working directory
 2.  run glimmer3
@@ -23,20 +21,18 @@ nohup /site/perl/diya.pl -conf /site/diya/conf/genome-annotator-for-bdrd.xml \
 8.  run phobos
 9.  run cmsearch
 10. run PhageFinder
-11. correct of annotation text
-12. create ASN and associated files for NCBI submission
 -->
 
 <conf>
   <order>
    <names>assemble_pseudocontig make-single-fa BDRD::glimmer3 extractCDS
           BDRD::blastpCDS BDRD::rpsblastCDS BDRD::tRNAscanSE BDRD::rnammer BDRD::CRT
-          BDRD::phobos BDRD::cmsearch phagefinder_prep BDRD::phagefinder gbconvert cleanup</names> 
+          BDRD::phobos BDRD::cmsearch phagefinder_prep BDRD::phagefinder cleanup</names> 
   </order>
     <script>
     <name>assemble_pseudocontig</name>
     <executable>diya-assemble_pseudocontig.pl</executable>
-    <command>-bin /usr/local/bin -infile INPUTFILE -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR -newbler 200:5</command>
+    <command>-bin /usr/local/bin -infile INPUTFILE -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR</command>
     <home>/site/diya/scripts</home>
     <inputfrom></inputfrom>
     <inputformat></inputformat>
