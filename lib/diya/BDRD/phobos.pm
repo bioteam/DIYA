@@ -113,7 +113,7 @@ sub parse_phobos {
         push @features,$feat;
     }
 
-	return 0 if ( ! @features );
+	return if ( ! @features );
 
 	@features;
 }

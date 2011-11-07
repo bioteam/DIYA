@@ -98,31 +98,29 @@ sub parse {
 
 sub parse_crt {
 	my $file = shift;
-	my $txt = read_file($file);
 	my @features;
 
-	# CRISPR 1   Range: 123524 - 124955
-	while ( $txt =~ /CRISPR\s+\d+\s+Range:\s+(\d+)\s+-\s+(\d+)/g ) {
+	open MYIN,$file;
 
-		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
+	while (my $line = <MYIN>) {
+
+		return if ( $line =~ /No CRISPR elements were found/ );
+
+		# CRISPR 1   Range: 123524 - 124955
+		if ( $line =~ /CRISPR\s+\d+\s+Range:\s+(\d+)\s+-\s+(\d+)/g ) {
+
+			my $feat = new Bio::SeqFeature::Generic(-start       => $1,
     		                                    -end         => $2,
         		                                -strand      => 1,
         		                                -tag         => {inference => "profile:CRT:1.2"},
             		                            -primary_tag => 'repeat_region');
-        push @features,$feat;
-    }
+			push @features,$feat;
+		}
+	}
 
-	return 0 if ( ! @features );
-
+	return if ! @features;
+ 
 	@features;
-}
-
-sub read_file {
-	my $file = shift;
-	local $/ = undef;
-	open MYIN,$file;
-	my $txt = <MYIN>;
-	$txt;
 }
 
 1;
