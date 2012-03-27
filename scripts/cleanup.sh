@@ -11,5 +11,6 @@ fi
 ID=$1
 DIR=$2
 
-mv -f $ID.* phage_phinder_${ID}.log $DIR
-rm -fr *err *out GLOCAL* FRAG* combined* error.log ${ID}_dir phage_finder*
+mv -f $ID.* $DIR
+mv -f cmsearch* $DIR
+rm -fr *err *out

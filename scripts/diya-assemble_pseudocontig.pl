@@ -1,4 +1,4 @@
-#!/arch/bin/perl 
+#!/usr/bin/perl 
 #--------------------------------------------------------------------------
 # ©Copyright 2008
 #
@@ -246,9 +246,7 @@ my @ids = $db->ids;
 #-------------------------------------------------------------------------------
 # Bio::DB::Fasta does not store the description line so we may need to store it
 
-# get_newbler_data() if ( $NEWBLER || $REFERENCE );
-# Do you need newbler data if newbler is not being used?
-get_newbler_data() if ( $NEWBLER );
+get_newbler_data() if ( $NEWBLER || $REFERENCE );
 
 #-------------------------------------------------------------------------------
 # This section deals with input using either the -reference or -scaff option

@@ -4,9 +4,11 @@ This Diya conf file can be used to take 454 assemblies and a *qual file as input
 and output an annotated Genbank file and corresponding ASN.1 that can be submitted to 
 NCBI.
 
+Do "module load infernal-mpi" to set the env's for cmsearch with MPI.
+
 Example command:
 
-nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml \
+nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi.xml \
 -set MYUNIREFD=/Jake/data/mirror/uniprot/uniref50.fasta -set MYSTRAIN=test0001 \
 -set MYSPECIES='Test test' -set MYRPSD=/Jake/data/mirror/ncbi/CDD/Cdd -set MYSEQID=test0001 \
 -set MYCLUSTERS=/Jake/data/mirror/ncbi/CDD/Clusters.bcp \
@@ -15,8 +17,8 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
 
 1. copy all relevant files to a working directory
 2. run glimmer3
-3. run blastp of predicted peptides against UniRef50
-4. run rpsblast of predicted peptides against CDD 
+3. run blastp of predicted peptides against UniRef50 (LSF/MPI)
+4. run rpsblast of predicted peptides against CDD (LSF/MPI)
 5. run tRNAscanSE
 6. run rnammer
 7. run CRT
@@ -24,6 +26,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
 9. run cmsearch
 10. correct of annotation text
 11. create ASN and associated files for NCBI submission
+
 -->
 
 <conf>
@@ -36,7 +39,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
     <script>
     <name>assemble_pseudocontig</name>
     <executable>diya-assemble_pseudocontig.pl</executable>
-    <command>-bin /Jake/apps/bin -infile INPUTFILE -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR -newbler 200:5</command>
+    <command>-bin /Jake/apps/bin -infile INPUTFILE -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR</command>
     <home>/Jake/apps/DIYA/scripts</home>
     <inputfrom></inputfrom>
     <inputformat></inputformat>
@@ -67,17 +70,17 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
   </script>
   <parser>
     <name>MARC::blastpCDS</name>
-    <executable>blastall</executable>
-    <command>-i INPUTFILE -p blastx -d MYUNIREFD -o OUTPUTFILE -e .001 -v 1 -b 1</command>
-    <home>/Jake/apps/bin</home>
+    <executable>bt-batchblast.pl</executable>
+   <command>-i INPUTFILE -p blastx -d MYUNIREFD -o OUTPUTFILE -e .001 -v 1 -b 1 --sync</command>
+    <home>/Jake/apps/DIYA/scripts</home>
     <inputformat></inputformat>
     <inputfrom>extractCDS</inputfrom>
   </parser>
   <parser>
     <name>MARC::rpsblastCDS</name>
-    <executable>rpsblast</executable>
-    <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1</command>
-    <home>/Jake/apps/bin</home>
+    <executable>bt-batchrpsblast.pl</executable>
+    <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1 --sync</command>
+    <home>/Jake/apps/DIYA/scripts</home>
     <inputformat></inputformat>
     <inputfrom>extractCDS</inputfrom>
   </parser>
@@ -85,7 +88,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
     <name>MARC::tRNAscanSE</name>
     <executable>tRNAscan-SE</executable>
     <command>-B -o OUTPUTFILE MYSEQID.fa</command>
-    <home>/Jake/apps/bin</home>
+    <home>/Jake/apps/tRNAscan-SE-1.23</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
@@ -123,9 +126,9 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi.xml
   </parser>
   <parser>
     <name>MARC::cmsearch</name>
-    <executable>cmsearch</executable>
-    <command>--tabfile OUTPUTFILE -E 1.0e-20 -o MYSEQID.cmsearch /Jake/data/mirror/Rfam-10.0/sRNAs.cm MYSEQID.fa</command>
-    <home>/Jake/apps/infernal-1.0.2/bin</home>
+    <executable>bsub</executable>
+    <command>-e cmsearch.err -o cmsearch.out -J "cmsearch-mpi" -K "/Jake/apps/DIYA/scripts/run-cmsearch-mpi.sh /Jake/data/mirror/Rfam-10.0/sRNAs.cm MYSEQID"</command>
+    <home>/opt/lsf/7.0/linux2.6-glibc2.3-x86_64/bin/</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
   </parser>
