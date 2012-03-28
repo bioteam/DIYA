@@ -28,8 +28,8 @@ Utility methods for Genbank submissions.
 =head1 DESCRIPTION
 
 Code to convert Genbank format files to the format required by the tbl2asn,
-the application that creates ASN.1 for Genbank. Also does any QC on the 
-CDS and gene features as required by NCBI.
+the application that creates ASN.1 for Genbank. Also does any QC and text
+editing on the CDS and gene features as required by NCBI.
 
 This script requires the tbl2asn program from NCBI.
 
