@@ -61,7 +61,7 @@ sub new {
 
 	# defaults
 	$self->template('template');
-	$self->executable('/arch/bin/tbl2asn');
+	$self->executable('/usr/local/bin/tbl2asn');
 	$self->accession_prefix('nmrcread');
 
 	$self->_initialize(@args);
