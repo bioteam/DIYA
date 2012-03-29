@@ -51,8 +51,6 @@ use strict;
 use Data::Dumper qw(Dumper);
 use Bio::SeqIO;
 
-my $property;
-
 sub new {
 	my ($module,@args) = @_;
 	my $class = ref($module) || $module;
@@ -60,9 +58,9 @@ sub new {
 
 	bless($self,$class);
 
-	# defaults
+	# Defaults
 	$self->template('template');
-	$self->executable('/arch/bin/tbl2asn');
+	$self->executable('/usr/local/bin/tbl2asn');
 	$self->accession_prefix('nmrcread');
 
 	$self->_initialize(@args);
@@ -95,11 +93,10 @@ sub fix_feature {
 
     if ( $feat->primary_tag eq 'CDS' ) {
 
-        # Edit product tag and a note tag
+        # Edit product tag and note tag
         if ( $feat->has_tag('product') ) {
 
-            my @products = $feat->remove_tag("product");
-            my $product  = $products[0];
+            my ($product) = $feat->remove_tag("product");
 
             # If 'note' and 'product' are duplicated
             if ( $feat->has_tag('note') ) {
@@ -141,9 +138,6 @@ sub fix_feature {
 
             $product = remove_loci($product);
 
-            # Too long, too many ()'s
-            $product = $1 if ( $product =~ /^([^()]+ \([^)]+\)) \([^)]+\)/ );
-
             # Remove '...-like'
             # if ( $product =~ /-like$/i ) {
             #     $feat->add_tag_value( 'note', $product );
@@ -151,6 +145,8 @@ sub fix_feature {
             # }
 
             ( $product, $feat ) = remove_semicolon( $product, $feat );
+
+            $feat = edit_note($feat);
 
             # Finally add it back
             $feat->add_tag_value( 'product', $product );
@@ -174,7 +170,7 @@ sub fix_feature {
 
             for my $xref (@xrefs) {
                 my $note = "similar to $xref";
-                $feat->add_tag_value( 'note', $note ) if ( !$xref eq 'family' );
+                $feat->add_tag_value( 'note', $note ) if ( ! $xref eq 'family' );
             }
         }
 
@@ -204,13 +200,13 @@ sub fix_feature {
 
         # Add inference tag
         $feat->add_tag_value( 'inference', 'profile:tRNAscan-SE:1.23' )
-          if ( !$feat->has_tag("inference") );
+          if ( ! $feat->has_tag("inference") );
 
         # Edit note tag
         if ( $feat->has_tag("note") ) {
-            my @note = $feat->remove_tag("note");
-            $note[0] =~ s/score=/tRNAscan-SE score=/;
-            $feat->add_tag_value( 'note', $note[0] );
+            my ($note) = $feat->remove_tag("note");
+            $note =~ s/score=/tRNAscan-SE score=/;
+            $feat->add_tag_value( 'note', $note );
         }
 
         # Change Codon tag to a note tag
@@ -224,9 +220,9 @@ sub fix_feature {
 
         # Remove 'ID', which will be added back as 'product'
         if ( $feat->has_tag("ID") ) {
-            my @ID = $feat->remove_tag("ID");
-            $ID[0] =~ s/:/-/;
-            $feat->add_tag_value( 'product', $ID[0] );
+            my ($ID) = $feat->remove_tag("ID");
+            $ID =~ s/:/-/;
+            $feat->add_tag_value( 'product', $ID );
         }
 
         # Add a 'gene' feature for the tRNA
@@ -237,24 +233,11 @@ sub fix_feature {
           ? $genefeat->strand(1)
           : $genefeat->strand(-1);
 
-        my @loci = $feat->remove_tag('locus_tag')
+        my ($loci) = $feat->remove_tag('locus_tag')
           if $feat->has_tag('locus_tag');
-        $genefeat->add_tag_value( 'locus_tag', $loci[0] );
+        $genefeat->add_tag_value( 'locus_tag', $loci );
 
-        # Remove all score tags
-        if ( $feat->has_tag('score') || $feat->has_tag('Score') ) {
-            my @scores = $feat->remove_tag('score');
-        }
-
-        # Remove all score values
-        for my $tag ( $feat->get_all_tags ) {
-            my @values = $feat->get_tag_values($tag);
-            $feat->remove_tag($tag);
-            for my $value (@values) {
-                $feat->add_tag_value( $tag, $value )
-                  if ( $value !~ /\s*score\s*[=:]/i );
-            }
-        }
+        $feat = remove_scores($feat);
 
         return ( $feat, $genefeat );
     }
@@ -280,25 +263,12 @@ sub fix_feature {
           ? $genefeat->strand(1)
           : $genefeat->strand(-1);
 
-        my @loci = $feat->remove_tag('locus_tag')
+        my ($loci) = $feat->remove_tag('locus_tag')
           if $feat->has_tag('locus_tag');
 
-        $genefeat->add_tag_value( 'locus_tag', $loci[0] );
+        $genefeat->add_tag_value( 'locus_tag', $loci );
 
-        # Remove all score tags
-        if ( $feat->has_tag('score') || $feat->has_tag('Score') ) {
-            my @scores = $feat->remove_tag('score');
-        }
-
-        # Remove all score values
-        for my $tag ( $feat->get_all_tags ) {
-            my @values = $feat->get_tag_values($tag);
-            $feat->remove_tag($tag);
-            for my $value (@values) {
-                $feat->add_tag_value( $tag, $value )
-                  if ( $value !~ /\s*score\s*[=:]/i );
-            }
-        }
+        $feat = remove_scores($feat);
 
         return ( $feat, $genefeat );
     }
@@ -308,12 +278,12 @@ sub fix_feature {
 sub remove_scores {
     my $feat = shift;
 
-    # remove all score tags
+    # Remove all score tags
     if ( $feat->has_tag('score') || $feat->has_tag('Score') ) {
         my @scores = $feat->remove_tag('score');
     }
 
-    # remove all score values
+    # Remove all score values
     for my $tag ( $feat->get_all_tags ) {
         my @values = $feat->get_tag_values($tag);
         $feat->remove_tag($tag);
@@ -328,7 +298,7 @@ sub remove_scores {
 sub move_species {
     my ( $product, $feat ) = @_;
 
-    # if the product looks something like:
+    # If the product looks something like:
     # "ABC protein [Yersinia pestis CO92]." then correct
     if ( $product =~ /(.+)\s+(\[.+?\])\.$/ ) {
 
@@ -356,7 +326,6 @@ sub move_species {
 
     ( $product, $feat );
 }
-
 
 sub fix_rps {
     my $feat = shift;
@@ -512,11 +481,10 @@ my @strs = (
 'NAD\(P\)H', 'NADPH',
 'spaning', 'spanning',
 'proetin', 'protein',
-'fibre', 'fiber',
 'Hypotethical', 'hypothetical',
 'reguatory', 'regulatory',
 'fibre', 'fiber',
-'Uncharacterised', 'Uncharacterized',
+'Uncharacterised', 'uncharacterized',
 'putaive', 'putative',
 'haemin', 'hemin',
 'Haemolytic', 'Hemolytic',
@@ -530,8 +498,9 @@ my @strs = (
 'protein protein', 'protein',
 'similar to Similar', 'similar',
 '^Acyl\stransferasesregion$', 'Acyl transferase',
-'permease-associated\sregion$', 'permease domain protein'
-
+'permease-associated\sregion$', 'permease domain protein',
+'Fragment', 'fragment',
+'Putative', 'putative'
 );
 
     while ( my ($search,$replace) = splice(@strs,0,2) ) {
@@ -563,7 +532,8 @@ sub remove_loci {
 '(Peptidase T-like protein)\s+[\d{1,}a-z{1,}\/-_]+',
 '(Uncharacterized ABC transporter ATP-binding protein)\s+[\d{1,}a-z{1,}\/-_]+',
 '(Uncharacterized acyl-CoA thioester hydrolase)\s+[\d{1,}a-z{1,}\/-_]+',
-'UPF\d+\s+(\w+-binding protein)'
+'UPF\d+\s+(\w+-binding protein)',
+'^([^()]+ \([^)]+\)) \([^)]+\)'
     );
 
     # No loci in product names, e.g 'hydrolase LC_123'
@@ -594,7 +564,7 @@ sub add_trailing {
 		);
 
     while ( my ($str,$add) = splice(@strs,0,2) ) {
-        $product .= $add if ( $product =~ /$str/ );
+        $product .= $add if ( $product =~ /$str/i );
     }
 
     $product;
@@ -667,13 +637,27 @@ sub make_singular {
 	$product;
 }
 
+sub edit_note {
+    my $feat = shift;
+
+    if ( $feat->has_tag('note') ) {
+        my @notes = $feat->remove_tag('note');
+        for my $note ( @notes ){
+            $note = remove_banned($note);
+            $feat->add_tag_value('note',$note);
+        }
+    }     
+
+    $feat;
+}
+
 sub remove_banned {
 	my $product = shift;
 
 	my @strs = (
 '\s+related\s+',            
 '\s+homologs?\s*',                           
-'\s+\(partial\s)',                          
+'\s+\(partial\s\)',                          
 ',?\s*putative',                          
 '^(Probable|Possible|Predicted|Putative)\s+',
 '\s+\(Fragment\)\s?',
@@ -999,7 +983,7 @@ sub get_start_minus {
 
 	return 1 if ( ($diff % 3) == 0 ); # Not tested
 	return 2 if ( ($diff % 3) == 2 ); # Not tested
-	return 3 if ( ($diff % 3) == 1 ); # confirmed
+	return 3 if ( ($diff % 3) == 1 ); # Confirmed
 }
 
 sub newFeatures {
@@ -1011,6 +995,7 @@ sub newFeatures {
 
 sub run_tbl2asn {
 	my ($self,$comment,$run) = @_;
+    my $cmd;
 
 	my ($tmplt, $outdir, $tbl2asn, $id) = 
 	  ($self->template, $self->outdir, $self->executable, $self->id);
@@ -1023,12 +1008,12 @@ sub run_tbl2asn {
 	}
 
 	if ( $outdir && $tmplt && $tbl2asn ) {
-		my $cmd = "$tbl2asn -s -j [gcode=11] -V vb -Z discrp -t $tmplt.sbt -p $outdir -y \"$comment\"";
+		$cmd = "$tbl2asn -s -j [gcode=11] -V vb -Z discrp -t $tmplt.sbt -p $outdir -y \"$comment\"";
 		print "tbl2asn command is \'$cmd\'\n" if $self->debug;
 		`$cmd`;
 		return 1;
 	}
-	die "Problem running tbl2asn";
+	die "Problem running tbl2asn: $cmd";
 }
 
 
@@ -1710,76 +1695,88 @@ sub _initialize {
 	}
 }
 
-$property = sub {
-    my ( $self, $name, $value ) = @_;
+# $property = sub {
+#     my ( $self, $name, $value ) = @_;
 
-    if ($value) {
-        $self->{$name} = $value;
-        return $value;
-    }
-    else {
-        return $self->{$name};
-    }
-};
+#     if ($value) {
+#         $self->{$name} = $value;
+#         return $value;
+#     }
+#     else {
+#         return $self->{$name};
+#     }
+# };
 
 sub lastBase {
 	my ($self,$base) = @_;
-    return $self->$property( "lastbase", @_ );
+    $self->{'lastbase'} = $base if defined $base;
+    return $self->{'lastbase'};
 }
 
 sub accession_prefix {
 	my ($self,$base) = @_;
-    return $self->$property( "accession_prefix", @_ );
+    $self->{'accession_prefix'} = $base if defined $base;
+    return $self->{'accession_prefix'};
 }
 
 sub executable {
 	my ($self,$base) = @_;
-    return $self->$property( "executable", @_ );
+    $self->{'executable'} = $base if defined $base;
+    return $self->{'executable'};
 }
 
 sub namemap {
 	my ($self,$base) = @_;
-    return $self->$property( "namemap", @_ );
+    $self->{'namemap'} = $base if defined $base;
+    return $self->{'namemap'};
 }
 
 sub cutoff {
 	my ($self,$base) = @_;
-    return $self->$property( "cutoff", @_ );
+    $self->{'cutoff'} = $base if defined $base;
+    return $self->{'cutoff'};
 }
 
 sub debug {
 	my ($self,$base) = @_;
-    return $self->$property( "debug", @_ );
+    $self->{'debug'} = $base if defined $base;
+    return $self->{'debug'};
 }
 
 sub template {
 	my ($self,$base) = @_;
-    return $self->$property( "template", @_ );
+    $self->{'template'} = $base if defined $base;
+    return $self->{'template'};
 }
 
 sub taxid {
 	my ($self,$base) = @_;
-    return $self->$property( "taxid", @_ );
+    $self->{'taxid'} = $base if defined $base;
+    return $self->{'taxid'};
 }
 
 sub organism {
 	my ($self,$base) = @_;
-    return $self->$property( "organism", @_ );
+    $self->{'organism'} = $base if defined $base;
+    return $self->{'organism'};
 }
 
 sub id {
 	my ($self,$base) = @_;
-    return $self->$property( "id", @_ );
+    $self->{'id'} = $base if defined $base;
+    return $self->{'id'};
 }
 
 sub strain {
 	my ($self,$base) = @_;
-    return $self->$property( "strain", @_ );
+    $self->{'strain'} = $base if defined $base;
+    return $self->{'strain'};
 }
 
 sub contigs {
 	my ($self,$base) = @_;
-    return $self->$property( "contigs", @_ );
+    $self->{'contigs'} = $base if defined $base;
+    return $self->{'contigs'};
 }
 
 sub trim {

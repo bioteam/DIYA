@@ -10,6 +10,13 @@ Script to create the tabular and fasta files required by the NCBI
 application tbl2asn, then run tbl2asn to create the ASN.1 file 
 that NCBI wants.
 
+=head1 USAGE
+
+Example:
+
+scripts/gbconvert.pl -template examples/template -e /usr/local/bin/tbl2asn -a test \
+t/data/2012_03_11_14_27_03-MARC::cmsearch.out.gbk
+
 =cut
 
 use strict;
@@ -20,38 +27,52 @@ use FileHandle;
 use Bio::Annotation::Collection;
 use Bio::Annotation::Comment;
 
-my ($debug, $help, $project, $spacer_start, $spacer_end,
-	 $contig_start, $contig_end, $qual, $agp, $taxid);
+my (
+    $debug,      $help,         $project,    $spacer_start,
+    $spacer_end, $contig_start, $contig_end, $qual,
+    $agp,        $taxid,        $template,   $executable,
+    $accession_prefix
+);
 
-GetOptions("project|p=i"  => \$project,
-			  "help!"        => \$help,
-			  "qual|q=s"     => \$qual,
-			  "agp!"         => \$agp,
-			  "taxid|t=i"    => \$taxid,
-			  "debug!"       => \$debug );
+GetOptions(
+    "project|p=i" => \$project,
+    "help!"       => \$help,
+    "qual|q=s"    => \$qual,
+    "agp!"        => \$agp,
+    "taxid|t=i"   => \$taxid,
+    "debug!"      => \$debug,
+    "template=s"  => \$template,
+    "a=s"         => \$accession_prefix,
+    "e=s"         => \$executable
+);
 
 usage() if $help;
 
-my $parser = diya::MARC::GenbankConvertUtil->new(-debug => $debug );
+die "File $template not found" if ! -e $template;
+die "Executable $executable is not found or not executable" if ! -x $executable;
+
+my $parser = diya::MARC::GenbankConvertUtil->new(-debug => $debug,
+                                                 -template => $template,
+                                                 -executable => $executable,
+                                                 -accession_prefix => $accession_prefix );
+# $parser->template($template) if -e $template;
+# $parser->accession_prefix($accession_prefix) if $accession_prefix;
+# $parser->executable($executable) if -x $executable;
 
 my $infile = shift @ARGV or usage('Need a Genbank format file');
-
 my $in = Bio::SeqIO->new(-file => $infile,-format => 'genbank');
-
 my $seq = $in->next_seq;
-
 my $id = $seq->id;
 
 $parser->id($id);
 $parser->taxid($taxid) if $taxid;
 
 my $outdir = $parser->outdir($id);
-
 my $definition = $parser->edit_definition($seq->desc);
 
 $seq->desc($definition);
 
-# make output files
+# Make output files
 my $tblfn = "$outdir/$id.tbl";
 my $outfeat = FileHandle->new(">$tblfn") or warn ("$tblfn: $!");
 
@@ -63,18 +84,17 @@ $parser->make_namemap($infile);
 
 my @oldFeatures = $seq->remove_SeqFeatures;
 
-# fix all the features
+# Fix all the features
 FEATURE:
 for my $feature ( @oldFeatures ) {
 
 	my $primary_tag = $feature->primary_tag;
 
-	# Each fasta_record describes a contig,
+	# Each fasta_record describes a contig, and 
 	# the 'cbt' feature is usually right before the 'fasta_record'
 	if ( $primary_tag eq 'cbt' ) {
 		($spacer_start, $spacer_end) = ($feature->start, $feature->end);
 	}
-
 	elsif ( $primary_tag eq 'fasta_record' ) {
 
 		($contig_start, $contig_end) = ($feature->start, $feature->end);
@@ -148,34 +168,35 @@ for my $feature ( @oldFeatures ) {
 			$parser->set_feat_from_adj_contig();
 		}
 
-		# get coverage statistic
+		# Get coverage statistic
 		my $avg;
 		for my $note (@notes) {
 			($avg) = $note =~ /coverage\s+=\s+([.\d]+)\s+reads/;
 			$parser->readsPerBase($len,$avg) if ($avg);
 		}
 
-		# write to fasta file
+		# Write to fasta file
 		my $fasta_header = $definition;
 		$fasta_header .= " [note=coverage of this contig is $avg" . 'X]';
 
 		my $str = $seq->subseq($contig_start, $contig_end);
-		my $featureSeq = Bio::Seq->new(-display_id => $contig_name,
-												 -desc       => $fasta_header,
-												 -seq        => $str );
+        my $featureSeq = Bio::Seq->new(
+            -display_id => $contig_name,
+            -desc       => $fasta_header,
+            -seq        => $str
+        );
 
 		$outfsa->write_seq($featureSeq);
 		$outfsa->flush();
 
 		print "fasta_record\t$contig_name\tlength:$len\n" 
 		  if $parser->debug;
-
 	}
 
-	# only submitting annotations for 4 primary features
+	# Only submitting annotations for these primary features
 	elsif ( $primary_tag =~ /^(gene|CDS|tRNA|rRNA|repeat_region|ncRNA)$/ ) {
 
-		# skip any feature with sequence containing 'N'
+		# Skip any feature with sequence containing 'N'
 		next FEATURE if ( $feature->seq->seq =~ /N/i );
 
 		my @locus = $feature->get_tag_values('locus_tag') if $feature->has_tag('locus_tag');
@@ -360,7 +381,7 @@ $parser->run_tbl2asn($comment,1);
 # Read the discrp file and write a new *.tbl file, fixing discrepancies
 $parser->fix_discrp;
 
-# create a quality file for tbl2asn
+# Create a quality file for tbl2asn
 $parser->create_qual($qual) if $qual;
 
 $parser->create_agp($infile) if $agp;
