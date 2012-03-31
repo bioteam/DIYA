@@ -39,7 +39,7 @@ SKIP: {
     skip( "Skipping test, application $tbl2asn not found", 7 )
       unless ( -x $tbl2asn );
 
-	`$script -template $template -e $tbl2asn -a test $gbk`;
+    `$script -template $template -e $tbl2asn -a test $gbk`;
 
     ok( -s "$gdir/test0001.fsa", "*fsa file created by $script" )
       || diag("*fsa file not created by $script");
@@ -53,7 +53,8 @@ SKIP: {
       || diag("discrp file not created by $script");
     ok( -z "$gdir/test0001.val", "empty *val file created by $script" )
       || diag("*val file is not empty");
-    ok( -z "$gdir/errorsummary.val", "empty errorsummary.val file created by $script" )
+    ok( -z "$gdir/errorsummary.val",
+        "empty errorsummary.val file created by $script" )
       || diag("errorsummary.val file is not empty");
 }
 
