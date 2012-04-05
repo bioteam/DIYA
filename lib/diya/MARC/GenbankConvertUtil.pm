@@ -109,7 +109,7 @@ sub fix_feature {
                 }
             }
 
-            $product =~ trim($product);
+            $product = trim($product);
 
             ( $product, $feat ) = fix_uniref( $product, $feat );
 
@@ -500,7 +500,12 @@ my @strs = (
 '^Acyl\stransferasesregion$', 'Acyl transferase',
 'permease-associated\sregion$', 'permease domain protein',
 'Fragment', 'fragment',
-'Putative', 'putative'
+'Putative', 'putative',
+'characteris', 'characteriz',
+'[Uu]ncharacterized', 'putative',
+'[Ss]ulphate', 'sulfate',
+'- \(pentapeptide', '-(pentapeptide',
+'genes activator', 'gene activator'
 );
 
     while ( my ($search,$replace) = splice(@strs,0,2) ) {
@@ -560,8 +565,10 @@ sub add_trailing {
 'Tetratricopeptides\(TPR\)\srepeat\s*$',      ' containing protein',
 'transporter\srelated$',                      ' protein',
 '^(\w+)\sbinding\sdomain$',                   ' protein',
-'(\S+-like)$',                                ' protein'
-		);
+'(\S+-like)$',                                ' protein',
+'SpoVR like',                                 ' protein',
+'Glutathione S-transferase domain',           ' protein'
+);
 
     while ( my ($str,$add) = splice(@strs,0,2) ) {
         $product .= $add if ( $product =~ /$str/i );
@@ -628,6 +635,8 @@ sub make_singular {
 'peptidases', 'peptidase',
 'Dehydrogenases', 'Dehydrogenase',
 'lyase.+?and.+?lyases', 'lyase',
+'protein protein', 'protein',
+'solvents', 'solvent'
 );
 
     while ( my ($search,$replace) = splice(@strs,0,2) ) {
@@ -643,6 +652,7 @@ sub edit_note {
     if ( $feat->has_tag('note') ) {
         my @notes = $feat->remove_tag('note');
         for my $note ( @notes ){
+            next if ( $note =~ /hypothetical protein/ );
             $note = remove_banned($note);
             $feat->add_tag_value('note',$note);
         }
@@ -665,7 +675,8 @@ sub remove_banned {
 '^PREDICTED:\s*',                    
 '^(B.thurinienis|Salmonella)\s+',  
 '^Similar to\s+',           
-'^Truncated\s+'                          
+'^Truncated\s+',
+'hypothetical protein'                      
 	);
 
     for my $str ( @strs ) {
@@ -756,7 +767,23 @@ sub remove_trailing {
 '\s+\(Diaminohydroxyphosphoribosylaminopyrimidine deaminase \(Riboflavin-specific deaminase\) and 5-amino-6-\(5-phosphoribosylamino\)uracil reductase\)',
 '\s+\(Probable\), IS891\/IS1136\/IS1341:Transposase, IS605 OrfB',
 '\s+and inactivated derivatives-like protein',
-'\[cytochrome\]\s*'
+'\[cytochrome\]\s*',
+', fused inner membrane subunits',
+', auxiliary component',
+', periplasmic component',
+', transcription of rRNA and tRNA operons, and DNA replication',
+' HI_\d+',
+'\/FOG: TPR repeat protein',
+'\/RND superfamily resistance-nodulation-cell division antiporter',
+'\/ DNA internalization-related competence protein ComEC\/Rec2 \/ predicted membrane metal-binding protein',
+', transcription of rRNA and tRNA operons, and DNA replication',
+': membrane component/ATP-binding',
+' MS\d+',  
+' HD_\d+', 
+', HI\d+',        
+' HD_\d+',
+', regulator of competence-specific genes',
+', fused lipid transporter subunits of ABC superfamily: membrane component\/ATP-binding'
 );
 
     for my $str (@strs) {
@@ -940,7 +967,25 @@ sub is_hypothetical {
 '^lipoprotein\s+[\d{1,}a-z{1,}\/-_]+$\s',
 '^Maf-like\sprotein\s+[\d{1,}a-z{1,}\/-_]+$\s',
 '^[\d{1,}a-z{1,}\/-_]+\s+protein\s+[\d{1,}a-z{1,}\/-_]+$\s',
-	);
+'Eag\d+',
+'Conserved domain protein',
+'Hypothetical conserved protein',
+'Uncharacterized conserved protein',
+'Uncharacterized membrane protein',
+'^protein$',
+'^gene$',
+'^genes$',
+'^conserved protein$',
+'UPI[\dA-Z]+\s+cluster',
+'KLLA0D19929p',
+'protein PARA_\d+',
+'HI\d+-like protein',
+'protein conserved in bacteria',
+'protein PM\d+',
+'membrane protein PM\d+',
+'protein HI_\d+',
+'Hybrid protein containing carboxymuconolactone decarboxylase domain'
+);
 
 	for my $str ( @strs ) {
 		return 1 if ( $product =~ /$str/i );
