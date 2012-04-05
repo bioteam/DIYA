@@ -778,12 +778,11 @@ sub remove_trailing {
 '\/ DNA internalization-related competence protein ComEC\/Rec2 \/ predicted membrane metal-binding protein',
 ', transcription of rRNA and tRNA operons, and DNA replication',
 ': membrane component/ATP-binding',
-' MS\d+',  
-' HD_\d+', 
+' MS\d+',
 ', HI\d+',        
 ' HD_\d+',
 ', regulator of competence-specific genes',
-', fused lipid transporter subunits of ABC superfamily: membrane component\/ATP-binding'
+', fused lipid transporter subunits of ABC superfamily.+'
 );
 
     for my $str (@strs) {
@@ -1053,7 +1052,7 @@ sub run_tbl2asn {
 	}
 
 	if ( $outdir && $tmplt && $tbl2asn ) {
-		$cmd = "$tbl2asn -s -j [gcode=11] -V vb -Z discrp -t $tmplt.sbt -p $outdir -y \"$comment\"";
+		$cmd = "$tbl2asn -s -j [gcode=11] -c b -V vb -Z discrp -t $tmplt.sbt -p $outdir -y \"$comment\"";
 		print "tbl2asn command is \'$cmd\'\n" if $self->debug;
 		`$cmd`;
 		return 1;
@@ -1158,18 +1157,21 @@ sub get_gene_overlaps {
 
 	$gene1 = shift @overlapgenes;
 
+# MiniLIMS_SAM_192:CDS    glycosyltransferase lcl|ctg7180000000003:c863978-863178 MiniLIMS_SAM_192_7700
+# MiniLIMS_SAM_192:CDS    glycosyltransferase lcl|ctg7180000000003:c864862-863978 MiniLIMS_SAM_192_7710
+
 	while ( my $gene2 = shift @overlapgenes ) {
 
 		# Note that this loop does not collect rRNAs or tRNAs
 
-		my ($g1start,$g1end) = $gene1 =~ /contig[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-		my ($g2start,$g2end) = $gene2 =~ /contig[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+		my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+		my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
 
 		my $g1len = abs($g1start - $g1end);
 		my $g2len = abs($g2start - $g2end);
 
-		my ($g1ctg) = $gene1 =~ /(contig[.\d]+)/;
-		my ($g2ctg) = $gene2 =~ /(contig[\d.]+)/;
+		my ($g1ctg) = $gene1 =~ /((?:contig|ctg)[.\d]+)/;
+		my ($g2ctg) = $gene2 =~ /((?:contig|ctg)[\d.]+)/;
 
 		# Gene	yberc_40220	lcl|contig01136:c856-281	yberc_40220
 		# Gene	yberc_40230	lcl|contig01136:c1053-856	yberc_40230
@@ -1229,10 +1231,10 @@ sub get_rna_overlaps {
 
 	while ( my $gene2 = shift @overlaps ) {
 
-      my ($g1start,$g1end) = $gene1 =~ /contig[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-      my ($g2start,$g2end) = $gene2 =~ /contig[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-      my ($g1ctg) = $gene1 =~ /(contig[\d.]+)/;
-      my ($g2ctg) = $gene2 =~ /(contig[\d.]+)/;
+      my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+      my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+      my ($g1ctg) = $gene1 =~ /((?:contig|ctg)[\d.]+)/;
+      my ($g2ctg) = $gene2 =~ /((?:contig|ctg)[\d.]+)/;
 
 		if ( $g1start >=  $g2end && $g1end <= $g2start && $g1ctg eq $g2ctg 
 			   && $gene1 =~ /^$id:(t|r)RNA/ && $gene2 =~ /^$id:CDS/ ) {
@@ -1377,7 +1379,7 @@ sub delete_from_tbl {
 	# Gene    yberc_r90       lcl|contig00186:128269->128665  yberc_r90
 	# CDS     hypothetical protein    lcl|contig00890:c203-<1 yberc_39200
 	for my $delete (@todelete) {
-		$delete =~ /^\S+\s+[^|]+\|(contig[\d.]+):c?(\d+)[<>]?-[<>]?(\d+)/;
+		$delete =~ /^\S+\s+[^|]+\|((?:contig|ctg)[\d.]+):c?(\d+)[<>]?-[<>]?(\d+)/;
 		$todelete{"$1 $2 $3"}++;
 	}
 

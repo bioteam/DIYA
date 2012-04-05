@@ -109,7 +109,7 @@ for my $feature ( @oldFeatures ) {
 		$contig_name = $parser->number_the_duplicate($contig_name)
 		  if ( $parser->is_duplicate_name($contig_name) );
 
-		# write to table
+		# Write to the *tbl file
 		print $outfeat ">Features $contig_name\n";
 
 		if ( my @sfs = $parser->get_feat_from_adj_contig ) {
@@ -175,9 +175,10 @@ for my $feature ( @oldFeatures ) {
 			$parser->readsPerBase($len,$avg) if ($avg);
 		}
 
-		# Write to fasta file
 		my $fasta_header = $definition;
-		$fasta_header .= " [note=coverage of this contig is $avg" . 'X]';
+
+		# Write to fasta file if there's coverage data
+		$fasta_header .= " [note=coverage of this contig is ${avg}X" if $avg;
 
 		my $str = $seq->subseq($contig_start, $contig_end);
         my $featureSeq = Bio::Seq->new(
@@ -357,7 +358,7 @@ for my $feature ( @oldFeatures ) {
 	$outfeat->flush();
 }
 
-# calculate overall coverage and add a 'source' feature -
+# Calculate overall coverage and add a 'source' feature -
 # if the Genbank file is external there's no coverage data
 my $comment = $parser->make_top_comment;
 
