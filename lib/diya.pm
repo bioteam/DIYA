@@ -769,7 +769,7 @@ sub run {
 		}
 
 		$filecount--;
-		# delay 1 second to assure that timestamps on output files differ
+		# Delay 1 second to assure that timestamps on output files differ
 		sleep(1);
 	}
 	1;
@@ -985,7 +985,7 @@ sub outputdir {
 
 sub mode {
 	my ($self,$mode) = @_;
-	my @modes = qw(sge serial);
+	my @modes = qw(sge serial lsf);
 
 	if ( defined $mode ) {
 		die "mode() was called with \'$mode\' but the only available modes are: @modes"
@@ -1080,7 +1080,7 @@ sub _execute {
 	my $output = `$fullcommand`;
 
 	# serial mode execution
-	if ( $self->mode ne 'sge' ) {
+	if ( $self->mode ne 'sge' && $self->mode ne 'lsf' ) {
 		if ( $? == 0 ) {
 			# if $CHILD_ERROR == 0
 			print $output, "\n";
@@ -1099,8 +1099,12 @@ sub _execute {
 			} 
 		}
 	}
-
-	# handle sge logic.
+	if ($self->mode eq 'lsf' && $output=~/<(\d+)>/)
+	{
+		# Extract job id from output
+		$output=$1;
+	}
+	# Handle SGE logic
 	if ( $? == 0 ) {
 		if ( $output =~ /^(\d+)$/ )	{
 			print "sge job id is $1\n" if $self->verbose();
@@ -1140,7 +1144,7 @@ bless(\$parser, "$modulename");
 my \$diya;
 $diyastr;
 \$diya->_reconstruct_sequence();
-\$parser->parse(\$diya,\$file);
+\$parser->parse(\$diya,'$file');
 );
 	close(OUT);
 	$self->_sequence($sequence);
@@ -1151,10 +1155,18 @@ $diyastr;
 	my $sgeid = $self->_lastsgeid();
 	my $outputdir = $self->outputdir();
 	my $intercommand = "qsub -b y -V -cwd -e $outputdir/intercmd_${count}.err -o $outputdir/intercmd_${count}.out -N intercmd -terse -hold_jid $sgeid $scriptfile";
-	
+	if ($self->mode eq 'lsf')
+	{
+		$intercommand = "bsub -e $outputdir/intercmd_${count}.err -o $outputdir/intercmd_${count}.out -J intercmd -w $sgeid $scriptfile";
+				
+	}
 	print "command is \'$intercommand\'\n" if $self->verbose();
 	$output = `$intercommand`;
-
+	if ($self->mode eq 'lsf' && $output=~/<(\d+)>/)
+	{
+		#extract jobid from lsf.
+		$output=$1;
+	}
 	if ( $? == 0 ) {
 		if ( $output =~ /^(\d+)$/ ) {
 			print "sge job id is $1\n" if $self->verbose();
@@ -1444,6 +1456,16 @@ sub _make_command {
 				$holdid = "-hold_jid $lastsgeid";
 			}
 			$cmd = "qsub -b y -V -cwd -e $joberr -o $jobout -N $name -terse $holdid $cmd";
+	} elsif ($self->mode eq 'lsf')
+	{
+			my $joberr = $self->outputdir()."/".$self->_executable($module) . ".err";
+			my $jobout = $self->outputdir()."/".$self->_executable($module) . ".out";
+			my $name   = $self->_executable($module);
+			my $holdid = "";
+			if ( defined($lastsgeid) )	{
+				$holdid = "-w $lastsgeid";
+			}
+			$cmd = "bsub -e $joberr -o $jobout -J $name $holdid $cmd";
 	}
 	
 	print "Command is \'$cmd\'\n" if ( $self->verbose && $self->mode eq 'sge' );

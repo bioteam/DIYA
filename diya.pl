@@ -1,5 +1,4 @@
-#!/arch/bin/perl -w
-# $Id: diya.pl 163 2008-08-04 19:21:08Z briano $
+#!/arch/bin/perl
 #-------------------------------------------------------------------------------
 # Copyright 2008
 #
@@ -37,6 +36,7 @@ information see the diya documentation in docs/diya.html or do:
 =cut
 
 use strict;
+use warnings;
 use diya;
 
 my $diya = diya->new( -verbose => 1);
