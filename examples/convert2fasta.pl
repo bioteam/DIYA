@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: convert2fasta.pl 203 2008-08-13 20:36:59Z briano $
 
 =head1 Description
 

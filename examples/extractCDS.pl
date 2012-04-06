@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: extractCDS.pl 244 2008-10-24 02:27:41Z briano $
 
 =head1 NAME
 

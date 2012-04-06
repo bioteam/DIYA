@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: rename-and-formatdb.pl 164 2008-08-06 15:39:20Z briano $
 
 =head1 NAME
 

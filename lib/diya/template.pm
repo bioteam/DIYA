@@ -1,4 +1,3 @@
-# $Id: template.pm 188 2008-08-12 15:22:09Z briano $
 #--------------------------------------------------------------------------
 # ©Copyright 2008
 #
@@ -30,12 +29,9 @@ runs a pipeline.
 
 Template Perl module. A parser() method is required.
 
-=head1 AUTHOR
-
-Andrew Stewart, andrew.stewart@med.navy.mil
-
 =head1 CONTRIBUTORS
 
+Andrew Stewart, andrew.stewart@med.navy.mil
 Tim Read, timothy.read@med.navy.mil
 Brian Osborne, briano@bioteam.net
 

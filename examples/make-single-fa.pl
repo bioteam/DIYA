@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-# $Id: make-single-fa.pl 319 2009-02-24 21:02:32Z briano $
 # Takes a Genbank file, makes a fasta file from it
 
 use strict;

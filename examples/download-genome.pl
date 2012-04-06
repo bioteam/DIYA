@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: download-genome.pl 188 2008-08-12 15:22:09Z briano $
 
 =head1 Description
 
