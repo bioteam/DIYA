@@ -2,49 +2,82 @@ Submit-block ::= {
   contact {
     contact {
       name name {
-        last "Osborne",
-        first "Brian"
+        last "Harhay",
+        first "Gregory",
+        initials "G.P."
       },
       affil std {
-        affil "BioTeam",
-        div "Biology",
-        city "Lexington",
-        sub "MA",
-        country "United States",
-        street "52 Peacock Farm Road",
-        email "bobo@alum.rdu.edu",
-        fax "333-313-3301",
-        phone "333-313-3301",
-        postal-code "02173"
-      }
+            affil "USDA-ARS-U.S. Meat Animal Research Center" ,
+            city "Clay Center" ,
+            sub "NE" ,
+            country "USA" ,
+            street "State Spur 18D" ,
+            email "gregory.harhay@ars.usda.gov" ,
+            phone "4027624250" ,
+            postal-code "68933" 
+            }
     }
   },
   cit {
-    authors {
-      names std {
-        {
-          name name {
-            last "Osborne",
-            first "Brian",
-            initials "B.I.",
-            suffix ""
-          }
-        }
-      },
-      affil std {
-        affil "BioTeam",
-        div "Biology",
-        city "Lexington",
-        sub "MA",
-        country "United States",
-        street "52 Peacock Farm Road",
-        email "bobo@alum.rdu.edu",
-        fax "333-313-3301",
-        phone "333-313-3301",
-        postal-code "02173"
-      }
-    }
-  },
+      authors {
+        names
+          std {
+            {
+              name
+                name {
+                  last "Harhay" ,
+                  first "Gregory" ,
+                  initials "G.P." } } ,
+            {
+              name
+                name {
+                  last "Smith" ,
+                  first "Timothy" ,
+                  initials "T.P.L." } } ,
+            {
+              name
+                name {
+                  last "McVey" ,
+                  first "Scott" ,
+                  initials "S." } } ,
+            {
+              name
+                name {
+                  last "Harhay" ,
+                  first "Dayna" ,
+                  initials "D.M." } } ,
+            {
+              name
+                name {
+                  last "Bono" ,
+                  first "Jim" ,
+                  initials "J." } } ,
+            {
+              name
+                name {
+                  last "Koren" ,
+                  first "Sergey" ,
+                  initials "S." } } ,
+            {
+              name
+                name {
+                  last "Phillippy" ,
+                  first "Adam" ,
+                  initials "A." } } } ,
+        affil
+          std {
+            affil "USDA-ARS-U.S. Meat Animal Research Center" ,
+            city "Clay Center" ,
+            sub "NE" ,
+            country "USA" ,
+            street "State Spur 18D" ,
+            postal-code "68933" } } ,
+      date
+        std {
+          year 2012 ,
+          month 4 ,
+          day 5 } }
+  ,
   subtype new
 }
 
@@ -56,25 +89,22 @@ Seqdesc ::= pub {
         names std {
           {
             name name {
-              last "Osborne",
-              first "Brian",
-              initials "B.I.",
-              suffix ""
+              last "Harhay",
+              first "Gregory",
+              initials "G.P."
             }
           }
         },
         affil std {
-          affil "BioTeam",
-          div "Biology",
-          city "Lexington",
-          sub "MA",
-          country "United States",
-          street "52 Peacock Farm Road",
-          email "bobo@alum.rdu.edu",
-          fax "333-313-3301",
-          phone "333-313-3301",
-          postal-code "02173"
-        }
+            affil "USDA-ARS-U.S. Meat Animal Research Center" ,
+            city "Clay Center" ,
+            sub "NE" ,
+            country "USA" ,
+            street "State Spur 18D" ,
+            email "gregory.harhay@ars.usda.gov" ,
+            phone "4027624250" ,
+            postal-code "68933" 
+            }
       },
       title "Annotation of the <BACTERIALSPECIES> <BACTERIALSTRAIN> genome"
     }
