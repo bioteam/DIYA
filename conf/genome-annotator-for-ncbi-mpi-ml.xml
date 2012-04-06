@@ -2,7 +2,7 @@
 <!--
 This Diya conf file can be used to take a fasta file as input
 and output an annotated Genbank file and corresponding ASN.1 that can be submitted to 
-NCBI. It also created a DIYA_Annotation MiniLIMS page for the annotation.
+NCBI. It also creates a DIYA_Annotation MiniLIMS page for the annotation.
 
 Do "module load infernal-mpi" to set the env's for cmsearch with MPI.
 
@@ -24,8 +24,8 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
 7. run CRT
 8. run phobos
 9. run cmsearch
-10. correct of annotation text
-11. create ASN and associated files for NCBI submission
+10. correct of annotation text (gbconvert.pl)
+11. create ASN and associated files for NCBI submission (gbconvert.pl)
 12. create MiniLIMS page
 -->
 
@@ -143,7 +143,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
   <script>
     <name>gbconvert</name>
     <executable>gbconvert.pl</executable>
-    <command>-agp -t MYTAXID INPUTFILE.gbk</command>
+    <command>-t MYTAXID INPUTFILE.gbk</command>
     <home>/Jake/apps/DIYA/scripts</home>
     <inputformat></inputformat>
     <inputfrom>MARC::cmsearch</inputfrom>

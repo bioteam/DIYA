@@ -138,12 +138,6 @@ sub fix_feature {
 
             $product = remove_loci($product);
 
-            # Remove '...-like'
-            # if ( $product =~ /-like$/i ) {
-            #     $feat->add_tag_value( 'note', $product );
-            #     $product = 'hypothetical protein';
-            # }
-
             ( $product, $feat ) = remove_semicolon( $product, $feat );
 
             $feat = edit_note($feat);
@@ -583,7 +577,8 @@ sub remove_similar {
 	my $product = shift;
 
 my @strs = (
-'^Similar to (acetyltransferase|exochitinase|restin isoform b|permease protein of ABC transport system|protein gp49 from prophage N15|fimbrial subunit type 1|bacteriophage integrase|vgrG protein|base plate protein gp25 of Bacteriophage|bacteriophage tail fiber assembly protein|protein V)',
+'^Similar to (acetyltransferase|exochitinase|restin isoform b|permease protein of ABC transport system|protein gp49 from prophage N15)',
+'^Similar to (fimbrial subunit type 1|bacteriophage integrase|vgrG protein|base plate protein gp25 of Bacteriophage|bacteriophage tail fiber assembly protein|protein V)',
 '^Related to (galactoside O-acetyltransferase)/',
 '^Strongly similar to (S-adenosylmethionine synthetase)',
 '^Exhibited considerable similarity to a small (polypeptide \(RepA\))',
@@ -1157,8 +1152,8 @@ sub get_gene_overlaps {
 
 	$gene1 = shift @overlapgenes;
 
-# MiniLIMS_SAM_192:CDS    glycosyltransferase lcl|ctg7180000000003:c863978-863178 MiniLIMS_SAM_192_7700
-# MiniLIMS_SAM_192:CDS    glycosyltransferase lcl|ctg7180000000003:c864862-863978 MiniLIMS_SAM_192_7710
+# 192:CDS    glycosyltransferase lcl|ctg7180000000003:c863978-863178 192_7700
+# 192:CDS    glycosyltransferase lcl|ctg7180000000003:c864862-863978 192_7710
 
 	while ( my $gene2 = shift @overlapgenes ) {
 
@@ -1744,7 +1739,7 @@ sub _initialize {
 
 # $property = sub {
 #     my ( $self, $name, $value ) = @_;
-
+#
 #     if ($value) {
 #         $self->{$name} = $value;
 #         return $value;
