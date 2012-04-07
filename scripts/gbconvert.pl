@@ -48,13 +48,13 @@ GetOptions(
 
 usage() if $help;
 
-die "File $template not found" if ! -e $template;
-die "Executable $executable is not found or not executable" if ! -x $executable;
+die "File $template not found" if ( $template && ! -e $template );
+die "Executable $executable is not found or not executable" if ( $executable && ! -x $executable );
 
 my $parser = diya::MARC::GenbankConvertUtil->new();
-$parser->template($template) if -e $template;
+$parser->template($template) if $template;
 $parser->accession_prefix($accession_prefix) if $accession_prefix;
-$parser->executable($executable) if -x $executable;
+$parser->executable($executable) if $executable;
 $parser->debug($debug) if defined $debug;
 $parser->taxid($taxid) if $taxid;
 
