@@ -39,7 +39,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
     <script>
     <name>assemble_pseudocontig</name>
     <executable>diya-assemble_pseudocontig.pl</executable>
-    <command>-bin /Jake/apps/bin -infile INPUTFILE -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR -newbler 200:5</command>
+    <command>-bin /Jake/apps/bin -infile INPUTFILE -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR</command>
     <home>/Jake/apps/DIYA/scripts</home>
     <inputfrom></inputfrom>
     <inputformat></inputformat>
