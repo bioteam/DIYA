@@ -14,7 +14,9 @@ that NCBI wants.
 
 Example:
 
-scripts/gbconvert.pl -template examples/template -e /usr/local/bin/tbl2asn -a test \
+scripts/gbconvert.pl -template examples/template -e /usr/local/bin/tbl2asn -a testlocus \
+-t 123 -host "Homo sapiens" -co Montreal:Canada -cd 20-05-2012 -is "isolation source" \
+-sn "test submission note" -gc 12 -st 'sequencing tech' -as "assembly method" \
 t/data/2012_03_11_14_27_03-MARC::cmsearch.out.gbk
 
 =cut
@@ -28,11 +30,19 @@ use Bio::Annotation::Collection;
 use Bio::Annotation::Comment;
 
 my (
-    $debug,      $help,         $project,    $spacer_start,
-    $spacer_end, $contig_start, $contig_end, $qual,
-    $agp,        $taxid,        $template,   $executable,
-    $accession_prefix
+    $debug,            $help,             $project,
+    $qual,             $agp,              $taxid,
+    $accession_prefix, $host,             $country,
+    $collection_date,  $isolation_source, $submission_note,
+    $Assembly_Name,    $Sequencing_Technology
 );
+
+# Defaults
+my $template        = 'template';
+my $executable      = '/usr/local/bin/tbl2asn';
+my $gcode           = '11';
+my $Assembly_Method = '454 Titanium; PacBio RS';
+my $Genome_Coverage = '12';
 
 GetOptions(
     "project|p=i" => \$project,
@@ -43,37 +53,65 @@ GetOptions(
     "debug!"      => \$debug,
     "template=s"  => \$template,
     "a=s"         => \$accession_prefix,
-    "e=s"         => \$executable
+    "e=s"         => \$executable,
+    "host=s"      => \$host,
+    "co=s"        => \$country,         
+    "cd=s"        => \$collection_date,
+    "is=s"        => \$isolation_source,
+    "sn=s"        => \$submission_note, 
+    "gc=s"        => \$gcode,
+    "an=s"        => \$Assembly_Name,
+    "gc=s"        => \$Genome_Coverage, 
+    "st=s"        => \$Sequencing_Technology, 
+    "as=s"        => \$Assembly_Method
 );
 
 usage() if $help;
 
-die "File $template not found" if ( $template && ! -e $template );
-die "Executable $executable is not found or not executable" if ( $executable && ! -x $executable );
+die "File $template not found" if ( ! -e $template );
+die "Executable $executable is not found or not executable" if ( ! -x $executable );
+die "Locus tag is required"             if ( ! $accession_prefix );
+die "Host is required"                  if ( ! $host );
+die "Taxonomy id is required"           if ( ! $taxid );
+die "Country is required"               if ( ! $country );
+die "Collection date is required"       if ( ! $collection_date );
+die "Isolation source is required"      if ( ! $isolation_source );
+die "Submission note is required"       if ( ! $submission_note );
+die "Genome Coverage is required"       if ( ! $Genome_Coverage );
+die "Sequencing Technology is required" if ( ! $Sequencing_Technology );
+die "Assembly method is required"       if ( ! $Assembly_Method );
 
-my $parser = diya::MARC::GenbankConvertUtil->new();
-$parser->template($template) if $template;
-$parser->accession_prefix($accession_prefix) if $accession_prefix;
-$parser->executable($executable) if $executable;
+my $parser = diya::MARC::GenbankConvertUtil->new(
+    -template              => $template,
+    -executable            => $executable,
+    -accession_prefix      => $accession_prefix,
+    -host                  => $host,
+    -country               => $country,
+    -collection_date       => $collection_date,
+    -isolation_source      => $isolation_source,
+    -submission_note       => $submission_note,
+    -Genome_Coverage       => $Genome_Coverage,
+    -Sequencing_Technology => $Sequencing_Technology,
+    -Assembly_Method       => $Assembly_Method,
+    -Assembly_Name         => $Assembly_Name,
+    -gcode                 => $gcode,
+    -taxid                 => $taxid
+);
+
 $parser->debug($debug) if defined $debug;
-$parser->taxid($taxid) if $taxid;
 
 my $infile = shift @ARGV or usage('Need a Genbank format file');
 my $in = Bio::SeqIO->new(-file => $infile,-format => 'genbank');
 my $seq = $in->next_seq;
+
 my $id = $seq->id;
-
 $parser->id($id);
-
 my $outdir = $parser->outdir($id);
 my $definition = $parser->edit_definition($seq->desc);
-
 $seq->desc($definition);
 
-# Make output files
 my $tblfn = "$outdir/$id.tbl";
 my $outfeat = FileHandle->new(">$tblfn") or warn ("$tblfn: $!");
-
 my $fsafn = "$outdir/$id.fsa";
 my $outfsa = Bio::SeqIO->new(-file => ">$fsafn",
 					         -format => 'fasta') or warn ("$fsafn: $!");
@@ -82,279 +120,8 @@ $parser->make_namemap($infile);
 
 my @oldFeatures = $seq->remove_SeqFeatures;
 
-# Fix all the features
-FEATURE:
-for my $feature ( @oldFeatures ) {
-
-	my $primary_tag = $feature->primary_tag;
-
-	# Each fasta_record describes a contig, and 
-	# the 'cbt' feature is usually right before the 'fasta_record'
-	if ( $primary_tag eq 'cbt' ) {
-		($spacer_start, $spacer_end) = ($feature->start, $feature->end);
-	}
-	elsif ( $primary_tag eq 'fasta_record' ) {
-
-		($contig_start, $contig_end) = ($feature->start, $feature->end);
-		my $len = $contig_end - $contig_start;
-
-		my @contig_names = $feature->get_tag_values('name');
-		my $contig_name = $contig_names[0];
-
-		my @notes = $feature->remove_tag('note') 
-		  if ( $feature->has_tag('note') );
-
-		$contig_name = $parser->number_the_duplicate($contig_name)
-		  if ( $parser->is_duplicate_name($contig_name) );
-
-		# Write to the *tbl file
-		print $outfeat ">Features $contig_name\n";
-
-		if ( my @sfs = $parser->get_feat_from_adj_contig ) {
-
-			for my $sf ( @sfs ) {
-
-				my @locus = $sf->get_tag_values('locus_tag') if 
-				  ( $sf->has_tag('locus_tag') );
-
-				my $sf_end = $sf->end;
-				my $sf_start = $sf->start;
-
-				# If the feature goes past the 5' end of the current contig (and 
-				# we already know that features in this block go past the 3' end) then
-				# we must skip this feature, no way to represent it in the *tbl file
-				if ( $sf->end <= $contig_end ) {
-
-					# Example: 444  >1 gene
-					print $outfeat join("\t", ( ($sf_end - $contig_start + 1) ), 
-										  (">1"), $sf->primary_tag ), "\n";
-
-					print "Stored feature: " . $locus[0] . " " .  $sf->primary_tag . 
-					  " sf end:$sf_end, contig start:$contig_start\n" if $parser->debug;
-
-					for my $tag ($sf->get_all_tags) {
-						for my $value ( $sf->get_tag_values($tag) ) {
-							print $outfeat "\t\t\t$tag\t$value\n";
-						}
-					}
-
-				} elsif ( $sf->primary_tag eq 'rRNA' ) {
-
-					# print $outfeat join("\t", ( ("<$contig_start") ), 
-					#					  (">$contig_end"), $sf->primary_tag ), "\n";
-
-               # Example: <1  >111 gene
-               print $outfeat join("\t", ( ("<1") ),
-                    (">" . $sf_end - $contig_start + 1), $sf->primary_tag ), "\n";
-
-
-					print "Spanning feature: " . $locus[0] . " " . $sf->primary_tag . 
-					  " sf end:$sf_end, contig start:$contig_start\n" if $parser->debug;
-
-					for my $tag ($sf->get_all_tags) {
-						for my $value ( $sf->get_tag_values($tag) ) {
-							print $outfeat "\t\t\t$tag\t$value\n";
-						}
-					}
-
-				} else {
-					print "Skipped feature: " . $locus[0] . " " . $sf->primary_tag . " start:$sf_start, end:$sf_end, "
-					  . "contig start:$contig_start, contig end:$contig_end\n" if $parser->debug;
-				}
-			}
-
-			$parser->set_feat_from_adj_contig();
-		}
-
-		# Get coverage statistic
-		my $avg;
-		for my $note (@notes) {
-			($avg) = $note =~ /coverage\s+=\s+([.\d]+)\s+reads/;
-			$parser->readsPerBase($len,$avg) if ($avg);
-		}
-
-		my $fasta_header = $definition;
-
-		# Write to fasta file if there's coverage data
-		$fasta_header .= " [note=coverage of this contig is ${avg}X" if $avg;
-
-		my $str = $seq->subseq($contig_start, $contig_end);
-        my $featureSeq = Bio::Seq->new(
-            -display_id => $contig_name,
-            -desc       => $fasta_header,
-            -seq        => $str
-        );
-
-		$outfsa->write_seq($featureSeq);
-		$outfsa->flush();
-
-		print "fasta_record\t$contig_name\tlength:$len\n" 
-		  if $parser->debug;
-	}
-
-	# Only submitting annotations for these primary features
-	elsif ( $primary_tag =~ /^(gene|CDS|tRNA|rRNA|repeat_region|ncRNA)$/ ) {
-
-		# Skip any feature with sequence containing 'N'
-		next FEATURE if ( $feature->seq->seq =~ /N/i );
-
-		my @locus = $feature->get_tag_values('locus_tag') if $feature->has_tag('locus_tag');
-
-		# skip a feature that starts in spacer ('cbt')
-		# next FEATURE if ( $feature->start >= $spacer_start && 
-		#						$feature->start <= $spacer_end );
-		# skip a feature that ends outside the contig
-		# next FEATURE if ( $feature->end > $contig_end );
-
-		# usually a CDS feature and a gene feature are returned here
-		my @fixedFeats = $parser->fix_feature($feature);
-
-		$fixedFeats[0] ? $parser->newFeatures(@fixedFeats) : next FEATURE;
-
-		my ($feat_start, $feat_end) = ($feature->start, $feature->end);
-
-	 FIXEDFEATURE:
-		for my $feature ( @fixedFeats ) {
-
-			# the feature is entirely contained in the contig
-			if ( $feat_start >= $contig_start && $feat_end <= $contig_end ) {
-
-				if ( $feature->strand eq '1' ) {
-					print $outfeat join("\t", ($feat_start - $contig_start + 1), 
-				  ($feat_end - $contig_start + 1), $feature->primary_tag ), "\n";
-				}
-				elsif ( $feature->strand eq '-1' ) {
-					print $outfeat join("\t", ($feat_end - $contig_start + 1), 
-					 ($feat_start - $contig_start + 1), $feature->primary_tag ), "\n";
-				}
-
-				print "Feature " . $locus[0] . " is inside contig\n" if $parser->debug;
-
-				for my $tag ($feature->get_all_tags) {
-					for my $value ( $feature->get_tag_values($tag) ) {
-						print $outfeat "\t\t\t$tag\t$value\n";
-					}
-				}
-
-				$parser->lastBase($feat_end) if ( $feat_end > $parser->lastBase );
-			}
-			# 
-			elsif (  $feat_start >= $contig_start && $feat_end > $contig_end ) {
-
-				# This feature begins in the next contig, its 3' end is in the spacer,
-				# we store this so that we can retrieve it when we're handling the next contig
-
-				if ( $feature->strand eq undef ) {
-
-					print "$locus[0] feature 5' end is in next contig - feature:$feat_end, ".
-					"contig:$contig_end, strand=0\n" if $parser->debug;
-
-					$parser->set_feat_from_adj_contig($feature);
-					next FIXEDFEATURE;
-				}
-				# This feature begins in the next contig, its 3' end is in the spacer,
-				# we store this so that we can retrieve it when we're handling the next contig
-				elsif ( $feature->strand eq '1' && $feat_start > $contig_end ) {
-
-					print "$locus[0] feature 5' end is in next contig - feature:$feat_end, ".
-					"contig:$contig_end,strand=1\n" if $parser->debug;
-
-					$parser->set_feat_from_adj_contig($feature);
-					next FIXEDFEATURE;
-				} 
-				# This starts in the contig, strand=1, and ends in the spacer
-				# Example: 200	>1575	gene
-				elsif ( $feature->strand eq '1' ) {
-
-					print $outfeat join("\t", ($feat_start - $contig_start + 1), 
-					(">" . ($contig_end - $contig_start + 1) ), $feature->primary_tag ), "\n";
-
-					print "$locus[0] feature end is past contig - feature:$feat_start-$feat_end, " .
-					"contig:$contig_start-$contig_end, strand=1\n" if $parser->debug;
-
-					for my $tag ($feature->get_all_tags) {
-						for my $value ( $feature->get_tag_values($tag) ) {
-							print $outfeat "\t\t\t$tag\t$value\n";
-						}
-					}
-				}
-				# This feature begins in the next contig, its 3' end is in the spacer,
-				# we store this so that we can retrieve it when we're handling the next contig
-				elsif ( $feature->strand eq '-1' && $feat_start > $contig_end ) {
-
-					print "$locus[0] feature 5' end is in next contig - feature:$feat_end, contig:$contig_end, "
-					  . "strand=-1\n" if $parser->debug;
-
-					$parser->set_feat_from_adj_contig($feature);
-					next FIXEDFEATURE;
-				} 
-				# This starts in the contig, strand=-1, and ends in the spacer
-				# Example: <444 222 gene
-				elsif ( $feature->strand eq '-1' && $feat_start < $contig_end ) {
-
-					print $outfeat join("\t", ("<" . ($contig_end - $contig_start + 1) ), 
-				  ( ($feat_start - $contig_start + 1) ), $feature->primary_tag ), "\n";
-
-					print "$locus[0] feature 3' end is in contig - start:$feat_start, end:$feat_end, " .
-					  "contig start:$contig_start, contig end:$contig_end, strand=-1\n" if $parser->debug;
-
-					my $startpos =  $parser->get_start_minus($feat_end,$contig_end);
-					print $outfeat "\t\t\tcodon_start\t$startpos\n";
-
-					for my $tag ($feature->get_all_tags) {
-						for my $value ( $feature->get_tag_values($tag) ) {
-							print $outfeat "\t\t\t$tag\t$value\n";
-						}
-					}
-				}
-			}
-			# This feature begins in the next contig, its 3' end is in the spacer,
-			# but there is no strand information, like an rRNA 'gene'
-			elsif ( $feat_start > $contig_end ) {
-
-				print "$locus[0] feature 5' end is in next contig - feature:$feat_end, contig:$contig_end,strand=-1\n"
-			  if $parser->debug;
-
-				$parser->set_feat_from_adj_contig($feature);
-				next FIXEDFEATURE;
-			} 
-			# One end of the feature is in the contig, the other end
-			# precedes the 5' end of the contig
-			elsif (  $feat_start < $contig_start && $feat_end <= $contig_end ) {
-
-				print "$locus[0] feature end is before contig - feature:$feat_end, contig:$contig_end\n"
-				  if $parser->debug;
-
-				# Example: <1	497	gene
-				if ( $feature->strand eq '1' ) {
-					print $outfeat join("\t", ("<1"), ($feat_end - $contig_start + 1), 
-											  $feature->primary_tag ), "\n";
-
-					my $startpos = $parser->get_start_plus( ($feat_end - $contig_start + 1) );
-					print $outfeat "\t\t\tcodon_start\t$startpos\n";
-				}
-				# Example: 436	>1	gene
-				elsif ( $feature->strand eq '-1' ) {
-
-					print $outfeat join("\t", ( ($feat_end - $contig_start + 1) ), 
-							 (">1"), $feature->primary_tag ), "\n";
-				}
-
-				for my $tag ($feature->get_all_tags) {
-					for my $value ( $feature->get_tag_values($tag) ) {
-						print $outfeat "\t\t\t$tag\t$value\n";
-					}
-				}
-			}
-			# Don't know anything about this feature so skip it
-			else {
-				print "Skipping feature " . $locus[0] . " with primary tag of $primary_tag\n" 
-				  if $parser->debug;
-			}
-		}
-	}
-	$outfeat->flush();
-}
+# Make fasta and *tbl files
+$parser->fixAndPrint(\@oldFeatures,$outfeat,$outfsa,$seq,$definition);
 
 # Calculate overall coverage and add a 'source' feature -
 # if the Genbank file is external there's no coverage data
@@ -384,6 +151,8 @@ $parser->fix_discrp;
 $parser->create_qual($qual) if $qual;
 
 $parser->create_agp($infile) if $agp;
+
+$parser->create_cmt();
 
 # Run again
 $parser->run_tbl2asn($comment,2);

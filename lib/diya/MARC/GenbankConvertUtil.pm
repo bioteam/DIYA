@@ -50,6 +50,10 @@ package diya::MARC::GenbankConvertUtil;
 use strict;
 use Data::Dumper qw(Dumper);
 use Bio::SeqIO;
+use FileHandle;
+
+my ($spacer_start,    $spacer_end,       $contig_start,
+    $contig_end);
 
 sub new {
 	my ($module,@args) = @_;
@@ -58,15 +62,362 @@ sub new {
 
 	bless($self,$class);
 
-	# Defaults
-	$self->template('template');
-	$self->executable('/usr/local/bin/tbl2asn');
-	$self->accession_prefix('nmrcread');
-
 	$self->_initialize(@args);
 
 	$self;
 }
+
+sub fixAndPrint {
+    my ( $self, $ref, $outfeat, $outfsa, $seq, $definition ) = @_;
+    my @oldFeatures = @{$ref};
+
+    # Fix all the features
+  FEATURE:
+    for my $feature (@oldFeatures) {
+
+        my $primary_tag = $feature->primary_tag;
+
+        # Each fasta_record describes a contig, and
+        # the 'cbt' feature is usually right before the 'fasta_record'
+        if ( $primary_tag eq 'cbt' ) {
+            ( $spacer_start, $spacer_end ) = ( $feature->start, $feature->end );
+        }
+        elsif ( $primary_tag eq 'fasta_record' ) {
+
+            ( $contig_start, $contig_end ) = ( $feature->start, $feature->end );
+            my $len = $contig_end - $contig_start;
+
+            my @contig_names = $feature->get_tag_values('name');
+            my $contig_name  = $contig_names[0];
+
+            my @notes = $feature->remove_tag('note')
+              if ( $feature->has_tag('note') );
+
+            $contig_name = $self->number_the_duplicate($contig_name)
+              if ( $self->is_duplicate_name($contig_name) );
+
+            # Write to the *tbl file
+            print $outfeat ">Features $contig_name\n";
+
+            if ( my @sfs = $self->get_feat_from_adj_contig ) {
+
+                for my $sf (@sfs) {
+
+                    my @locus = $sf->get_tag_values('locus_tag')
+                      if ( $sf->has_tag('locus_tag') );
+
+                    my $sf_end   = $sf->end;
+                    my $sf_start = $sf->start;
+
+          # If the feature goes past the 5' end of the current contig (and
+          # we already know that features in this block go past the 3' end) then
+          # we must skip this feature, no way to represent it in the *tbl file
+                    if ( $sf->end <= $contig_end ) {
+
+                        # Example: 444  >1 gene
+                        print $outfeat join( "\t",
+                            ( ( $sf_end - $contig_start + 1 ) ),
+                            (">1"), $sf->primary_tag ),
+                          "\n";
+
+                        print "Stored feature: "
+                          . $locus[0] . " "
+                          . $sf->primary_tag
+                          . " sf end:$sf_end, contig start:$contig_start\n"
+                          if $self->debug;
+
+                        for my $tag ( $sf->get_all_tags ) {
+                            for my $value ( $sf->get_tag_values($tag) ) {
+                                print $outfeat "\t\t\t$tag\t$value\n";
+                            }
+                        }
+
+                    }
+                    elsif ( $sf->primary_tag eq 'rRNA' ) {
+
+               # print $outfeat join("\t", ( ("<$contig_start") ),
+               #                     (">$contig_end"), $sf->primary_tag ), "\n";
+
+                        # Example: <1  >111 gene
+                        print $outfeat join( "\t",
+                            ( ("<1") ),
+                            ( ">" . $sf_end - $contig_start + 1 ),
+                            $sf->primary_tag ),
+                          "\n";
+
+                        print "Spanning feature: "
+                          . $locus[0] . " "
+                          . $sf->primary_tag
+                          . " sf end:$sf_end, contig start:$contig_start\n"
+                          if $self->debug;
+
+                        for my $tag ( $sf->get_all_tags ) {
+                            for my $value ( $sf->get_tag_values($tag) ) {
+                                print $outfeat "\t\t\t$tag\t$value\n";
+                            }
+                        }
+
+                    }
+                    else {
+                        print "Skipped feature: "
+                          . $locus[0] . " "
+                          . $sf->primary_tag
+                          . " start:$sf_start, end:$sf_end, "
+                          . "contig start:$contig_start, contig end:$contig_end\n"
+                          if $self->debug;
+                    }
+                }
+
+                $self->set_feat_from_adj_contig();
+            }
+
+            # Get coverage statistic
+            my $avg;
+            for my $note (@notes) {
+                ($avg) = $note =~ /coverage\s+=\s+([.\d]+)\s+reads/;
+                $self->readsPerBase( $len, $avg ) if ($avg);
+            }
+
+            my $fasta_header = $definition;
+
+            # Write to fasta file if there's coverage data
+            $fasta_header .= " [note=coverage of this contig is ${avg}X"
+              if $avg;
+
+            my $str = $seq->subseq( $contig_start, $contig_end );
+            my $featureSeq = Bio::Seq->new(
+                -display_id => $contig_name,
+                -desc       => $fasta_header,
+                -seq        => $str
+            );
+
+            $outfsa->write_seq($featureSeq);
+            $outfsa->flush();
+
+            print "fasta_record\t$contig_name\tlength:$len\n"
+              if $self->debug;
+        }
+
+        # Only submitting annotations for these primary features
+        elsif ( $primary_tag =~ /^(gene|CDS|tRNA|rRNA|repeat_region|ncRNA)$/ ) {
+
+            # Skip any feature with sequence containing 'N'
+            next FEATURE if ( $feature->seq->seq =~ /N/i );
+
+            my @locus = $feature->get_tag_values('locus_tag')
+              if $feature->has_tag('locus_tag');
+
+            # skip a feature that starts in spacer ('cbt')
+            # next FEATURE if ( $feature->start >= $spacer_start &&
+            #                       $feature->start <= $spacer_end );
+            # skip a feature that ends outside the contig
+            # next FEATURE if ( $feature->end > $contig_end );
+
+            # usually a CDS feature and a gene feature are returned here
+            my @fixedFeats = $self->fix_feature($feature);
+
+            $fixedFeats[0] ? $self->newFeatures(@fixedFeats) : next FEATURE;
+
+            my ( $feat_start, $feat_end ) = ( $feature->start, $feature->end );
+
+          FIXEDFEATURE:
+            for my $feature (@fixedFeats) {
+
+                # the feature is entirely contained in the contig
+                if ( $feat_start >= $contig_start && $feat_end <= $contig_end )
+                {
+
+                    if ( $feature->strand eq '1' ) {
+                        print $outfeat join( "\t",
+                            ( $feat_start - $contig_start + 1 ),
+                            ( $feat_end - $contig_start + 1 ),
+                            $feature->primary_tag ),
+                          "\n";
+                    }
+                    elsif ( $feature->strand eq '-1' ) {
+                        print $outfeat join( "\t",
+                            ( $feat_end - $contig_start + 1 ),
+                            ( $feat_start - $contig_start + 1 ),
+                            $feature->primary_tag ),
+                          "\n";
+                    }
+
+                    print "Feature " . $locus[0] . " is inside contig\n"
+                      if $self->debug;
+
+                    for my $tag ( $feature->get_all_tags ) {
+                        for my $value ( $feature->get_tag_values($tag) ) {
+                            print $outfeat "\t\t\t$tag\t$value\n";
+                        }
+                    }
+
+                    $self->lastBase($feat_end)
+                      if ( $feat_end > $self->lastBase );
+                }
+
+                #
+                elsif ($feat_start >= $contig_start
+                    && $feat_end > $contig_end )
+                {
+
+  # This feature begins in the next contig, its 3' end is in the spacer,
+  # we store this so that we can retrieve it when we're handling the next contig
+
+                    if ( $feature->strand eq undef ) {
+
+                        print
+"$locus[0] feature 5' end is in next contig - feature:$feat_end, "
+                          . "contig:$contig_end, strand=0\n"
+                          if $self->debug;
+
+                        $self->set_feat_from_adj_contig($feature);
+                        next FIXEDFEATURE;
+                    }
+
+  # This feature begins in the next contig, its 3' end is in the spacer,
+  # we store this so that we can retrieve it when we're handling the next contig
+                    elsif ($feature->strand eq '1'
+                        && $feat_start > $contig_end )
+                    {
+
+                        print
+"$locus[0] feature 5' end is in next contig - feature:$feat_end, "
+                          . "contig:$contig_end,strand=1\n"
+                          if $self->debug;
+
+                        $self->set_feat_from_adj_contig($feature);
+                        next FIXEDFEATURE;
+                    }
+
+                   # This starts in the contig, strand=1, and ends in the spacer
+                   # Example: 200  >1575   gene
+                    elsif ( $feature->strand eq '1' ) {
+
+                        print $outfeat join( "\t",
+                            ( $feat_start - $contig_start + 1 ),
+                            ( ">" . ( $contig_end - $contig_start + 1 ) ),
+                            $feature->primary_tag ),
+                          "\n";
+
+                        print
+"$locus[0] feature end is past contig - feature:$feat_start-$feat_end, "
+                          . "contig:$contig_start-$contig_end, strand=1\n"
+                          if $self->debug;
+
+                        for my $tag ( $feature->get_all_tags ) {
+                            for my $value ( $feature->get_tag_values($tag) ) {
+                                print $outfeat "\t\t\t$tag\t$value\n";
+                            }
+                        }
+                    }
+
+  # This feature begins in the next contig, its 3' end is in the spacer,
+  # we store this so that we can retrieve it when we're handling the next contig
+                    elsif ($feature->strand eq '-1'
+                        && $feat_start > $contig_end )
+                    {
+
+                        print
+"$locus[0] feature 5' end is in next contig - feature:$feat_end, contig:$contig_end, "
+                          . "strand=-1\n"
+                          if $self->debug;
+
+                        $self->set_feat_from_adj_contig($feature);
+                        next FIXEDFEATURE;
+                    }
+
+                  # This starts in the contig, strand=-1, and ends in the spacer
+                  # Example: <444 222 gene
+                    elsif ($feature->strand eq '-1'
+                        && $feat_start < $contig_end )
+                    {
+
+                        print $outfeat join( "\t",
+                            ( "<" . ( $contig_end - $contig_start + 1 ) ),
+                            ( ( $feat_start - $contig_start + 1 ) ),
+                            $feature->primary_tag ),
+                          "\n";
+
+                        print
+"$locus[0] feature 3' end is in contig - start:$feat_start, end:$feat_end, "
+                          . "contig start:$contig_start, contig end:$contig_end, strand=-1\n"
+                          if $self->debug;
+
+                        my $startpos =
+                          $self->get_start_minus( $feat_end, $contig_end );
+                        print $outfeat "\t\t\tcodon_start\t$startpos\n";
+
+                        for my $tag ( $feature->get_all_tags ) {
+                            for my $value ( $feature->get_tag_values($tag) ) {
+                                print $outfeat "\t\t\t$tag\t$value\n";
+                            }
+                        }
+                    }
+                }
+
+          # This feature begins in the next contig, its 3' end is in the spacer,
+          # but there is no strand information, like an rRNA 'gene'
+                elsif ( $feat_start > $contig_end ) {
+
+                    print
+"$locus[0] feature 5' end is in next contig - feature:$feat_end, contig:$contig_end,strand=-1\n"
+                      if $self->debug;
+
+                    $self->set_feat_from_adj_contig($feature);
+                    next FIXEDFEATURE;
+                }
+
+                # One end of the feature is in the contig, the other end
+                # precedes the 5' end of the contig
+                elsif ($feat_start < $contig_start
+                    && $feat_end <= $contig_end )
+                {
+
+                    print
+"$locus[0] feature end is before contig - feature:$feat_end, contig:$contig_end\n"
+                      if $self->debug;
+
+                    # Example: <1   497 gene
+                    if ( $feature->strand eq '1' ) {
+                        print $outfeat join( "\t",
+                            ("<1"), ( $feat_end - $contig_start + 1 ),
+                            $feature->primary_tag ),
+                          "\n";
+
+                        my $startpos = $self->get_start_plus(
+                            ( $feat_end - $contig_start + 1 ) );
+                        print $outfeat "\t\t\tcodon_start\t$startpos\n";
+                    }
+
+                    # Example: 436  >1  gene
+                    elsif ( $feature->strand eq '-1' ) {
+
+                        print $outfeat join( "\t",
+                            ( ( $feat_end - $contig_start + 1 ) ),
+                            (">1"), $feature->primary_tag ),
+                          "\n";
+                    }
+
+                    for my $tag ( $feature->get_all_tags ) {
+                        for my $value ( $feature->get_tag_values($tag) ) {
+                            print $outfeat "\t\t\t$tag\t$value\n";
+                        }
+                    }
+                }
+
+                # Don't know anything about this feature so skip it
+                else {
+                    print "Skipping feature "
+                      . $locus[0]
+                      . " with primary tag of $primary_tag\n"
+                      if $self->debug;
+                }
+            }
+        }
+        $outfeat->flush();
+    }
+}
+
 
 sub list_primary_tags {
 	my $self = shift;
@@ -1032,12 +1383,23 @@ sub newFeatures {
 	return @{$self->{newFeatures}};
 }
 
+# Example command, 4/2012:
+# tbl2asn -t template -p path_to_files -X C -M n -Z discrep \
+# -j "[organism=Clostridium difficile ABDC] [strain=ABDC] [host=Homo sapiens] [country=Canada: Montreal] \
+# [collection_date=2008] [isolation-source=stool sample] [note=isolated from an outbreak in Montreal] [gcode=11]"
 sub run_tbl2asn {
 	my ($self,$comment,$run) = @_;
-    my $cmd;
 
-	my ($tmplt, $outdir, $tbl2asn, $id) = 
-	  ($self->template, $self->outdir, $self->executable, $self->id);
+    my ( $tmplt, $outdir, $tbl2asn, $id, $gcode, $strain, $organism, $host,
+        $country, $collection_date, $isolation_source, $submission_note )
+      = (
+        $self->template,         $self->outdir,
+        $self->executable,       $self->id,
+        $self->gcode,            $self->strain,
+        $self->organism,         $self->host,
+        $self->country,          $self->collection_date,
+        $self->isolation_source, $self->submission_note
+      );
 
 	if ( $run > 1) {
 		for my $suffix ( qw( val sqn gbf ) ) {
@@ -1046,12 +1408,13 @@ sub run_tbl2asn {
 		system "mv discrp discrp.orig" if ( -e "discrp" );
 	}
 
-	if ( $outdir && $tmplt && $tbl2asn ) {
-		$cmd = "$tbl2asn -s -j [gcode=11] -c b -V vb -Z discrp -t $tmplt.sbt -p $outdir -y \"$comment\"";
-		print "tbl2asn command is \'$cmd\'\n" if $self->debug;
-		`$cmd`;
-		return 1;
-	}
+	my $cmd = "$tbl2asn -s -c b -V vb -Z discrp -t $tmplt.sbt -p $outdir -y \"$comment\" -X C " .
+              "-j \"[organism=$organism] [strain=$strain] [host=$host] [country=$country] [gcode=$gcode] " . 
+              "[collection_date=$collection_date] [isolation-source=$isolation_source] [note=$submission_note]\"";
+	print "tbl2asn command is \'$cmd\'\n" if $self->debug;
+	`$cmd`;
+	return 1;
+	
 	die "Problem running tbl2asn: $cmd";
 }
 
@@ -1323,22 +1686,26 @@ sub write_tbl {
 	my $dir = $self->outdir;
 	my $id = $self->id;
 	my $namemap = $self->namemap;
+    # my $count = 1;
 
-	system "mv $dir/$id.tbl $dir/$id.tbl.orig" if ( -e "$dir/$id.tbl" );
+	`mv $dir/$id.tbl $dir/$id.tbl.orig` if ( -e "$dir/$id.tbl" );
 
-	open MYOUT,">$dir/$id.tbl" or die "Cannot write to $dir/$id.tbl";
+    my $tblfh = FileHandle->new(">$dir/$id.tbl") or die ("Cannot write to file $dir/$id.tbl");
+
 	print "Writing to $dir/$id.tbl\n" if $self->debug;
 
 	for my $contig ( @{$tbl} ) {
 
-		print MYOUT ">Features " . $contig->{contigname} . "\n";
+		#print $tblfh ">Features " . $contig->{contigname} . " Table${count}\n";
+        print $tblfh ">Features " . $contig->{contigname} . "\n";
 
 	 FEAT:
 		for my $feat ( sort sort_by_loc keys %{$contig} ) {
 			next FEAT if ( $feat eq 'contigname' );
-			print MYOUT $feat;
-			print MYOUT $contig->{$feat};
+			print $tblfh $feat;
+			print $tblfh $contig->{$feat};
 		}
+        #$count++;
 	}
 
 	1;
@@ -1589,15 +1956,14 @@ sub create_qual {
 sub create_agp {
     my ( $self, $gbk ) = @_;
     my $taxid    = $self->taxid or die "No taxid found";
-    my $date     = $self->get_date;
-    my $id       = $self->id;
-    my $organism = $self->organism;
-    my $strain   = $self->strain;
     my %frames   = ( '1', '+', '-1', '-' );
 
+    my ($date,$id,$organism,$strain) = 
+    ($self->get_date,$self->id,$self->organism,$self->strain);
+
 # hack!
-#my @gbks = <*rnammer.out.gbk>;
-#die "No *rnammer.out.gbk file found, can not create an *.agp file" unless ( -e $gbks[0] );
+# my @gbks = <*rnammer.out.gbk>;
+# die "No *rnammer.out.gbk file found, can not create an *.agp file" unless ( -e $gbks[0] );
 
     open MYAPG, ">>$id.agp" or die "Cannot create file $id.agp";
 
@@ -1643,9 +2009,36 @@ sub create_agp {
 
 }
 
+# The *cmt file is a 2 column, tab-delimited file like this:
+# StructuredCommentPrefix ##Genome-Assembly-Data-START##
+# Assembly Method Newbler v. 2.3
+# Assembly Name   Ecoli.str12345_v1.0
+# Genome Coverage 16.3x
+# Sequencing Technology   454 Titanium; PacBio RS
+# StructuredCommentSuffix ##Genome-Assembly-Data-END##
+sub create_cmt {
+    my $self = shift;
+    my ( $method, $name, $coverage, $tech, $id, $outdir ) = (
+        $self->Assembly_Method, $self->Assembly_Name, $self->Genome_Coverage,
+        $self->Sequencing_Technology, $self->id, $self->outdir
+    );
+
+    my $cmtfh  = FileHandle->new(
+        ">$outdir/$id.cmt") or die ("Cannot open file $outdir/$id.cmt for writing");
+
+    my $txt = 'StructuredCommentPrefix ##Genome-Assembly-Data-START##' . "\n" .
+              "Assembly Method\t$method\n" .
+              "Assembly Name\t$name\n" .
+              "Genome Coverage\t${coverage}x\n" .
+              "Sequencing Technology\t$tech\n" .
+              'StructuredCommentSuffix ##Genome-Assembly-Data-END##';
+
+    print $cmtfh $txt;
+    1;
+}
+
 sub get_date {
 	my $self = shift;
-
 	use Date::Format;
 	return time2str("%d-%B-%Y",time);
 }
@@ -1820,6 +2213,68 @@ sub contigs {
     $self->{'contigs'} = $base if defined $base;
     return $self->{'contigs'};
 }
+
+sub host {
+    my ($self,$base) = @_;
+    $self->{'host'} = $base if defined $base;
+    return $self->{'host'};
+}
+    
+sub country {
+    my ($self,$base) = @_;
+    $self->{'country'} = $base if defined $base;
+    return $self->{'country'};
+}
+
+sub collection_date {
+    my ($self,$base) = @_;
+    $self->{'collection_date'} = $base if defined $base;
+    return $self->{'collection_date'};
+}
+
+sub isolation_source {
+    my ($self,$base) = @_;
+    $self->{'isolation_source'} = $base if defined $base;
+    return $self->{'isolation_source'};
+}
+    
+sub submission_note {
+    my ($self,$base) = @_;
+    $self->{'submission_note'} = $base if defined $base;
+    return $self->{'submission_note'};
+}
+
+sub gcode {
+    my ($self,$base) = @_;
+    $self->{'gcode'} = $base if defined $base;
+    return $self->{'gcode'};
+}
+
+sub Assembly_Name {
+    my ($self,$base) = @_;
+    $self->{'Assembly_Name'} = $base if defined $base;
+    return $self->{'Assembly_Name'} if defined $self->{'Assembly_Name'};
+    '';
+}
+
+sub Genome_Coverage {
+    my ($self,$base) = @_;
+    $self->{'Genome_Coverage'} = $base if defined $base;
+    return $self->{'Genome_Coverage'};
+}
+
+sub Sequencing_Technology {
+    my ($self,$base) = @_;
+    $self->{'Sequencing_Technology'} = $base if defined $base;
+    return $self->{'Sequencing_Technology'};
+}
+
+sub Assembly_Method {
+    my ($self,$base) = @_;
+    $self->{'Assembly_Method'} = $base if defined $base;
+    return $self->{'Assembly_Method'};
+}
+
 
 sub trim {
 	my $str = shift;
