@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-This Diya conf file can be used to take 454 assemblies and a *qual file as input
+This Diya XML file can be used to take 454 assemblies and a *qual file as input
 and output an annotated Genbank file and corresponding ASN.1 that can be submitted to 
 NCBI.
 

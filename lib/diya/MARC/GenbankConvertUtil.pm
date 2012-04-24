@@ -1408,7 +1408,7 @@ sub run_tbl2asn {
 		system "mv discrp discrp.orig" if ( -e "discrp" );
 	}
 
-	my $cmd = "$tbl2asn -s -c b -V vb -Z discrp -t $tmplt.sbt -p $outdir -y \"$comment\" -X C " .
+	my $cmd = "$tbl2asn -t $tmplt.sbt -p $outdir -M n -Z discrp -y \"$comment\" -X C " .
               "-j \"[organism=$organism] [strain=$strain] [host=$host] [country=$country] [gcode=$gcode] " . 
               "[collection_date=$collection_date] [isolation-source=$isolation_source] [note=$submission_note]\"";
 	print "tbl2asn command is \'$cmd\'\n" if $self->debug;
@@ -1876,29 +1876,8 @@ sub edit_asn_file {
 
 sub make_top_comment {
     my $self = shift;
-    my ( $totalLen, $totalReads ) = 0;
 
-    my $readsPerBase = $self->readsPerBase;
-    my $comment      = '';
-
-    if ($readsPerBase) {
-        for my $len ( keys %{$readsPerBase} ) {
-            $totalLen   += $len;
-            $totalReads += ( $len * $readsPerBase->{$len} );
-        }
-
-        $comment = "Genome coverage: "
-          . sprintf( "%.1f", ( $totalReads / $totalLen ) ) . "X";
-    }
-
-    if ( $self->strain !~ /ATCC/ ) {
-        if ($comment) {
-            $comment = "Bacteria available from MARC~" . $comment;
-        }
-        else {
-            $comment = "Bacteria available from MARC";
-        }
-    }
+    my $comment = "Bacteria available from MARC" if ( $self->strain !~ /ATCC/ );
 
     $comment;
 }
@@ -2018,20 +1997,31 @@ sub create_agp {
 # StructuredCommentSuffix ##Genome-Assembly-Data-END##
 sub create_cmt {
     my $self = shift;
-    my ( $method, $name, $coverage, $tech, $id, $outdir ) = (
-        $self->Assembly_Method, $self->Assembly_Name, $self->Genome_Coverage,
-        $self->Sequencing_Technology, $self->id, $self->outdir
+    my ( $method, $name, $coverage, $tech, $id, $outdir, $readsPerBase ) = (
+        $self->Assembly_Method, $self->Assembly_Name,
+        $self->Genome_Coverage, $self->Sequencing_Technology,
+        $self->id,              $self->outdir,
+        $self->readsPerBase
     );
+    my ( $totalLen, $totalReads );
 
-    my $cmtfh  = FileHandle->new(
-        ">$outdir/$id.cmt") or die ("Cannot open file $outdir/$id.cmt for writing");
+    if ($readsPerBase) {
+        for my $len ( keys %{$readsPerBase} ) {
+            $totalLen   += $len;
+            $totalReads += ( $len * $readsPerBase->{$len} );
+        }
+        $coverage = sprintf( "%.1f", ( $totalReads / $totalLen ) );
+    }
 
-    my $txt = 'StructuredCommentPrefix ##Genome-Assembly-Data-START##' . "\n" .
-              "Assembly Method\t$method\n" .
-              "Assembly Name\t$name\n" .
-              "Genome Coverage\t${coverage}x\n" .
+    my $cmtfh = FileHandle->new(">$outdir/$id.cmt")
+      or die("Cannot open file $outdir/$id.cmt for writing");
+
+    my $txt = "StructuredCommentPrefix\t" . '##Genome-Assembly-Data-START##' . "\n" .
+              "Assembly Method\t$method\n";
+    $txt .=   "Assembly Name\t$name\n" if $name;
+    $txt .=   "Genome Coverage\t${coverage}x\n" .
               "Sequencing Technology\t$tech\n" .
-              'StructuredCommentSuffix ##Genome-Assembly-Data-END##';
+              "StructuredCommentSuffix\t" . '##Genome-Assembly-Data-END##';
 
     print $cmtfh $txt;
     1;
