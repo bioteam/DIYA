@@ -51,6 +51,7 @@ use strict;
 use Data::Dumper qw(Dumper);
 use Bio::SeqIO;
 use FileHandle;
+use Date::Format qw(time2str);
 
 my ($spacer_start,    $spacer_end,       $contig_start,
     $contig_end);
@@ -181,8 +182,8 @@ sub fixAndPrint {
             my $fasta_header = $definition;
 
             # Write to fasta file if there's coverage data
-            $fasta_header .= " [note=coverage of this contig is ${avg}X"
-              if $avg;
+            # $fasta_header .= " [note=coverage of this contig is ${avg}X"
+            #  if $avg;
 
             my $str = $seq->subseq( $contig_start, $contig_end );
             my $featureSeq = Bio::Seq->new(
@@ -560,8 +561,9 @@ sub fix_feature {
             $feat->add_tag_value( 'note', "Anticodon is $codon[0]" );
         }
 
-        # Remove AminoAcid tag
+        # Remove AminoAcid and Name tags
         $feat->remove_tag("AminoAcid") if $feat->has_tag('AminoAcid');
+        $feat->remove_tag("Name") if $feat->has_tag('Name');
 
         # Remove 'ID', which will be added back as 'product'
         if ( $feat->has_tag("ID") ) {
@@ -1408,8 +1410,11 @@ sub run_tbl2asn {
 		system "mv discrp discrp.orig" if ( -e "discrp" );
 	}
 
+    # Fix country and city
+    $country =~ s/:\s*/: /;
+
 	my $cmd = "$tbl2asn -t $tmplt.sbt -p $outdir -M n -Z discrp -y \"$comment\" -X C " .
-              "-j \"[organism=$organism] [strain=$strain] [host=$host] [country=$country] [gcode=$gcode] " . 
+              "-j \"[organism=$organism $strain] [strain=$strain] [host=$host] [country=$country] [gcode=$gcode] " . 
               "[collection_date=$collection_date] [isolation-source=$isolation_source] [note=$submission_note]\"";
 	print "tbl2asn command is \'$cmd\'\n" if $self->debug;
 	`$cmd`;
@@ -2017,7 +2022,7 @@ sub create_cmt {
       or die("Cannot open file $outdir/$id.cmt for writing");
 
     my $txt = "StructuredCommentPrefix\t" . '##Genome-Assembly-Data-START##' . "\n" .
-              "Assembly Method\t$method\n";
+              "Assembly Method\t$method v 1.0\n";
     $txt .=   "Assembly Name\t$name\n" if $name;
     $txt .=   "Genome Coverage\t${coverage}x\n" .
               "Sequencing Technology\t$tech\n" .
@@ -2029,7 +2034,6 @@ sub create_cmt {
 
 sub get_date {
 	my $self = shift;
-	use Date::Format;
 	return time2str("%d-%B-%Y",time);
 }
 
@@ -2216,8 +2220,11 @@ sub country {
     return $self->{'country'};
 }
 
+# 20-May-2012
 sub collection_date {
     my ($self,$base) = @_;
+    # @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+    # printf "%4d-%s-%02d\n", $d[5]+1900, $mon[$d[4]], $d[3];
     $self->{'collection_date'} = $base if defined $base;
     return $self->{'collection_date'};
 }

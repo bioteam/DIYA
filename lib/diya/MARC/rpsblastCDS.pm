@@ -142,7 +142,7 @@ sub parse {
 
 					$tags->{'score'} = $hit->significance;
 					$tags->{'rps_gi'} = $cid;
-					$tags->{'inference'} = "protein motif:RPS-BLAST:2.2.21";
+					$tags->{'inference'} = "alignment:RPS-BLAST:2.2.21";
 
 					# set cluster
 					$tags->{'cluster'} = $clustermap->{$cid}->{'entry'};

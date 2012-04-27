@@ -103,7 +103,7 @@ sub parse {
 				( $tags{locus_tag}, $tags{score}, $tags{product} ) = 
 				  ($locus[0], $hsp->bits, $hit->description);
 
-				$tags{inference} = "similar to AA sequence:$program:$version";
+				$tags{inference} = "alignment:$program:$version";
 
 				my $CDSfeat = new Bio::SeqFeature::Generic(-primary => 'CDS',
 														   -start	=> $feat->start,
