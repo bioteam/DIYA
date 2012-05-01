@@ -34,23 +34,20 @@ use warnings;
 use Bio::SeqIO;
 use Getopt::Long;
 
-my ($id,$outdir,$count,$len, $page);
+my ($id,$outdir,$count,$len, $page, $name, $assembly);
 my $loadscript = '/Jake/apps/bin/DIYAAnnotationResult.php';
 
 GetOptions( "i=s" => \$id,
             "d=s" => \$outdir ,
-	    "a=s"=>\\$page
-	    
+	    "m=s"=>\$page,
+	    "s=s"=>\$assembly	    
 	    );
 
 die "Need DIYA id, and output directory name" 
   unless ( $outdir && $id );
 
 my $ncbidir = "${id}-gbsubmit.out.d";
-if (!$page)
-{
-    $page    = "${id}_Annotation";
-}
+ $name="${id}_Annotation";
 my $gbk     = "$ncbidir/$id.gbf";
 
 my $in = Bio::SeqIO->new( -file => $gbk,
@@ -61,9 +58,10 @@ while ( my $seq = $in->next_seq ) {
     $len += $seq->length;
 }
 
-my $cmd = "$loadscript -g $ncbidir -o $outdir -c $count -l $len -n $page -i $outdir/$id.fna";
+my $cmd = "$loadscript -g $ncbidir -o $outdir -c $count -l $len -n '$name' -m '$page' -a '$assembly' -i '$outdir/$id.fna'";
 print "$0 loading command is $cmd\n";
-# `$cmd`;
+my $output =`$cmd`;
+print $output;
 
 __END__
 
