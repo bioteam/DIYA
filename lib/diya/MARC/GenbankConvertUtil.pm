@@ -1410,12 +1410,18 @@ sub run_tbl2asn {
 		system "mv discrp discrp.orig" if ( -e "discrp" );
 	}
 
-    # Fix country and city
-    $country =~ s/:\s*/: /;
+  # Fix country and city
+  $country =~ s/:\s*/: /;
+
+  my $jstring = "[organism=$organism $strain] [strain=$strain] [gcode=$gcode]";
+  $jstring   .= " [host=$host]" if $host;
+  $jstring   .= " [country=$country]" if $country;
+  $jstring   .= " [collection_date=$collection_date]" if $collection_date;
+  $jstring   .= " [isolation-source=$isolation_source]" if $isolation_source;
+  $jstring   .= " [note=$submission_note]" if $submission_note;
 
 	my $cmd = "$tbl2asn -t $tmplt.sbt -p $outdir -M n -Z discrp -y \"$comment\" -X C " .
-              "-j \"[organism=$organism $strain] [strain=$strain] [host=$host] [country=$country] [gcode=$gcode] " . 
-              "[collection_date=$collection_date] [isolation-source=$isolation_source] [note=$submission_note]\"";
+              "-j \"$jstring\"";
 	print "tbl2asn command is \'$cmd\'\n" if $self->debug;
 	`$cmd`;
 	return 1;
