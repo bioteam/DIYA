@@ -14,8 +14,8 @@ that NCBI wants.
 
 Example:
 
-scripts/gbconvert.pl -template examples/template -e /usr/local/bin/tbl2asn -a testlocus \
--t 123 -host "Homo sapiens" -co Montreal:Canada -cd 20-05-2012 -is "isolation source" \
+scripts/gbconvert.pl -template examples/template -a testlocus \
+-t 123 -host "Homo sapiens" -co "Montreal: Canada" -cd 20-May-2012 -is "isolation source" \
 -sn "test submission note" -gc 12 -st 'sequencing tech' -as "assembly method" \
 t/data/2012_03_11_14_27_03-MARC::cmsearch.out.gbk
 
@@ -39,7 +39,7 @@ my (
 
 # Defaults
 my $template        = 'template';
-my $executable      = '/usr/local/bin/tbl2asn';
+my $executable      = '/Jake/apps/bin/tbl2asn';
 my $gcode           = '11';
 my $Assembly_Method = '454 Titanium; PacBio RS';
 my $Genome_Coverage = '12';
