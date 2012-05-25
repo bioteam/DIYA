@@ -14,9 +14,9 @@ that NCBI wants.
 
 Example:
 
-scripts/gbconvert.pl -template examples/template -a testlocus \
--t 123 -host "Homo sapiens" -co "Montreal: Canada" -cd 20-May-2012 -is "isolation source" \
--sn "test submission note" -gc 12 -st 'sequencing tech' -as "assembly method" \
+/Jake/apps/DIYA/scripts/gbconvert.pl -a WQG -t 47735 -host 'Bos taurus' \
+-co 'United States:NE' -cd 10-Nov-2010 -is 'lung' -gc 12 -as 'Celera 7.0' \
+-sn 'Isolated from cattle lung, post-mortem'  -st '454 Titanium; PacBio RS' \
 t/data/2012_03_11_14_27_03-MARC::cmsearch.out.gbk
 
 =cut
@@ -38,7 +38,7 @@ my (
 );
 
 # Defaults
-my $template        = 'template';
+my $template        = '/Jake/apps/DIYA/template';
 my $executable      = '/Jake/apps/bin/tbl2asn';
 my $gcode           = '11';
 my $Assembly_Method = '454 Titanium; PacBio RS';
@@ -77,9 +77,7 @@ die "Country is required"               if ( ! $country );
 die "Collection date is required"       if ( ! $collection_date );
 die "Isolation source is required"      if ( ! $isolation_source );
 die "Submission note is required"       if ( ! $submission_note );
-die "Genome Coverage is required"       if ( ! $Genome_Coverage );
 die "Sequencing Technology is required" if ( ! $Sequencing_Technology );
-die "Assembly method is required"       if ( ! $Assembly_Method );
 
 my $parser = diya::MARC::GenbankConvertUtil->new(
     -template              => $template,
