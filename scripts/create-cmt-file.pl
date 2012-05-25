@@ -47,10 +47,18 @@ else {
     die $response->status_line;
 }
 
-my ($data) = $html =~ /(START##.+##MIGS)/;
+my ($data) = $html =~ /START##\n(.+)\n##MIGS/s;
+my (@lines) = $data =~ /(.+)\n/g;
+my $text = "StructuredCommentPrefix ##MIGS-Data-START##\n";
 
-print "Done\n";
+for my $line ( @lines ) {
+    $line =~ /^(\S+)\s+::\s+(.+)/;
+    $text .= "$1\t$2\n";
+}
 
+open MYIN,">$id.cmt";
+print MYIN $text;
+print "Done with $0\n";
 
 __END__
 
@@ -72,3 +80,29 @@ submitted_to_insdc  ::  N
 ##MIGS-Data-END##
 </pre>
 
+Example *cmt file:
+
+StructuredCommentPrefix ##MIGS-Data-START##
+investigation_type bacteria_archaea
+project_name Bibersteinia trehalosi 192
+collection_date 2008-08-09
+lat_lon 35.64N 56E
+depth 10cm
+alt_elev 100m
+country     Canada
+environment    Soil
+num_replicons  4
+ref_biomaterial Not available
+biotic_relationship     Free living
+trophic_level  autotroph
+rel_to_oxygen  Facultative
+isol_growth_condt      Not available
+sequencing_meth pyrosequencing
+assembly Newbler v. 2.3 (pre-release)
+finishing strategy draft, 15x, 26 contigs
+StructuredCommentPrefix ##Genome-Assembly-Data-START##
+Assembly Method Celera assembler v. 6.1
+Assembly Name CA_gls454027
+Genome Coverage 16.3x
+Sequencing Technology 454 Paired-End Titanium
+StructuredCommentSuffix ##Genome-Assembly-Data-END##
