@@ -2014,7 +2014,7 @@ sub create_cmt {
         $self->id,              $self->outdir,
         $self->readsPerBase
     );
-    my ( $totalLen, $totalReads );
+    my ( $totalLen, $totalReads, $cmtfh );
 
     if ($readsPerBase) {
         for my $len ( keys %{$readsPerBase} ) {
@@ -2024,8 +2024,13 @@ sub create_cmt {
         $coverage = sprintf( "%.1f", ( $totalReads / $totalLen ) );
     }
 
-    my $cmtfh = FileHandle->new(">$outdir/$id.cmt")
-      or die("Cannot open file $outdir/$id.cmt for writing");
+    if ( -e "$outdir/$id.cmt" ) {
+      $cmtfh = FileHandle->new(">>$outdir/$id.cmt")
+        or die("Cannot open file $outdir/$id.cmt for appending");
+    } else {
+      $cmtfh = FileHandle->new(">$outdir/$id.cmt")
+        or die("Cannot open file $outdir/$id.cmt for writing");      
+    }
 
     my $txt = "StructuredCommentPrefix\t" . '##Genome-Assembly-Data-START##' . "\n" .
               "Assembly Method\t$method v 1.0\n";

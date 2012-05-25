@@ -56,7 +56,7 @@ for my $line ( @lines ) {
     $text .= "$1\t$2\n";
 }
 
-open MYIN,">$id.cmt";
+open MYIN,">$ncbidir/$file";
 print MYIN $text;
 print "Done with $0\n";
 
