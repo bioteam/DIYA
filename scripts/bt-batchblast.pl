@@ -133,7 +133,7 @@ close OUTPUT;
 
 my $finishUp =
 "bsub -J \"$jobname.cleanup\" -o batchblast.stdout -e batchblast.stderr -w $jobname ";
-if ($sync) { $finishUp .= "-K "; }
+$finishUp .= "-K " if $sync;
 $finishUp .= " < $cleanfn";
 system($finishUp);
 

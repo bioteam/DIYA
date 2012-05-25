@@ -41,7 +41,7 @@ GetOptions(
 );
 my $more_args = join( " ", @ARGV );
 
-# LSB_JOBINDEX == SGE_TASK_ID
+# LSB_JOBINDEX is used in the "job array" context
 $id = $ENV{LSB_JOBINDEX} unless $id;
 
 $tmp_output = sprintf( "/tmp/blastall.%05d.tmp", $$ );
@@ -95,6 +95,7 @@ my $out = Bio::SeqIO->new(
     -format => 'Fasta',
     -fh     => \*QUERY
 );
+
 my $counter   = 1;
 my $seq_count = 1;
 while ( my $seq = $queryIO->next_seq() ) {

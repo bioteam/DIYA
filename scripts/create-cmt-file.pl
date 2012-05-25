@@ -27,6 +27,7 @@ use warnings;
 use Getopt::Long;
 use LWP::UserAgent;
 use HTML::Parser;
+use XML::Simple;
 
 my ($id,$html);
 my $url = 'http://moose/minilims/plugins/MIGS/export_mims.php?instance';
@@ -48,7 +49,9 @@ else {
     die $response->status_line;
 }
 
+my $data = XMLin($html);
 
+print "Done\n";
 
 
 __END__
