@@ -26,8 +26,6 @@ use strict;
 use warnings;
 use Getopt::Long;
 use LWP::UserAgent;
-use HTML::Parser;
-use XML::Simple;
 
 my ($id,$html);
 my $url = 'http://moose/minilims/plugins/MIGS/export_mims.php?instance';
@@ -49,10 +47,28 @@ else {
     die $response->status_line;
 }
 
-my $data = XMLin($html);
+my ($data) = $html =~ /(START##.+##MIGS)/;
 
 print "Done\n";
 
 
 __END__
+
+<pre>
+##MIGS-Data-START##
+biome               ::  organ
+biotic_relationship ::  commensal
+collection_date     ::  2010-10-10
+estimated_size      ::  2500000
+geo_loc_name        ::  United_States:Nebraska
+health_disease_stat ::  dead
+investigation_type  ::  bacteria_archaea
+material            ::  mucus
+pathogenicity       ::  animal
+ploidy              ::  haploid
+samp_collect_device ::  swab
+specific_host       ::  9913
+submitted_to_insdc  ::  N
+##MIGS-Data-END##
+</pre>
 
