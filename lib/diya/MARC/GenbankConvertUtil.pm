@@ -1044,6 +1044,7 @@ sub remove_trailing {
 
     # Remove meaningless trailing comments
     my @strs = (
+',\s+PFL_\d+',
 '\s+and\sother\spencillin-binding\sproteins?',
 '\s+\(Insoluble\sfraction\)',
 '\s+\(amino terminus\)',
@@ -1149,6 +1150,9 @@ sub is_hypothetical {
 	# e.g. 'Lin0391 protein' ^Lin\d+ protein \(Lin\d+ protein\)$/ 
 
 	my @strs = (
+'^RHS$',
+'^protein HIB_\d+$',
+'^Ybl\d+$',
 '^(similar|similarities)\s+(to|with)\s+(unknown|putative|probable|C-terminal|N-terminal)',
 'polypeptide \([a-z]+\)\sencoded\sby\splasmid',
 '^Possible\speptide\santibiotic',
@@ -1843,7 +1847,7 @@ sub outdir {
 	if ($id) {
 		# Make output directory
 		my $outdir = "$id-gbsubmit.out.d";
-		`rm -rf $outdir; mkdir -p $outdir`;
+		`mkdir -p $outdir` if ( ! -d $outdir );
 		$self->{outdir} = $outdir;
 	}
 	return $self->{outdir} if $self->{outdir};

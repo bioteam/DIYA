@@ -20,7 +20,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
 
 1. copy all relevant files to a working directory
 2. run glimmer3
-3. run blastp of predicted peptides against UniRef50 (LSF/MPI)
+3. run blastx of predicted peptides against UniRef50 (LSF/MPI)
 4. run rpsblast of predicted peptides against CDD (LSF/MPI)
 5. run tRNAscanSE
 6. run rnammer
@@ -35,8 +35,8 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
 <conf>
   <order>
    <names>assemble_pseudocontig make-single-fa MARC::glimmer3 extractCDS
-   MARC::blastpCDS MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer MARC::CRT
-   MARC::phobos MARC::cmsearch gbconvert create-ML-page cleanup
+   MARC::blastxCDS MARC::rpsblastCDS MARC::tRNAscanSE MARC::rnammer MARC::CRT
+   MARC::phobos MARC::cmsearch create-cmt-file gbconvert create-ML-page cleanup
    </names> 
   </order>
     <script>
@@ -72,7 +72,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
     <inputformat></inputformat>
   </script>
   <parser>
-    <name>MARC::blastpCDS</name>
+    <name>MARC::blastxCDS</name>
     <executable>bt-batchblast.pl</executable>
    <command>-i INPUTFILE -p blastx -d MYUNIREFD -o OUTPUTFILE -e .001 -v 1 -b 1 --sync</command>
     <home>/Jake/apps/DIYA/scripts</home>
@@ -144,9 +144,17 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
     <inputfrom></inputfrom>
   </parser>
   <script>
+    <name>create-cmt-file</name>
+    <executable>create-cmt-file.pl</executable>
+    <command>-i MYSEQID</command>
+    <home>/Jake/apps/DIYA/scripts</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </script>
+  <script>
     <name>gbconvert</name>
     <executable>gbconvert.pl</executable>
-    <command>-t MYTAXID -a testlocus -host "MYHOST" -co "MYCOUNTRY" -cd MYCOLLECTION_DATE -is "MYISOLATION_SOURCE" -sn "MYNOTE" -gc MYGENOME_COVERAGE -st "MYSEQUENCING_TECHNOLOGY" -as "MYASSEMBLY_METHOD" INPUTFILE.gbk</command>
+    <command>-t MYTAXID -a MYLOCUS -host "MYHOST" -co "MYCOUNTRY" -cd MYCOLLECTION_DATE -is "MYISOLATION_SOURCE" -sn "MYNOTE" -gc MYGENOME_COVERAGE -st "MYSEQUENCING_TECHNOLOGY" -as "MYASSEMBLY_METHOD" INPUTFILE.gbk</command>
     <home>/Jake/apps/DIYA/scripts</home>
     <inputformat></inputformat>
     <inputfrom>MARC::cmsearch</inputfrom>

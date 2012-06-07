@@ -52,10 +52,12 @@ my (@lines) = $data =~ /(.+)\n/g;
 my $text = "StructuredCommentPrefix ##MIGS-Data-START##\n";
 
 for my $line ( @lines ) {
-    $line =~ /^(\S+)\s+::\s+(.+)/;
-    $text .= "$1\t$2\n";
+    my ($key,$val) = $line =~ /^(\S+)\s+::\s+(.+)/;
+    $val =~ s/_/ /g;
+    $text .= "$key\t$val\n";
 }
 
+`mkdir $ncbidir` if ( ! -d $ncbidir );
 open MYIN,">$ncbidir/$file";
 print MYIN $text;
 print "Done with $0\n";

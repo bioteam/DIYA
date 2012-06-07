@@ -1,12 +1,11 @@
 #!/usr/bin/perl -w
-# $Id: list_primary_tags.pl 235 2009-04-17 19:28:38Z briano $
 
 use strict;
 
-use diya::GenbankConvertUtil;
+use diya::MARC::GenbankConvertUtil;
 
 my $file = shift or die "No file given";
 
-my $gb = diya::GenbankConvertUtil->new(-file => $file);
+my $gb = diya::MARC::GenbankConvertUtil->new(-file => $file);
 
 $gb->list_primary_tags;
