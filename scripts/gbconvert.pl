@@ -7,8 +7,8 @@ gbconvert.pl
 =head1 DESCRIPTION
 
 Script to create the tabular and fasta files required by the NCBI
-application tbl2asn, then run tbl2asn to create the ASN.1 file 
-that NCBI wants.
+application tbl2asn, then run tbl2asn to create the files 
+that NCBI Genome wants.
 
 =head1 USAGE
 
@@ -16,7 +16,7 @@ Example:
 
 /Jake/apps/DIYA/scripts/gbconvert.pl -a WQG -t 47735 -host 'Bos taurus' \
 -co 'United States:NE' -cd 10-Nov-2010 -is 'lung' -gc 12 -as 'Celera 7.0' \
--sn 'Isolated from cattle lung, post-mortem'  -st '454 Titanium; PacBio RS' \
+-sn 'Isolated from cattle lung, post-mortem' -st '454 Titanium, PacBio RS' \
 t/data/2012_03_11_14_27_03-MARC::cmsearch.out.gbk
 
 =cut
@@ -41,7 +41,7 @@ my (
 my $template        = '/Jake/apps/DIYA/template';
 my $executable      = '/Jake/apps/bin/tbl2asn';
 my $gcode           = '11';
-my $Assembly_Method = '454 Titanium; PacBio RS';
+my $Assembly_Method = '454 Titanium, PacBio RS';
 my $Genome_Coverage = '12';
 
 GetOptions(

@@ -22,10 +22,11 @@ use strict;
 use Getopt::Long;
 use Bio::SeqIO;
 use File::Basename;
+use POSIX;
 
 $ENV{BLASTMAT} = "/Jake/apps/ncbi/data/" unless (defined($ENV{BLASTMAT}));
 
-my ($query, $id, $blast_output, $db, $tmp_output, $localdata);
+my ($query, $id, $blast_output, $db, $localdata);
 my $chunk_size = 1;
 my $bindir     = '/Jake/apps/bin';
 
@@ -42,7 +43,8 @@ my $more_args = join(" ", @ARGV);
 # LSB_JOBINDEX == SGE_TASK_ID
 $id = $ENV{LSB_JOBINDEX} unless $id;
 
-$tmp_output= sprintf("/tmp/blastall.%05d.tmp", $$);
+my $timestamp = strftime("%Y_%m_%d_%H_%M_%S", localtime);
+my $tmp_output = "/tmp/rpsblast-${timestamp}.tmp";
 #
 # Fountain of debugging info
 #
@@ -117,6 +119,6 @@ print STDERR `$cmd`;
 #
 # Clean up after ourselves.
 #
-unlink($query_fn);
-unlink($tmp_output);
+system("rm -f $query_fn");
+system("rm -f $tmp_output");
 

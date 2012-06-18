@@ -95,27 +95,27 @@ sub parse {
 }
 
 sub parse_phobos {
-	my $file = shift;
-	my ($txt,$version) = read_file($file);
-	my @features;
-
+    my $file = shift;
+    my ($txt,$version) = read_file($file);
+    my @features;
 # contig00007	Phobos	tandem-repeat	8849	8866	100.00	.	.	Name="repeat_region 8849-8
 # 866 unit_size 9 repeat_number 2.000 perfection 100.000 unit ATCGCCGCC"
 
-	while ( $txt =~ /^\S+\s+Phobos\s+tandem-repeat\s+(\d+)\s+(\d+)/g ) {
-
-		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
-    		                                    -end         => $2,
-        		                                -strand      => 1,
-        		                                -tag         => {inference => "similar to DNA sequence:phobos:$version",
-        		                                				 rpt_type  => 'tandem' },
-            		                            -primary_tag => 'repeat_region');
-        push @features,$feat;
+    while ( $txt =~ /^\S+\s+Phobos\s+tandem-repeat\s+(\d+)\s+(\d+)/g ) {
+	my $feat = new Bio::SeqFeature::Generic(
+						-start => $1,
+						-end    => $2,
+						-strand => 1,
+						-tag    => {inference => "nucleotide motif:$version",
+							    rpt_type  => 'tandem' },
+						-primary_tag => 'repeat_region'
+						);
+	push @features,$feat;
     }
 
-	return 0 if ( ! @features );
+    return 0 if ( ! @features );
 
-	@features;
+    @features;
 }
 
 sub read_file {

@@ -23,7 +23,7 @@ use Getopt::Long;
 use Bio::SeqIO;
 use File::Basename;
 
-$ENV{BLASTMAT} = "/common/data/blastmat" unless (defined($ENV{BLASTMAT});
+$ENV{BLASTMAT} = "/common/data/blastmat" unless defined($ENV{BLASTMAT});
 
 my ($query, $id, $blast_output, $db, $localdata);
 my $chunk_size = 1;
@@ -41,7 +41,9 @@ my $more_args = join(" ", @ARGV);
 $id = $ENV{SGE_TASK_ID} if ( ! $id );
 $id = 1 if ($id eq "undefined");
 
-my $tmp_output= sprintf("/tmp/blastall.%05d.tmp", $$);
+my $timestamp = strftime("%Y_%m_%d_%H_%M_%S", localtime);
+my $tmp_output= "/tmp/rpsblast-${timestamp}.tmp";
+# my $tmp_output= sprintf("/tmp/rpsblast.%05d.tmp", $$);
 
 #
 # Fountain of debugging info
@@ -123,6 +125,6 @@ print STDERR `$cmd`;
 #
 # Clean up after ourselves.
 #
-unlink($query_fn);
-unlink($tmp_output);
+system("rm -f $query_fn");
+system("rm -f $tmp_output");
 
