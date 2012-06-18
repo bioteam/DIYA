@@ -1468,7 +1468,8 @@ sub get_dup_rnas {
 	my $gene1;
 
 	my @overlapgenes   = $self->get_from_discrp('OVERLAPPING_GENES');
-  push @overlapgenes, $self->get_from_discrp('FIND_OVERLAPPED_GENES');
+	push @overlapgenes, $self->get_from_discrp('FIND_OVERLAPPED_GENES');
+	print "Overlapping genes: @overlapgenes\n" if $self->debug;
 
 	$gene1 = shift @overlapgenes;
 

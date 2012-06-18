@@ -154,7 +154,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
   <script>
     <name>gbconvert</name>
     <executable>gbconvert.pl</executable>
-    <command>-t MYTAXID -a MYLOCUS -host "MYHOST" -co "MYCOUNTRY" -cd MYCOLLECTION_DATE -is "MYISOLATION_SOURCE" -sn "MYNOTE" -gc MYGENOME_COVERAGE -st "MYSEQUENCING_TECHNOLOGY" -as "MYASSEMBLY_METHOD" INPUTFILE.gbk</command>
+    <command>-debug -t MYTAXID -a MYLOCUS -host "MYHOST" -co "MYCOUNTRY" -cd MYCOLLECTION_DATE -is "MYISOLATION_SOURCE" -sn "MYNOTE" -gc MYGENOME_COVERAGE -st "MYSEQUENCING_TECHNOLOGY" -as "MYASSEMBLY_METHOD" INPUTFILE.gbk</command>
     <home>/Jake/apps/DIYA/scripts</home>
     <inputformat></inputformat>
     <inputfrom>MARC::cmsearch</inputfrom>
