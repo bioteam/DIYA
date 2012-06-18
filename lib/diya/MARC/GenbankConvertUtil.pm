@@ -1457,13 +1457,18 @@ sub fix_discrp {
 # DiscRep:OVERLAPPING_GENES::2 genes overlap another gene on the same strand.
 # Gene    ykris_r40       lcl|contig00434:49-1579 ykris_r40
 # Gene    ykris_r30       lcl|contig00434:1101->1648      ykris_r30
+# or:
+# DiscRep_ALL:FIND_OVERLAPPED_GENES::6 genes completely overlapped by other genes
+# WGQ:Gene        WGQ_50  lcl|ctg7180000000008:7373-7807  WGQ_50
+# WGQ:Gene        WGQ_240 lcl|ctg7180000000008:33916-34350        WGQ_240
 sub get_dup_rnas {
 	my $self = shift;
 	my @todelete = ();
 	my $id = $self->id;
 	my $gene1;
 
-	my @overlapgenes = $self->get_from_discrp('OVERLAPPING_GENES');
+	my @overlapgenes   = $self->get_from_discrp('OVERLAPPING_GENES');
+  push @overlapgenes, $self->get_from_discrp('FIND_OVERLAPPED_GENES');
 
 	$gene1 = shift @overlapgenes;
 
@@ -1471,11 +1476,11 @@ sub get_dup_rnas {
 
 		if ( $gene1 =~ /_r\d+/ && $gene2 =~ /_r\d+/ ) {
 
-			my ($g1start,$g1end) = $gene1 =~ /contig[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-			my ($g2start,$g2end) = $gene2 =~ /contig[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+			my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+			my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
 
-			my ($g1ctg) = $gene1 =~ /(contig[.\d]+)/;
-			my ($g2ctg) = $gene2 =~ /(contig[\d.]+)/;
+			my ($g1ctg) = $gene1 =~ /((?:contig|ctg)[.\d]+)/;
+			my ($g2ctg) = $gene2 =~ /((?:contig|ctg)[\d.]+)/;
 
 			# Remove identical rRNAs and rRNAs inside rRNAs
 			if ( $g1start ==  $g2start && $g1end == $g2end && $g1ctg eq $g2ctg ) {
