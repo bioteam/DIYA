@@ -1468,7 +1468,7 @@ sub get_dup_rnas {
 	my $gene1;
 
 	my @overlapgenes   = $self->get_from_discrp('OVERLAPPING_GENES');
-	push @overlapgenes, $self->get_from_discrp('FIND_OVERLAPPED_GENES');
+	# push @overlapgenes, $self->get_from_discrp('FIND_OVERLAPPED_GENES');
 	print "Overlapping genes: @overlapgenes\n" if $self->debug;
 
 	$gene1 = shift @overlapgenes;
@@ -1598,6 +1598,14 @@ sub get_gene_overlaps {
 # DiscRep_SUB:RNA_CDS_OVERLAP::5 coding regions completely contain RNAs
 # bcere0010:CDS hypothetical proteinlcl|contig00078:84-557 bcere0010_4450
 # bcere0010:rRNA 5S ribosomal RNAlcl|contig00078:89-203 bcere0010_r40
+#
+# DiscRep_ALL:RNA_CDS_OVERLAP::7 coding regions overlap RNA features
+# FATAL: DiscRep_SUB:RNA_CDS_OVERLAP::7 coding regions are completely contained in RNAs
+# WGQ:CDS Cell wall-associated hydrolase  lcl|ctg7180000000008:7373-7807  WGQ_50
+# WGQ:rRNA        23S ribosomal RNA       lcl|ctg7180000000008:7227-10119 WGQ_r140
+# WGQ:CDS Cell wall-associated hydrolase  lcl|ctg7180000000008:33916-34350        WGQ_240
+# WGQ:rRNA        23S ribosomal RNA       lcl|ctg7180000000008:33770-36662        WGQ_r100
+
 sub get_rna_overlaps {
 	my $self = shift;
 	my @todelete = ();
@@ -1605,6 +1613,7 @@ sub get_rna_overlaps {
 	my $id = $self->id;
 
 	my @overlaps = $self->get_from_discrp('RNA_CDS_OVERLAP');
+  print "RNA-CDS overlaps: @overlaps" if $self->debug;
 
 	$gene1 = shift @overlaps;
 
