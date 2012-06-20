@@ -20,6 +20,10 @@ using that information.
     <inputfrom></inputfrom>
   </script>
 
+=head2 Example URL
+
+http://moose/minilims/plugins/MIGS/export_mims.php?instance=Bibersteinia_trehalsoi_192_lung_swab
+
 =cut
 
 use strict;
@@ -27,23 +31,23 @@ use warnings;
 use Getopt::Long;
 use LWP::UserAgent;
 
-my ($id,$html);
+my ($id,$html,$strain);
 my $url = 'http://moose/minilims/plugins/MIGS/export_mims.php?instance';
 
-GetOptions( "i=s" => \$id );
+GetOptions( "i=s" => \$id, "s=s" => \$strain );
 
-die "Need DIYA id" unless ($id);
+die "Need DIYA id and strain" if ( ! $id || ! $strain );
 
+$strain     =~ s/\s+/_/g;
 my $ncbidir = "${id}-gbsubmit.out.d";
 my $file    = "${id}.cmt";
 my $ua = LWP::UserAgent->new;
 
-my $response = $ua->get("$url=$id");
+my $response = $ua->get("$url=$strain");
 
 if ( $response->is_success ) {
     $html = $response->decoded_content;
-}
-else {
+} else {
     die $response->status_line;
 }
 
@@ -56,6 +60,8 @@ for my $line ( @lines ) {
     $val =~ s/_/ /g;
     $text .= "$key\t$val\n";
 }
+
+$text .= "StructuredCommentPrefix ##MIGS-Data-END##\n";
 
 `mkdir $ncbidir` if ( ! -d $ncbidir );
 open MYIN,">$ncbidir/$file";

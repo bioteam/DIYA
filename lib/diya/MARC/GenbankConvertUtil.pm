@@ -256,7 +256,6 @@ sub fixAndPrint {
                       if ( $feat_end > $self->lastBase );
                 }
 
-                #
                 elsif ($feat_start >= $contig_start
                     && $feat_end > $contig_end )
                 {
@@ -419,7 +418,6 @@ sub fixAndPrint {
     }
 }
 
-
 sub list_primary_tags {
 	my $self = shift;
 	my $file = $self->{file};
@@ -461,6 +459,8 @@ sub fix_feature {
                 }
             }
 
+	    print "Product name before correction: $product\n" if $self->debug;
+
             $product = trim($product);
 
             ( $product, $feat ) = fix_uniref( $product, $feat );
@@ -490,6 +490,8 @@ sub fix_feature {
 
             $product = remove_loci($product);
 
+	    $product = remove_trailing($product);
+
             ( $product, $feat ) = remove_semicolon( $product, $feat );
 
             $feat = edit_note($feat);
@@ -497,11 +499,13 @@ sub fix_feature {
             # Finally add it back
             $feat->add_tag_value( 'product', $product );
 
+	    print "Product name after correction: $product\n" if $self->debug;
         }
         else {
             # If there is no 'product' then it's a 'hypothetical protein'
             $feat->add_tag_value( 'product', 'hypothetical protein' );
         }
+
 
         # Change locus_tag to protein_id
         if ( $feat->has_tag('locus_tag') ) {
@@ -796,6 +800,7 @@ sub correct_spelling {
     my $product = shift;
 
 my @strs = (
+'Lipoprotein_5', 'Lipoprotein 5',
 'Catabolite protein activator', 'catabolite protein activator',
 'Accessory protein regulator ([A-Z])', 'accessory protein regulator $1',
 'Penicillin V acylase\. Cysteine peptidase\.', 'penicillin V acylase; cysteine peptidase;',
@@ -1044,6 +1049,8 @@ sub remove_trailing {
 
     # Remove meaningless trailing comments
     my @strs = (
+', PFL_4704',
+' of prophage CP-933K',
 ',\s+PFL_\d+',
 '\s+and\sother\spencillin-binding\sproteins?',
 '\s+\(Insoluble\sfraction\)',
@@ -1135,7 +1142,7 @@ sub remove_trailing {
 );
 
     for my $str (@strs) {
-        $product =~ s/$str\s*$//i;
+        $product =~ s/$str$//i;
     }
 
     $product;
@@ -1424,8 +1431,8 @@ sub run_tbl2asn {
   $jstring   .= " [isolation-source=$isolation_source]" if $isolation_source;
   $jstring   .= " [note=$submission_note]" if $submission_note;
 
-	my $cmd = "$tbl2asn -t $tmplt.sbt -p $outdir -M n -Z discrp -y \"$comment\" -X C -V b -w $outdir/$id.cmt " .
-              "-j \"$jstring\"";
+	my $cmd = "$tbl2asn -t $tmplt.sbt -p $outdir -M n -Z discrp -y \"$comment\" " .
+                  "-X C -V b -w $outdir/$id.cmt -j \"$jstring\"";
 	print "tbl2asn command is \'$cmd\'\n" if $self->debug;
 	`$cmd`;
 	return 1;
@@ -1613,7 +1620,7 @@ sub get_rna_overlaps {
 	my $id = $self->id;
 
 	my @overlaps = $self->get_from_discrp('RNA_CDS_OVERLAP');
-  print "RNA-CDS overlaps: @overlaps" if $self->debug;
+	print "RNA-CDS overlaps:@overlaps\n" if $self->debug;
 
 	$gene1 = shift @overlaps;
 
@@ -1702,7 +1709,7 @@ sub get_from_discrp {
 	while (<MYIN>) {
 		$readflag = 0 if ( /^\n/ || /^\s/ );
 		push @lines,$_ if $readflag;
-		$readflag = 1 if ( /^DiscRep_SUB:$header/ );
+		$readflag = 1 if ( /DiscRep_SUB:$header/ );
 		print "Found header $header in discrp\n" if ($self->debug && $readflag);
 		# Older versions of tbl2asn have a slightly different 'discrp' format
 		# $readflag = 1 if ( /^$header/ );
@@ -2033,6 +2040,8 @@ sub create_cmt {
         $self->id,              $self->outdir,
         $self->readsPerBase
     );
+    $method = trim_comma($method);
+    $tech   = trim_comma($tech);
     my ( $totalLen, $totalReads, $cmtfh );
 
     if ($readsPerBase) {
@@ -2052,7 +2061,7 @@ sub create_cmt {
     }
 
     my $txt = "StructuredCommentPrefix\t" . '##Genome-Assembly-Data-START##' . "\n" .
-              "Assembly Method\t$method v 1.0\n";
+              "Assembly Method\t$method\n";
     $txt .=   "Assembly Name\t$name\n" if $name;
     $txt .=   "Genome Coverage\t${coverage}x\n" .
               "Sequencing Technology\t$tech\n" .
@@ -2065,6 +2074,13 @@ sub create_cmt {
 sub get_date {
 	my $self = shift;
 	return time2str("%d-%B-%Y",time);
+}
+
+sub trim_comma {
+    my $str = shift;
+    $str =~ s/('|")$//;
+    $str =~ s/^('|")//;
+    $str;
 }
 
 sub edit_definition {
@@ -2301,7 +2317,6 @@ sub Assembly_Method {
     $self->{'Assembly_Method'} = $base if defined $base;
     return $self->{'Assembly_Method'};
 }
-
 
 sub trim {
 	my $str = shift;
