@@ -53,7 +53,7 @@ if ( $response->is_success ) {
 
 my ($data) = $html =~ /START##\n(.+)\n##MIGS/s;
 my (@lines) = $data =~ /(.+)\n/g;
-my $text = "StructuredCommentPrefix ##MIGS-Data-START##\n";
+my $text = "StructuredCommentPrefix\t" . '##MIGS-Data-START##' . "\n";
 
 for my $line ( @lines ) {
     my ($key,$val) = $line =~ /^(\S+)\s+::\s+(.+)/;
@@ -61,7 +61,7 @@ for my $line ( @lines ) {
     $text .= "$key\t$val\n";
 }
 
-$text .= "StructuredCommentPrefix ##MIGS-Data-END##\n";
+$text .= "StructuredCommentPrefix\t" . '##MIGS-Data-END##' . "\n";
 
 `mkdir $ncbidir` if ( ! -d $ncbidir );
 open MYIN,">$ncbidir/$file";
