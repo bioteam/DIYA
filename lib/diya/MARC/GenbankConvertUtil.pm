@@ -2034,6 +2034,7 @@ sub create_agp {
 # StructuredCommentSuffix ##Genome-Assembly-Data-END##
 sub create_cmt {
     my $self = shift;
+
     my ( $method, $name, $coverage, $tech, $id, $outdir, $readsPerBase ) = (
         $self->Assembly_Method, $self->Assembly_Name,
         $self->Genome_Coverage, $self->Sequencing_Technology,
@@ -2053,19 +2054,24 @@ sub create_cmt {
     }
 
     if ( -e "$outdir/$id.cmt" ) {
-      $cmtfh = FileHandle->new(">>$outdir/$id.cmt")
-        or die("Cannot open file $outdir/$id.cmt for appending");
-    } else {
-      $cmtfh = FileHandle->new(">$outdir/$id.cmt")
-        or die("Cannot open file $outdir/$id.cmt for writing");      
+        $cmtfh = FileHandle->new(">>$outdir/$id.cmt")
+          or die("Cannot open file $outdir/$id.cmt for appending");
+    }
+    else {
+        $cmtfh = FileHandle->new(">$outdir/$id.cmt")
+          or die("Cannot open file $outdir/$id.cmt for writing");
     }
 
-    my $txt = "StructuredCommentPrefix\t" . '##Genome-Assembly-Data-START##' . "\n" .
-              "Assembly Method\t$method\n";
-    $txt .=   "Assembly Name\t$name\n" if $name;
-    $txt .=   "Genome Coverage\t${coverage}x\n" .
-              "Sequencing Technology\t$tech\n" .
-              "StructuredCommentSuffix\t" . '##Genome-Assembly-Data-END##';
+    my $txt =
+        "StructuredCommentPrefix\t"
+      . '##Genome-Assembly-Data-START##' . "\n"
+      . "Assembly Method\t$method\n";
+    $txt .= "Assembly Name\t$name\n" if $name;
+    $txt .=
+        "Genome Coverage\t${coverage}x\n"
+      . "Sequencing Technology\t$tech\n"
+      . "StructuredCommentSuffix\t"
+      . '##Genome-Assembly-Data-END##';
 
     print $cmtfh $txt;
     1;

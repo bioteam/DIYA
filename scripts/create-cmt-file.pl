@@ -31,8 +31,11 @@ use warnings;
 use Getopt::Long;
 use LWP::UserAgent;
 
-my ($id,$html,$strain);
+my ( $id, $html, $strain );
 my $url = 'http://moose/minilims/plugins/MIGS/export_mims.php?instance';
+# Allowd values in MIGS 3.0
+my @investigationTypes =
+  qw(eukaryote bacteria_archaea plasmid virus organelle metagenome miens-survey miens-culture);
 
 GetOptions( "i=s" => \$id, "s=s" => \$strain );
 
@@ -58,6 +61,7 @@ my $text = "StructuredCommentPrefix\t" . '##MIGS:3.0-Data-START##' . "\n";
 for my $line ( @lines ) {
     my ($key,$val) = $line =~ /^(\S+)\s+::\s+(.+)/;
     $val =~ s/_/ /g;
+    $val =~ s/\s+/_/ if ( $key eq 'investigation_type' );
     $text .= "$key\t$val\n";
 }
 
