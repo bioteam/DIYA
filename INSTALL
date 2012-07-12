@@ -33,7 +33,7 @@ file is all the *bcp file in the CLUSTERS directory concatenated together.
 The file cddid_all.tbl can be found at ftp://ftp.ncbi.nih.gov/pub/mmdb/cdd/.
 
 
-Quick Install
+Install
 
 1. Install all the required Perl modules and any suggested software
    and databases
