@@ -8,7 +8,7 @@ Required Perl modules (available from CPAN)
 	* XML::Simple
 	* File::Basename
 
-Linux and Mac OS X users should be able to use yum or fink to install Bioperl.
+Linux and Mac OS X users may be able to use yum or fink to install Bioperl.
 
 Suggested software, these are the applications used by the annotation
 pipelines in the examples/ directory.
@@ -33,7 +33,7 @@ file is all the *bcp file in the CLUSTERS directory concatenated together.
 The file cddid_all.tbl can be found at ftp://ftp.ncbi.nih.gov/pub/mmdb/cdd/.
 
 
-Quick Install
+Install
 
 1. Install all the required Perl modules and any suggested software
    and databases
