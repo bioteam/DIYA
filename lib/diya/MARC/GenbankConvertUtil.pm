@@ -578,13 +578,13 @@ sub fix_feature {
         # Add a 'gene' feature for the tRNA
         my $genefeat = Bio::SeqFeature::Generic->new( -primary_tag => 'gene' );
         $genefeat->location( $feat->location );
+        $genefeat->strand( $feat->strand );
 
-        if ( $genefeat->end > $genefeat->start ) {
-            $genefeat->strand(1);
-        }
-        else {
-            $genefeat->strand(-1);
-        }
+#        if ( $genefeat->end > $genefeat->start ) {
+#        }
+#        else {
+#            $genefeat->strand(-1);
+#        }
 
         my ($loci) = $feat->remove_tag('locus_tag')
           if $feat->has_tag('locus_tag');
@@ -611,13 +611,14 @@ sub fix_feature {
         # Add a 'gene' feature for the rRNA
         my $genefeat = Bio::SeqFeature::Generic->new( -primary_tag => 'gene' );
         $genefeat->location( $feat->location );
+        $genefeat->strand( $feat->strand );
 
-        if ( $genefeat->end > $genefeat->start ) {
-            $genefeat->strand(1);
-        }
-        else {
-            $genefeat->strand(-1);
-        }
+        # if ( $genefeat->end > $genefeat->start ) {
+        #     $genefeat->strand(1);
+        # }
+        # else {
+        #     $genefeat->strand(-1);
+        # }
 
         my ($loci) = $feat->remove_tag('locus_tag')
           if $feat->has_tag('locus_tag');
