@@ -459,7 +459,7 @@ sub fix_feature {
                 }
             }
 
-	    print "Product name before correction: $product\n" if $self->debug;
+            print "Product name before correction: $product\n" if $self->debug;
 
             $product = trim($product);
 
@@ -490,7 +490,7 @@ sub fix_feature {
 
             $product = remove_loci($product);
 
-	    $product = remove_trailing($product);
+            $product = remove_trailing($product);
 
             ( $product, $feat ) = remove_semicolon( $product, $feat );
 
@@ -499,13 +499,12 @@ sub fix_feature {
             # Finally add it back
             $feat->add_tag_value( 'product', $product );
 
-	    print "Product name after correction: $product\n" if $self->debug;
+            print "Product name after correction: $product\n" if $self->debug;
         }
         else {
             # If there is no 'product' then it's a 'hypothetical protein'
             $feat->add_tag_value( 'product', 'hypothetical protein' );
         }
-
 
         # Change locus_tag to protein_id
         if ( $feat->has_tag('locus_tag') ) {
@@ -520,7 +519,7 @@ sub fix_feature {
 
             for my $xref (@xrefs) {
                 my $note = "similar to $xref";
-                $feat->add_tag_value( 'note', $note ) if ( ! $xref eq 'family' );
+                $feat->add_tag_value( 'note', $note ) if ( !$xref eq 'family' );
             }
         }
 
@@ -550,7 +549,7 @@ sub fix_feature {
 
         # Add inference tag
         $feat->add_tag_value( 'inference', 'profile:tRNAscan-SE:1.23' )
-          if ( ! $feat->has_tag("inference") );
+          if ( !$feat->has_tag("inference") );
 
         # Edit note tag
         if ( $feat->has_tag("note") ) {
@@ -567,7 +566,7 @@ sub fix_feature {
 
         # Remove AminoAcid and Name tags
         $feat->remove_tag("AminoAcid") if $feat->has_tag('AminoAcid');
-        $feat->remove_tag("Name") if $feat->has_tag('Name');
+        $feat->remove_tag("Name")      if $feat->has_tag('Name');
 
         # Remove 'ID', which will be added back as 'product'
         if ( $feat->has_tag("ID") ) {
@@ -580,9 +579,12 @@ sub fix_feature {
         my $genefeat = Bio::SeqFeature::Generic->new( -primary_tag => 'gene' );
         $genefeat->location( $feat->location );
 
-        ( $genefeat->end ) > ( $genefeat->start )
-          ? $genefeat->strand(1)
-          : $genefeat->strand(-1);
+        if ( $genefeat->end > $genefeat->start ) {
+            $genefeat->strand(1);
+        }
+        else {
+            $genefeat->strand(-1);
+        }
 
         my ($loci) = $feat->remove_tag('locus_tag')
           if $feat->has_tag('locus_tag');
@@ -610,9 +612,12 @@ sub fix_feature {
         my $genefeat = Bio::SeqFeature::Generic->new( -primary_tag => 'gene' );
         $genefeat->location( $feat->location );
 
-        ( $genefeat->end ) > ( $genefeat->start )
-          ? $genefeat->strand(1)
-          : $genefeat->strand(-1);
+        if ( $genefeat->end > $genefeat->start ) {
+            $genefeat->strand(1);
+        }
+        else {
+            $genefeat->strand(-1);
+        }
 
         my ($loci) = $feat->remove_tag('locus_tag')
           if $feat->has_tag('locus_tag');
