@@ -1775,7 +1775,7 @@ sub delete_from_tbl {
 	# Gene    yberc_r90       lcl|contig00186:128269->128665  yberc_r90
 	# CDS     hypothetical protein    lcl|contig00890:c203-<1 yberc_39200
 	for my $delete (@todelete) {
-		$delete =~ /^\S+\s+[^|]+\|((?:contig|ctg)[\d.]+):c?(\d+)[<>]?-[<>]?(\d+)/;
+		$delete =~ /^\S+\s+[^|]+\|((?:contig|ctg|scf)[\d.]+):c?(\d+)[<>]?-[<>]?(\d+)/;
 		$todelete{"$1 $2 $3"}++;
 	}
 
