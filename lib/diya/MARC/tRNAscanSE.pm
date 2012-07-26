@@ -48,48 +48,45 @@ use strict;
 use base 'diya';
 use Bio::Tools::tRNAscanSE;
 
-
 sub parse {
-	my ($self,$diya) = @_;
+    my ( $self, $diya ) = @_;
 
-	my $LOCUS_TAG_NUMBER = 0;
+    my $LOCUS_TAG_NUMBER = 0;
 
-	my $out = $diya->_outputfile('MARC::tRNAscanSE');
-	print "Parsing " . $out . "\n" if $diya->verbose;
+    my $out = $diya->_outputfile('MARC::tRNAscanSE');
+    print "Parsing " . $out . "\n" if $diya->verbose;
 
-	# Parse tRNAscan output
-	my $parser = Bio::Tools::tRNAscanSE->new(-file => "$out",
-														  -genetag	=> 'tRNA');
+    # Parse tRNAscan output
+    my $parser = Bio::Tools::tRNAscanSE->new(
+        -file    => "$out",
+        -genetag => 'tRNA'
+    );
 
-	my $gbk = $diya->_outputfile("MARC::rpsblastCDS");
-	my $in = Bio::SeqIO->new(-file => "$gbk.gbk", -format => 'genbank');
-	my $seq = $in->next_seq;
+    my $gbk = $diya->_outputfile("MARC::rpsblastCDS");
+    my $in  = Bio::SeqIO->new( -file => "$gbk.gbk", -format => 'genbank' );
+    my $seq = $in->next_seq;
 
-	# my $seq = $diya->_sequence;
+    # Parse the results
+    while ( my $feat = $parser->next_prediction ) {
+        my %tag;
+        $tag{locus_tag} = $seq->display_id . "_t" . ( $LOCUS_TAG_NUMBER += 10 );
+        $feat->set_attributes( -tag => \%tag );
+        $feat->source_tag('tRNAscan-SE');
+        $$seq->add_SeqFeature($feat);
+    }
 
-	# parse the results
-	while( my $feat = $parser->next_prediction ) {
-		my %tag;
-		$tag{locus_tag} = $seq->display_id . "_t" . ($LOCUS_TAG_NUMBER += 10);
-		$feat->set_attributes(-tag => \%tag);
-		$feat->source_tag('tRNAscan-SE');
-		$seq->add_SeqFeature($feat);
-	}
+    # Sort features by location
+    my @features = $seq->remove_SeqFeatures;
+    @features = sort { $a->start <=> $b->start } @features;
+    $seq->add_SeqFeature(@features);
 
-	# Sort features by location
-	my @features = $seq->remove_SeqFeatures;
-	# sort features by start position
-	@features = sort { $a->start <=> $b->start } @features;
-	$seq->add_SeqFeature(@features);
-
-	# Output
-
-	my $outfile = $out . ".gbk";
-
-	my $seqo = Bio::SeqIO->new(-format	=> 'genbank',
-										-file	=> ">$outfile");
-	$seqo->write_seq($seq);
-
+    # Output
+    my $outfile = $out . ".gbk";
+    my $seqo = Bio::SeqIO->new(
+        -format => 'genbank',
+        -file   => ">$outfile"
+    );
+    $seqo->write_seq($seq);
 }
 
 1;
