@@ -72,7 +72,7 @@ sub parse {
         $tag{locus_tag} = $seq->display_id . "_t" . ( $LOCUS_TAG_NUMBER += 10 );
         $feat->set_attributes( -tag => \%tag );
         $feat->source_tag('tRNAscan-SE');
-        $$seq->add_SeqFeature($feat);
+        $seq->add_SeqFeature($feat);
     }
 
     # Sort features by location

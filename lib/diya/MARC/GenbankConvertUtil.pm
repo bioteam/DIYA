@@ -580,12 +580,6 @@ sub fix_feature {
         $genefeat->location( $feat->location );
         $genefeat->strand( $feat->strand );
 
-#        if ( $genefeat->end > $genefeat->start ) {
-#        }
-#        else {
-#            $genefeat->strand(-1);
-#        }
-
         my ($loci) = $feat->remove_tag('locus_tag')
           if $feat->has_tag('locus_tag');
         $genefeat->add_tag_value( 'locus_tag', $loci );
@@ -612,13 +606,6 @@ sub fix_feature {
         my $genefeat = Bio::SeqFeature::Generic->new( -primary_tag => 'gene' );
         $genefeat->location( $feat->location );
         $genefeat->strand( $feat->strand );
-
-        # if ( $genefeat->end > $genefeat->start ) {
-        #     $genefeat->strand(1);
-        # }
-        # else {
-        #     $genefeat->strand(-1);
-        # }
 
         my ($loci) = $feat->remove_tag('locus_tag')
           if $feat->has_tag('locus_tag');
