@@ -580,12 +580,6 @@ sub fix_feature {
         $genefeat->location( $feat->location );
         $genefeat->strand( $feat->strand );
 
-#        if ( $genefeat->end > $genefeat->start ) {
-#        }
-#        else {
-#            $genefeat->strand(-1);
-#        }
-
         my ($loci) = $feat->remove_tag('locus_tag')
           if $feat->has_tag('locus_tag');
         $genefeat->add_tag_value( 'locus_tag', $loci );
@@ -612,13 +606,6 @@ sub fix_feature {
         my $genefeat = Bio::SeqFeature::Generic->new( -primary_tag => 'gene' );
         $genefeat->location( $feat->location );
         $genefeat->strand( $feat->strand );
-
-        # if ( $genefeat->end > $genefeat->start ) {
-        #     $genefeat->strand(1);
-        # }
-        # else {
-        #     $genefeat->strand(-1);
-        # }
 
         my ($loci) = $feat->remove_tag('locus_tag')
           if $feat->has_tag('locus_tag');
@@ -1618,6 +1605,10 @@ sub get_gene_overlaps {
 # WGQ:rRNA        23S ribosomal RNA       lcl|ctg7180000000008:7227-10119 WGQ_r140
 # WGQ:CDS Cell wall-associated hydrolase  lcl|ctg7180000000008:33916-34350        WGQ_240
 # WGQ:rRNA        23S ribosomal RNA       lcl|ctg7180000000008:33770-36662        WGQ_r100
+#
+# FATAL: DiscRep_SUB:RNA_CDS_OVERLAP::6 coding regions are completely contained in RNAs
+# WGQ:CDS Cell wall-associated hydrolase  lcl|scf7180000000008:c220896-220462     WGQ_1940
+# WGQ:rRNA        23S ribosomal RNA       lcl|scf7180000000008:218150-221042      WGQ_r90
 
 sub get_rna_overlaps {
 	my $self = shift;
@@ -1632,10 +1623,10 @@ sub get_rna_overlaps {
 
 	while ( my $gene2 = shift @overlaps ) {
 
-      my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-      my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-      my ($g1ctg) = $gene1 =~ /((?:contig|ctg)[\d.]+)/;
-      my ($g2ctg) = $gene2 =~ /((?:contig|ctg)[\d.]+)/;
+      my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg|scf)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+      my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg|scf)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+      my ($g1ctg) = $gene1 =~ /((?:contig|ctg|scf)[\d.]+)/;
+      my ($g2ctg) = $gene2 =~ /((?:contig|ctg|scf)[\d.]+)/;
 
 		if ( $g1start >=  $g2end && $g1end <= $g2start && $g1ctg eq $g2ctg 
 			   && $gene1 =~ /^$id:(t|r)RNA/ && $gene2 =~ /^$id:CDS/ ) {
