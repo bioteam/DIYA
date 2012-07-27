@@ -1477,11 +1477,15 @@ sub get_dup_rnas {
 
 		if ( $gene1 =~ /_r\d+/ && $gene2 =~ /_r\d+/ ) {
 
-			my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-			my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+			# my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+			# my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+			# my ($g1ctg) = $gene1 =~ /((?:contig|ctg)[.\d]+)/;
+			# my ($g2ctg) = $gene2 =~ /((?:contig|ctg)[\d.]+)/;
 
-			my ($g1ctg) = $gene1 =~ /((?:contig|ctg)[.\d]+)/;
-			my ($g2ctg) = $gene2 =~ /((?:contig|ctg)[\d.]+)/;
+      my ($g1start,$g1end) = $gene1 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
+      my ($g2start,$g2end) = $gene2 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
+      my ($g1ctg) = $gene1 =~ m{lcl|([a-z]+[.\d]+)};
+      my ($g2ctg) = $gene2 =~ m{lcl|([a-z]+[\d.]+)};
 
 			# Remove identical rRNAs and rRNAs inside rRNAs
 			if ( $g1start ==  $g2start && $g1end == $g2end && $g1ctg eq $g2ctg ) {
@@ -1543,14 +1547,15 @@ sub get_gene_overlaps {
 
 		# Note that this loop does not collect rRNAs or tRNAs
 
-		my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-		my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-
+		# my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+		# my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+    my ($g1start,$g1end) = $gene1 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
+    my ($g2start,$g2end) = $gene2 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
 		my $g1len = abs($g1start - $g1end);
 		my $g2len = abs($g2start - $g2end);
 
-		my ($g1ctg) = $gene1 =~ /((?:contig|ctg)[.\d]+)/;
-		my ($g2ctg) = $gene2 =~ /((?:contig|ctg)[\d.]+)/;
+		my ($g1ctg) = $gene1 =~ m{lcl|([a-z]+[.\d]+)};
+		my ($g2ctg) = $gene2 =~ m{lcl|([a-z]+[\d.]+)};
 
 		# Gene	yberc_40220	lcl|contig01136:c856-281	yberc_40220
 		# Gene	yberc_40230	lcl|contig01136:c1053-856	yberc_40230
@@ -1611,85 +1616,133 @@ sub get_gene_overlaps {
 # WGQ:rRNA        23S ribosomal RNA       lcl|scf7180000000008:218150-221042      WGQ_r90
 
 sub get_rna_overlaps {
-	my $self = shift;
-	my @todelete = ();
-	my $gene1;
-	my $id = $self->id;
+    my $self     = shift;
+    my @todelete = ();
+    my $gene1;
+    my $id = $self->id;
 
-	my @overlaps = $self->get_from_discrp('RNA_CDS_OVERLAP');
-	print "RNA-CDS overlaps:@overlaps\n" if $self->debug;
+    my @overlaps = $self->get_from_discrp('RNA_CDS_OVERLAP');
+    print "RNA-CDS overlaps:@overlaps\n" if $self->debug;
 
-	$gene1 = shift @overlaps;
+    $gene1 = shift @overlaps;
 
-	while ( my $gene2 = shift @overlaps ) {
+    while ( my $gene2 = shift @overlaps ) {
 
-      my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg|scf)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-      my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg|scf)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-      my ($g1ctg) = $gene1 =~ /((?:contig|ctg|scf)[\d.]+)/;
-      my ($g2ctg) = $gene2 =~ /((?:contig|ctg|scf)[\d.]+)/;
+# my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg|scf)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+# my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg|scf)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
+# my ($g1ctg) = $gene1 =~ /((?:contig|ctg|scf)[\d.]+)/;
+# my ($g2ctg) = $gene2 =~ /((?:contig|ctg|scf)[\d.]+)/;
 
-		if ( $g1start >=  $g2end && $g1end <= $g2start && $g1ctg eq $g2ctg 
-			   && $gene1 =~ /^$id:(t|r)RNA/ && $gene2 =~ /^$id:CDS/ ) {
- 				push @todelete,$gene2;
- 				print "RNA inside CDS, will remove CDS: $gene2" if $self->debug;
- 		}
- 		if ( $g2start >=  $g1end && $g2end <= $g1start && $g1ctg eq $g2ctg 
-			   && $gene2 =~ /^$id:(t|r)RNA/ && $gene1 =~ /^$id:CDS/ ) {
- 				push @todelete,$gene1;
- 				print "RNA inside CDS, will remove CDS: $gene1" if $self->debug;
- 		}
-		# RNA in CDS, both +1 strand
-		if ( $g2start >=  $g1start && $g2end <= $g1end && $g1ctg eq $g2ctg 
-			   && $gene2 =~ /^$id:(t|r)RNA/ && $gene1 =~ /^$id:CDS/ ) {
- 				push @todelete,$gene1;
- 				print "RNA inside CDS, +1, will remove CDS: $gene1" if $self->debug;
- 		}
- 		if ( $g1start >=  $g2start && $g1end <= $g2end && $g1ctg eq $g2ctg 
-			   && $gene1 =~ /^$id:(t|r)RNA/ && $gene2 =~ /^$id:CDS/ ) {
- 				push @todelete,$gene2;
- 				print "RNA inside CDS, +1, will remove CDS: $gene2" if $self->debug;
- 		}
+        my ( $g1start, $g1end ) =
+          $gene1 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
+        my ( $g2start, $g2end ) =
+          $gene2 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
+        my ($g1ctg) = $gene1 =~ m{lcl|([a-z]+[\d.]+)};
+        my ($g2ctg) = $gene2 =~ m{lcl|([a-z]+[\d.]+)};
 
-		# DiscRep:RNA_CDS_OVERLAP::4 coding regions overlap RNA features
-		# CDS	Trehalose-6-phosphate hydrolase	lcl|contig00186:126780-128441	yberc_1530
-		# rRNA	ribosomal RNA	lcl|contig00186:128108->128665	yberc_r60
-		if ( $g2start <=  $g1end && $g1ctg eq $g2ctg 
-			   && $gene2 =~ /^$id:(t|r)RNA/ && $gene1 =~ /^$id:CDS/ ) {
- 				push @todelete,$gene1;
- 				print "RNA overlaps CDS, +1, will remove CDS: $gene1" if $self->debug;
- 		}
- 		if ( $g1start <=  $g2end && $g1ctg eq $g2ctg 
-			   && $gene1 =~ /^$id:(t|r)RNA/ && $gene2 =~ /^$id:CDS/ ) {
- 				push @todelete,$gene2;
- 				print "RNA overlaps CDS, +1, will remove CDS: $gene2" if $self->debug;
- 		}
-		if ( $g2end >=  $g1start && $g1ctg eq $g2ctg 
-			   && $gene2 =~ /^$id:(t|r)RNA/ && $gene1 =~ /^$id:CDS/ ) {
- 				push @todelete,$gene1;
- 				print "RNA overlaps CDS, +1, will remove CDS: $gene1" if $self->debug;
- 		}
- 		if ( $g1end >=  $g2start && $g1ctg eq $g2ctg 
-			   && $gene1 =~ /^(t|r)$id:RNA/ && $gene2 =~ /^$id:CDS/ ) {
- 				push @todelete,$gene2;
- 				print "RNA overlaps CDS, +1, will remove CDS: $gene2" if $self->debug;
- 		}
+        if (   $g1start >= $g2end
+            && $g1end <= $g2start
+            && $g1ctg eq $g2ctg
+            && $gene1 =~ /^$id:(t|r)RNA/
+            && $gene2 =~ /^$id:CDS/ )
+        {
+            push @todelete, $gene2;
+            print "RNA inside CDS, will remove CDS: $gene2" if $self->debug;
+        }
+        if (   $g2start >= $g1end
+            && $g2end <= $g1start
+            && $g1ctg eq $g2ctg
+            && $gene2 =~ /^$id:(t|r)RNA/
+            && $gene1 =~ /^$id:CDS/ )
+        {
+            push @todelete, $gene1;
+            print "RNA inside CDS, will remove CDS: $gene1" if $self->debug;
+        }
 
-		if ( $g2end >=  $g1end && $g1ctg eq $g2ctg 
-			   && $gene2 =~ /^$id:(t|r)RNA/ && $gene1 =~ /^$id:CDS/ ) {
- 				push @todelete,$gene1;
- 				print "RNA overlaps CDS, -1, will remove CDS: $gene1" if $self->debug;
- 		}
- 		if ( $g1end >=  $g2end && $g1ctg eq $g2ctg 
-			   && $gene1 =~ /^$id:(t|r)RNA/ && $gene2 =~ /^$id:CDS/ ) {
- 				push @todelete,$gene2;
- 				print "RNA overlaps CDS, -1, will remove CDS: $gene2" if $self->debug;
- 		}
+        # RNA in CDS, both +1 strand
+        if (   $g2start >= $g1start
+            && $g2end <= $g1end
+            && $g1ctg eq $g2ctg
+            && $gene2 =~ /^$id:(t|r)RNA/
+            && $gene1 =~ /^$id:CDS/ )
+        {
+            push @todelete, $gene1;
+            print "RNA inside CDS, +1, will remove CDS: $gene1" if $self->debug;
+        }
+        if (   $g1start >= $g2start
+            && $g1end <= $g2end
+            && $g1ctg eq $g2ctg
+            && $gene1 =~ /^$id:(t|r)RNA/
+            && $gene2 =~ /^$id:CDS/ )
+        {
+            push @todelete, $gene2;
+            print "RNA inside CDS, +1, will remove CDS: $gene2" if $self->debug;
+        }
 
-		$gene1 = $gene2;
-	}
+  # DiscRep:RNA_CDS_OVERLAP::4 coding regions overlap RNA features
+  # CDS Trehalose-6-phosphate hydrolase lcl|contig00186:126780-128441 yberc_1530
+  # rRNA  ribosomal RNA lcl|contig00186:128108->128665  yberc_r60
+        if (   $g2start <= $g1end
+            && $g1ctg eq $g2ctg
+            && $gene2 =~ /^$id:(t|r)RNA/
+            && $gene1 =~ /^$id:CDS/ )
+        {
+            push @todelete, $gene1;
+            print "RNA overlaps CDS, +1, will remove CDS: $gene1"
+              if $self->debug;
+        }
+        if (   $g1start <= $g2end
+            && $g1ctg eq $g2ctg
+            && $gene1 =~ /^$id:(t|r)RNA/
+            && $gene2 =~ /^$id:CDS/ )
+        {
+            push @todelete, $gene2;
+            print "RNA overlaps CDS, +1, will remove CDS: $gene2"
+              if $self->debug;
+        }
+        if (   $g2end >= $g1start
+            && $g1ctg eq $g2ctg
+            && $gene2 =~ /^$id:(t|r)RNA/
+            && $gene1 =~ /^$id:CDS/ )
+        {
+            push @todelete, $gene1;
+            print "RNA overlaps CDS, +1, will remove CDS: $gene1"
+              if $self->debug;
+        }
+        if (   $g1end >= $g2start
+            && $g1ctg eq $g2ctg
+            && $gene1 =~ /^(t|r)$id:RNA/
+            && $gene2 =~ /^$id:CDS/ )
+        {
+            push @todelete, $gene2;
+            print "RNA overlaps CDS, +1, will remove CDS: $gene2"
+              if $self->debug;
+        }
 
-	@todelete = unique(@todelete);
-	@todelete;
+        if (   $g2end >= $g1end
+            && $g1ctg eq $g2ctg
+            && $gene2 =~ /^$id:(t|r)RNA/
+            && $gene1 =~ /^$id:CDS/ )
+        {
+            push @todelete, $gene1;
+            print "RNA overlaps CDS, -1, will remove CDS: $gene1"
+              if $self->debug;
+        }
+        if (   $g1end >= $g2end
+            && $g1ctg eq $g2ctg
+            && $gene1 =~ /^$id:(t|r)RNA/
+            && $gene2 =~ /^$id:CDS/ )
+        {
+            push @todelete, $gene2;
+            print "RNA overlaps CDS, -1, will remove CDS: $gene2"
+              if $self->debug;
+        }
+
+        $gene1 = $gene2;
+    }
+
+    @todelete = unique(@todelete);
+    @todelete;
 }
 
 # DiscRep_ALL:RNA_CDS_OVERLAP::6 coding regions overlap RNA features
@@ -1697,67 +1750,70 @@ sub get_rna_overlaps {
 # bcere0010:CDShypothetical proteinlcl|contig00145:2461-2892bcere0010_53360
 # bcere0010:rRNA23S ribosomal RNAlcl|contig00145:9-2928bcere0010_r50
 sub get_from_discrp {
-	my ($self,$header) = @_;
-	my @lines;
-	my $readflag = 0;
+    my ( $self, $header ) = @_;
+    my @lines;
+    my $readflag = 0;
 
-	open MYIN,"discrp" or die "Could not open discrp file";
+    open MYIN, "discrp" or die "Could not open discrp file";
 
-	while (<MYIN>) {
-		$readflag = 0 if ( /^\n/ || /^\s/ );
-		push @lines,$_ if $readflag;
-		$readflag = 1 if ( /DiscRep_SUB:$header/ );
-		print "Found header $header in discrp\n" if ($self->debug && $readflag);
-		# Older versions of tbl2asn have a slightly different 'discrp' format
-		# $readflag = 1 if ( /^$header/ );
-	}
-	@lines;
+    while (<MYIN>) {
+        $readflag = 0 if ( /^\n/ || /^\s/ );
+        push @lines, $_ if $readflag;
+        $readflag = 1 if (/DiscRep_SUB:$header/);
+        print "Found header $header in discrp\n"
+          if ( $self->debug && $readflag );
+
+        # Older versions of tbl2asn have a slightly different 'discrp' format
+        # $readflag = 1 if ( /^$header/ );
+    }
+    @lines;
 }
 
 sub write_tbl {
-	my ($self,$tbl) = @_;
+    my ( $self, $tbl ) = @_;
 
-	my $dir = $self->outdir;
-	my $id = $self->id;
-	my $namemap = $self->namemap;
-    # my $count = 1;
+    my $dir     = $self->outdir;
+    my $id      = $self->id;
+    my $namemap = $self->namemap;
 
-	`mv $dir/$id.tbl $dir/$id.tbl.orig` if ( -e "$dir/$id.tbl" );
+    `mv $dir/$id.tbl $dir/$id.tbl.orig` if ( -e "$dir/$id.tbl" );
 
-    my $tblfh = FileHandle->new(">$dir/$id.tbl") or die ("Cannot write to file $dir/$id.tbl");
+    my $tblfh = FileHandle->new(">$dir/$id.tbl")
+      or die("Cannot write to file $dir/$id.tbl");
 
-	print "Writing to $dir/$id.tbl\n" if $self->debug;
+    print "Writing to $dir/$id.tbl\n" if $self->debug;
 
-	for my $contig ( @{$tbl} ) {
+    for my $contig ( @{$tbl} ) {
 
-		#print $tblfh ">Features " . $contig->{contigname} . " Table${count}\n";
+       # print $tblfh ">Features " . $contig->{contigname} . " Table${count}\n";
         print $tblfh ">Features " . $contig->{contigname} . "\n";
 
-	 FEAT:
-		for my $feat ( sort sort_by_loc keys %{$contig} ) {
-			next FEAT if ( $feat eq 'contigname' );
-			print $tblfh $feat;
-			print $tblfh $contig->{$feat};
-		}
-        #$count++;
-	}
-
-	1;
+      FEAT:
+        for my $feat ( sort sort_by_loc keys %{$contig} ) {
+            next FEAT if ( $feat eq 'contigname' );
+            print $tblfh $feat;
+            print $tblfh $contig->{$feat};
+        }
+    }
+    1;
 }
 
 sub is_short {
-	my ($self,$contigname) = @_;
-	my $namemap = $self->namemap;
-	my $cutoff = $self->cutoff;
+    my ( $self, $contigname ) = @_;
+    my $namemap = $self->namemap;
+    my $cutoff  = $self->cutoff;
 
-	for my $name ( keys %{$namemap} ) {
-		if ( $contigname =~ /$name/ && $namemap->{$name}->{len} < $cutoff ) {
-			print "Skipping contig " . $contigname . ", length:" . 
-			  $namemap->{$name}->{len} . "\n" if $self->debug;
-			return 1;
-		}
-	}
-	0;
+    for my $name ( keys %{$namemap} ) {
+        if ( $contigname =~ /$name/ && $namemap->{$name}->{len} < $cutoff ) {
+            print "Skipping contig "
+              . $contigname
+              . ", length:"
+              . $namemap->{$name}->{len} . "\n"
+              if $self->debug;
+            return 1;
+        }
+    }
+    0;
 }
 
 sub sort_by_loc {
@@ -1768,40 +1824,43 @@ sub sort_by_loc {
 }
 
 sub delete_from_tbl {
-	my ($self,$tbl,@todelete) = @_;
-	my %todelete;
+    my ( $self, $tbl, @todelete ) = @_;
+    my %todelete;
 
-	# Transform array of lines into hash of names plus locations
-	# Gene    yberc_r90       lcl|contig00186:128269->128665  yberc_r90
-	# CDS     hypothetical protein    lcl|contig00890:c203-<1 yberc_39200
-	for my $delete (@todelete) {
-		$delete =~ /^\S+\s+[^|]+\|((?:contig|ctg|scf)[\d.]+):c?(\d+)[<>]?-[<>]?(\d+)/;
-		$todelete{"$1 $2 $3"}++;
-	}
+    # Transform array of lines into hash of names plus locations
+    # Gene    yberc_r90       lcl|contig00186:128269->128665  yberc_r90
+    # CDS     hypothetical protein    lcl|contig00890:c203-<1 yberc_39200
+    for my $delete (@todelete) {
 
-	# Iterate over each contig section
-	for my $contig ( @{$tbl} ) {
-		print "Next contig in *tbl is " . $contig->{contigname} . "\n" 
-		  if $self->debug;
+# $delete =~ /^\S+\s+[^|]+\|((?:contig|ctg|scf)[\d.]+):c?(\d+)[<>]?-[<>]?(\d+)/;
+        $delete =~ m{^\S+\s+[^|]+\|([a-z]+[\d.]+):c?(\d+)[<>]?-[<>]?(\d+)};
+        $todelete{"$1 $2 $3"}++;
+    }
 
-		for my $delete ( keys %todelete ) {
-			my ($deletecontig,$loc1,$loc2) = $delete =~ /^(\S+)\s(\d+)\s(\d+)/;
+    # Iterate over each contig section
+    for my $contig ( @{$tbl} ) {
+        print "Next contig in *tbl is " . $contig->{contigname} . "\n"
+          if $self->debug;
 
-			if ( $deletecontig eq $contig->{contigname} ) {
-				for my $feat ( keys %{$contig} ) {
-					my ($loca,$locb) = $feat =~ /^[<>]?(\d+)\s+[<>]?(\d+)/;
-					if ( $loca == $loc1 && $locb == $loc2 ) {
-						print "Deleting feature $delete with location \'$loc1 $loc2\'\n" 
-						  if $self->debug;
-						delete ${$contig}{$feat};
-					}
-				}
-			}
+        for my $delete ( keys %todelete ) {
+            my ( $deletecontig, $loc1, $loc2 ) =
+              $delete =~ /^(\S+)\s(\d+)\s(\d+)/;
 
-		}
-	}
+            if ( $deletecontig eq $contig->{contigname} ) {
+                for my $feat ( keys %{$contig} ) {
+                    my ( $loca, $locb ) = $feat =~ /^[<>]?(\d+)\s+[<>]?(\d+)/;
+                    if ( $loca == $loc1 && $locb == $loc2 ) {
+                        print "Deleting feature $delete with location \'$loc1 $loc2\'\n"
+                          if $self->debug;
+                        delete ${$contig}{$feat};
+                    }
+                }
+            }
 
-	$tbl;
+        }
+    }
+
+    $tbl;
 }
 
 # Each contig, starting with ">Features", is an element in
@@ -1809,38 +1868,40 @@ sub delete_from_tbl {
 # are stored in an anonymous hash, one per element.
 # Also store the contig names in an array.
 sub read_tbl {
-	my $self = shift;
-	my $tbl = $self->outdir . "/" . $self->id . ".tbl";
-	my (@contignames,@tbl);
+    my $self = shift;
+    my $tbl  = $self->outdir . "/" . $self->id . ".tbl";
+    my ( @contignames, @tbl );
 
-	local $/ = undef;
+    local $/ = undef;
 
-	open MYIN,"$tbl" or die "Cannot open file $tbl";
+    open MYIN, "$tbl" or die "Cannot open file $tbl";
 
-	my @contigs = split  /^(?=>Features.+)/m, <MYIN>; 
+    my @contigs = split /^(?=>Features.+)/m, <MYIN>;
 
-	for my $contig ( @contigs ) {
+    for my $contig (@contigs) {
 
-		my $hsh;
-		$contig =~ /^>Features\s+(\S+)/;
-		$hsh->{contigname} = $1;
-		push @contignames,$1;
+        my $hsh;
+        $contig =~ /^>Features\s+(\S+)/;
+        $hsh->{contigname} = $1;
+        push @contignames, $1;
 
-		my @features = split /^(?=[\d><]+\s+[\d><]+\s+\w+)/m, $contig;
-		# Remove the header
-		my $header = shift @features;
-		print "Header: $header\n" if $self->debug;
+        my @features = split /^(?=[\d><]+\s+[\d><]+\s+\w+)/m, $contig;
 
-		for my $feature ( @features ) {
-			$feature =~ /^([\d><]+\s+[\d><]+\s+\S+)(.+)/s;
-         # print Dumper $feature;
-			$hsh->{$1} = $2;
-		}
-      push @tbl, $hsh;
-	}
-	$self->contigs(\@contignames);
+        # Remove the header
+        my $header = shift @features;
+        print "Header: $header\n" if $self->debug;
 
-	\@tbl;
+        for my $feature (@features) {
+            $feature =~ /^([\d><]+\s+[\d><]+\s+\S+)(.+)/s;
+
+            # print Dumper $feature;
+            $hsh->{$1} = $2;
+        }
+        push @tbl, $hsh;
+    }
+    $self->contigs( \@contignames );
+
+    \@tbl;
 }
 
 sub cleanup {
@@ -1857,7 +1918,6 @@ sub cleanup {
 	for my $suffix ( qw(gbf val tbl sqn) ) {
 		unlink "$dir/$id.$suffix.orig" if -e "$dir/$id.$suffix.orig";
 	}
-
 }
 
 sub outdir {
@@ -1905,7 +1965,6 @@ sub edit_asn_file {
 
     open MYOUT, ">$asn" or die "Cannot write to file $asn";
     print MYOUT $text;
-
 }
 
 sub make_top_comment {
@@ -2127,7 +2186,6 @@ sub make_namemap {
         if ( $feat->primary_tag eq 'fasta_record' ) {
             my @names = $feat->get_tag_values('name');
             $namemap->{ $names[0] }->{num}++;
-
             # $namemap{$1}++ if ( /\/name="([^"]+)/ );
             $namemap->{ $names[0] }->{len} = ( $feat->end ) - ( $feat->start );
         }
@@ -2180,92 +2238,92 @@ sub _initialize {
 # };
 
 sub lastBase {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'lastbase'} = $base if defined $base;
     return $self->{'lastbase'};
 }
 
 sub accession_prefix {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'accession_prefix'} = $base if defined $base;
     return $self->{'accession_prefix'};
 }
 
 sub executable {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'executable'} = $base if defined $base;
     return $self->{'executable'};
 }
 
 sub namemap {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'namemap'} = $base if defined $base;
     return $self->{'namemap'};
 }
 
 sub cutoff {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'cutoff'} = $base if defined $base;
     return $self->{'cutoff'};
 }
 
 sub debug {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'debug'} = $base if defined $base;
     return $self->{'debug'};
 }
 
 sub template {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'template'} = $base if defined $base;
     return $self->{'template'};
 }
 
 sub taxid {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'taxid'} = $base if defined $base;
     return $self->{'taxid'};
 }
 
 sub organism {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'organism'} = $base if defined $base;
     return $self->{'organism'};
 }
 
 sub id {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'id'} = $base if defined $base;
     return $self->{'id'};
 }
 
 sub strain {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'strain'} = $base if defined $base;
     return $self->{'strain'};
 }
 
 sub contigs {
-	my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'contigs'} = $base if defined $base;
     return $self->{'contigs'};
 }
 
 sub host {
-    my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'host'} = $base if defined $base;
     return $self->{'host'};
 }
-    
+
 sub country {
-    my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'country'} = $base if defined $base;
     return $self->{'country'};
 }
 
 # 20-May-2012
 sub collection_date {
-    my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     # @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
     # printf "%4d-%s-%02d\n", $d[5]+1900, $mon[$d[4]], $d[3];
     $self->{'collection_date'} = $base if defined $base;
@@ -2273,66 +2331,67 @@ sub collection_date {
 }
 
 sub isolation_source {
-    my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'isolation_source'} = $base if defined $base;
     return $self->{'isolation_source'};
 }
-    
+
 sub submission_note {
-    my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'submission_note'} = $base if defined $base;
     return $self->{'submission_note'};
 }
 
 sub gcode {
-    my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'gcode'} = $base if defined $base;
     return $self->{'gcode'};
 }
 
 sub Assembly_Name {
-    my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'Assembly_Name'} = $base if defined $base;
     return $self->{'Assembly_Name'} if defined $self->{'Assembly_Name'};
     '';
 }
 
 sub Genome_Coverage {
-    my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'Genome_Coverage'} = $base if defined $base;
     return $self->{'Genome_Coverage'};
 }
 
 sub Sequencing_Technology {
-    my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'Sequencing_Technology'} = $base if defined $base;
     return $self->{'Sequencing_Technology'};
 }
 
 sub Assembly_Method {
-    my ($self,$base) = @_;
+    my ( $self, $base ) = @_;
     $self->{'Assembly_Method'} = $base if defined $base;
     return $self->{'Assembly_Method'};
 }
 
 sub trim {
-	my $str = shift;
-	$str =~ s/^\s+//;
-	$str =~ s/\s+$//;
-	$str =~ s/\s+/ /g;
-	$str;
+    my $str = shift;
+    $str =~ s/^\s+//;
+    $str =~ s/\s+$//;
+    $str =~ s/\s+/ /g;
+    $str;
 }
 
 sub unique {
-	my @arr = @_;
-	my %hsh;
+    my @arr = @_;
+    my %hsh;
 
-	for my $x (@arr) {
-		$hsh{$x}++;
-	}
+    for my $x (@arr) {
+        $hsh{$x}++;
+    }
 
-	(keys %hsh);
+    ( keys %hsh );
 }
+
 
 1;
 
