@@ -53,8 +53,7 @@ use Bio::SeqIO;
 use FileHandle;
 use Date::Format qw(time2str);
 
-my ($spacer_start,    $spacer_end,       $contig_start,
-    $contig_end);
+my ($spacer_start, $spacer_end, $contig_start, $contig_end);
 
 sub new {
 	my ($module,@args) = @_;
@@ -135,9 +134,6 @@ sub fixAndPrint {
 
                     }
                     elsif ( $sf->primary_tag eq 'rRNA' ) {
-
-               # print $outfeat join("\t", ( ("<$contig_start") ),
-               #                     (">$contig_end"), $sf->primary_tag ), "\n";
 
                         # Example: <1  >111 gene
                         print $outfeat join( "\t",
@@ -1468,7 +1464,6 @@ sub get_dup_rnas {
 	my $gene1;
 
 	my @overlapgenes   = $self->get_from_discrp('OVERLAPPING_GENES');
-	# push @overlapgenes, $self->get_from_discrp('FIND_OVERLAPPED_GENES');
 	print "Overlapping genes: @overlapgenes\n" if $self->debug;
 
 	$gene1 = shift @overlapgenes;
@@ -1476,11 +1471,6 @@ sub get_dup_rnas {
 	while ( my $gene2 = shift @overlapgenes ) {
 
 		if ( $gene1 =~ /_r\d+/ && $gene2 =~ /_r\d+/ ) {
-
-			# my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-			# my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-			# my ($g1ctg) = $gene1 =~ /((?:contig|ctg)[.\d]+)/;
-			# my ($g2ctg) = $gene2 =~ /((?:contig|ctg)[\d.]+)/;
 
       my ($g1start,$g1end) = $gene1 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
       my ($g2start,$g2end) = $gene2 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
@@ -1546,9 +1536,6 @@ sub get_gene_overlaps {
 	while ( my $gene2 = shift @overlapgenes ) {
 
 		# Note that this loop does not collect rRNAs or tRNAs
-
-		# my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-		# my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
     my ($g1start,$g1end) = $gene1 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
     my ($g2start,$g2end) = $gene2 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
 		my $g1len = abs($g1start - $g1end);
@@ -1628,15 +1615,11 @@ sub get_rna_overlaps {
 
     while ( my $gene2 = shift @overlaps ) {
 
-# my ($g1start,$g1end) = $gene1 =~ /(?:contig|ctg|scf)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-# my ($g2start,$g2end) = $gene2 =~ /(?:contig|ctg|scf)[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)/;
-# my ($g1ctg) = $gene1 =~ /((?:contig|ctg|scf)[\d.]+)/;
-# my ($g2ctg) = $gene2 =~ /((?:contig|ctg|scf)[\d.]+)/;
-
         my ( $g1start, $g1end ) =
           $gene1 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
         my ( $g2start, $g2end ) =
           $gene2 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
+
         my ($g1ctg) = $gene1 =~ m{lcl|([a-z]+[\d.]+)};
         my ($g2ctg) = $gene2 =~ m{lcl|([a-z]+[\d.]+)};
 
@@ -1785,7 +1768,6 @@ sub write_tbl {
 
     for my $contig ( @{$tbl} ) {
 
-       # print $tblfh ">Features " . $contig->{contigname} . " Table${count}\n";
         print $tblfh ">Features " . $contig->{contigname} . "\n";
 
       FEAT:
@@ -1831,8 +1813,6 @@ sub delete_from_tbl {
     # Gene    yberc_r90       lcl|contig00186:128269->128665  yberc_r90
     # CDS     hypothetical protein    lcl|contig00890:c203-<1 yberc_39200
     for my $delete (@todelete) {
-
-# $delete =~ /^\S+\s+[^|]+\|((?:contig|ctg|scf)[\d.]+):c?(\d+)[<>]?-[<>]?(\d+)/;
         $delete =~ m{^\S+\s+[^|]+\|([a-z]+[\d.]+):c?(\d+)[<>]?-[<>]?(\d+)};
         $todelete{"$1 $2 $3"}++;
     }
