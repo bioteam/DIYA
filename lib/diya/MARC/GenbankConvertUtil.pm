@@ -1429,6 +1429,51 @@ sub run_tbl2asn {
 	die "Problem running tbl2asn: $cmd";
 }
 
+# The *cmt file is a 2 column, tab-delimited file like this:
+# StructuredCommentPrefix ##Genome-Assembly-Data-START##
+# Assembly Method Newbler v. 2.3
+# Assembly Name   Ecoli.str12345_v1.0
+# Genome Coverage 16.3x
+# Sequencing Technology   454 Titanium; PacBio RS
+# StructuredCommentSuffix ##Genome-Assembly-Data-END##
+sub create_cmt {
+    my $self = shift;
+    my ( $method, $name, $coverage, $tech, $id, $outdir, $readsPerBase ) = (
+        $self->Assembly_Method, $self->Assembly_Name,
+        $self->Genome_Coverage, $self->Sequencing_Technology,
+        $self->id,              $self->outdir,
+        $self->readsPerBase
+    );
+    $method = trim_comma($method);
+    $tech   = trim_comma($tech);
+    my ( $totalLen, $totalReads, $cmtfh );
+
+    if ($readsPerBase) {
+        for my $len ( keys %{$readsPerBase} ) {
+            $totalLen   += $len;
+            $totalReads += ( $len * $readsPerBase->{$len} );
+        }
+        $coverage = sprintf( "%.1f", ( $totalReads / $totalLen ) );
+    }
+
+    if ( -e "$outdir/$id.cmt" ) {
+      $cmtfh = FileHandle->new(">>$outdir/$id.cmt")
+        or die("Cannot open file $outdir/$id.cmt for appending");
+    } else {
+      $cmtfh = FileHandle->new(">$outdir/$id.cmt")
+        or die("Cannot open file $outdir/$id.cmt for writing");      
+    }
+
+    my $txt = "StructuredCommentPrefix\t" . '##Genome-Assembly-Data-START##' . "\n" .
+              "Assembly Method\t$method\n";
+    $txt .=   "Assembly Name\t$name\n" if $name;
+    $txt .=   "Genome Coverage\t${coverage}x\n" .
+              "Sequencing Technology\t$tech\n" .
+              "StructuredCommentSuffix\t" . '##Genome-Assembly-Data-END##';
+
+    print $cmtfh $txt;
+    1;
+}
 
 sub fix_discrp {
 	my $self = shift;
@@ -2059,52 +2104,6 @@ sub create_agp {
         $count++;
     }
 
-}
-
-# The *cmt file is a 2 column, tab-delimited file like this:
-# StructuredCommentPrefix ##Genome-Assembly-Data-START##
-# Assembly Method Newbler v. 2.3
-# Assembly Name   Ecoli.str12345_v1.0
-# Genome Coverage 16.3x
-# Sequencing Technology   454 Titanium; PacBio RS
-# StructuredCommentSuffix ##Genome-Assembly-Data-END##
-sub create_cmt {
-    my $self = shift;
-    my ( $method, $name, $coverage, $tech, $id, $outdir, $readsPerBase ) = (
-        $self->Assembly_Method, $self->Assembly_Name,
-        $self->Genome_Coverage, $self->Sequencing_Technology,
-        $self->id,              $self->outdir,
-        $self->readsPerBase
-    );
-    $method = trim_comma($method);
-    $tech   = trim_comma($tech);
-    my ( $totalLen, $totalReads, $cmtfh );
-
-    if ($readsPerBase) {
-        for my $len ( keys %{$readsPerBase} ) {
-            $totalLen   += $len;
-            $totalReads += ( $len * $readsPerBase->{$len} );
-        }
-        $coverage = sprintf( "%.1f", ( $totalReads / $totalLen ) );
-    }
-
-    if ( -e "$outdir/$id.cmt" ) {
-      $cmtfh = FileHandle->new(">>$outdir/$id.cmt")
-        or die("Cannot open file $outdir/$id.cmt for appending");
-    } else {
-      $cmtfh = FileHandle->new(">$outdir/$id.cmt")
-        or die("Cannot open file $outdir/$id.cmt for writing");      
-    }
-
-    my $txt = "StructuredCommentPrefix\t" . '##Genome-Assembly-Data-START##' . "\n" .
-              "Assembly Method\t$method\n";
-    $txt .=   "Assembly Name\t$name\n" if $name;
-    $txt .=   "Genome Coverage\t${coverage}x\n" .
-              "Sequencing Technology\t$tech\n" .
-              "StructuredCommentSuffix\t" . '##Genome-Assembly-Data-END##';
-
-    print $cmtfh $txt;
-    1;
 }
 
 sub get_date {
