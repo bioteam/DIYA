@@ -1930,19 +1930,19 @@ sub read_tbl {
 }
 
 sub cleanup {
-	my $self = shift;
-	my $id = $self->id;
-	my $dir = $self->outdir;
-	my $template = $self->{template};
+    my $self = shift;
+    my $id = $self->id;
+    my $dir = $self->outdir;
+    my $template = $self->{template};
 
-	`rm $template.sbt` if -e "$template.sbt";
-	`rm discrp.orig`   if -e "discrp.orig";
-	`mv discrp $dir`   if -e "discrp";
-        `mv $id.agp $dir`  if -e "$id.agp";
+    `rm $template.sbt` if -e "$template.sbt";
+    `rm discrp.orig`   if -e "discrp.orig";
+    `mv discrp $dir`   if -e "discrp";
+    `mv $id.agp $dir`  if -e "$id.agp";
 
-	for my $suffix ( qw(gbf val tbl sqn) ) {
-		unlink "$dir/$id.$suffix.orig" if -e "$dir/$id.$suffix.orig";
-	}
+    for my $suffix ( qw(gbf val tbl sqn cmt) ) {
+	`rm -f $dir/$id.$suffix.orig` if -e "$dir/$id.$suffix.orig";
+    }
 }
 
 sub outdir {

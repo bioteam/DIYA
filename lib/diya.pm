@@ -390,7 +390,7 @@ Specify the output directory for the pipeline. An example:
 
 Setting B<outputdir> is optional. If it is not set then I<diya> will create
 an output directory in your $DIYAHOME directory using a timestamp, 
-for example "2008-06-29-11:35:38-diya".
+for example "2012_08_07_15_17_34_diya".
 
 =back
 
