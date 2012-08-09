@@ -1420,8 +1420,10 @@ sub run_tbl2asn {
   $jstring   .= " [isolation-source=$isolation_source]" if $isolation_source;
   $jstring   .= " [note=$submission_note]" if $submission_note;
 
+#	my $cmd = "$tbl2asn -t $tmplt.sbt -p $outdir -M n -Z discrp -y \"$comment\" " .
+#                  "-X C -V b -w $outdir/$id.cmt -j \"$jstring\"";
 	my $cmd = "$tbl2asn -t $tmplt.sbt -p $outdir -M n -Z discrp -y \"$comment\" " .
-                  "-X C -V b -w $outdir/$id.cmt -j \"$jstring\"";
+                  "-X C -V b -j \"$jstring\"";
 	print "tbl2asn command is \'$cmd\'\n" if $self->debug;
 	`$cmd`;
 	return 1;
