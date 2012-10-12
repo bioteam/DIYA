@@ -30,6 +30,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use LWP::UserAgent;
+use Cwd 'abs_path';
 
 my ( $id, $html, $strain );
 my $url = 'http://moose/minilims/plugins/MIGS/export_mims.php?instance';
@@ -43,6 +44,7 @@ die "Need DIYA id and strain" if ( ! $id || ! $strain );
 
 $strain     =~ s/\s+/_/g;
 my $ncbidir = "${id}-gbsubmit.out.d";
+$ncbidir    = abs_path($ncbidir);
 my $file    = "${id}.cmt";
 my $ua = LWP::UserAgent->new;
 
@@ -66,10 +68,13 @@ for my $line ( @lines ) {
 }
 
 $text .= "StructuredCommentPrefix\t" . '##MIGS:3.0-Data-END##' . "\n";
+print "Text is:\n$text\n";
 
 `mkdir $ncbidir` if ( ! -d $ncbidir );
 open MYIN,">$ncbidir/$file";
 print MYIN $text;
+print "*cmt file is $ncbidir/$file\n";
+print "Problem writing to $ncbidir/$file\n" if ( ! -e "$ncbidir/$file" );
 print "Done with $0\n";
 
 __END__

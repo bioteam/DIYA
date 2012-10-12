@@ -1404,7 +1404,7 @@ sub run_tbl2asn {
       );
 
 	if ( $run > 1) {
-		for my $suffix ( qw( val sqn gbf cmt) ) {
+		for my $suffix ( qw( val sqn gbf ) ) {
 			system "mv $outdir/$id.$suffix $outdir/$id.$suffix.orig" if ( -e "$outdir/$id.$suffix" );
 		}
 		system "mv discrp discrp.orig" if ( -e "discrp" );
