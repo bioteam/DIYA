@@ -34,7 +34,7 @@ my (
     $qual,             $agp,              $taxid,
     $accession_prefix, $host,             $country,
     $collection_date,  $isolation_source, $submission_note,
-    $Assembly_Name,    $Sequencing_Technology
+    $Assembly_Name,    $Sequencing_Technology, $topology
 );
 
 # Defaults
@@ -63,7 +63,8 @@ GetOptions(
     "an=s"        => \$Assembly_Name,
     "gc=s"        => \$Genome_Coverage, 
     "st=s"        => \$Sequencing_Technology, 
-    "as=s"        => \$Assembly_Method
+    "as=s"        => \$Assembly_Method,
+    "topology=s"  => \$topology
 );
 
 usage() if $help;
@@ -93,7 +94,8 @@ my $parser = diya::MARC::GenbankConvertUtil->new(
     -Assembly_Method       => $Assembly_Method,
     -Assembly_Name         => $Assembly_Name,
     -gcode                 => $gcode,
-    -taxid                 => $taxid
+    -taxid                 => $taxid,
+    -topology              => $topology
 );
 
 $parser->debug($debug) if defined $debug;

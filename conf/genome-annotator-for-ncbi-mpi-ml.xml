@@ -16,7 +16,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
 -set MYTAXID=12345 454MiniContigs.fna -set MYHOST='Homo sapiens' -set MYCOUNTRY=Montreal:Canada \
 -set MYCOLLECTION_DATE=04-21-1960 -set MYISOLATION_SOURCE=liver -set MYNOTE='note test' \
 -set MYGENOME_COVERAGE=12 -set MYASSEMBLY_METHOD='method test' -set MYSEQUENCING_TECHNOLOGY="test test" \
-> test0001.out &
+-set MYTOPOLOGY=circular > test0001.out &
 
 1. copy all relevant files to a working directory
 2. run glimmer3
@@ -154,7 +154,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
   <script>
     <name>gbconvert</name>
     <executable>gbconvert.pl</executable>
-    <command>-debug -t MYTAXID -a MYLOCUS -host "MYHOST" -co "MYCOUNTRY" -cd MYCOLLECTION_DATE -is "MYISOLATION_SOURCE" -sn "MYNOTE" -gc "MYGENOME_COVERAGE" -st "MYSEQUENCING_TECHNOLOGY" -as "MYASSEMBLY_METHOD" INPUTFILE.gbk</command>
+    <command>-debug -t MYTAXID -a MYLOCUS -host "MYHOST" -co "MYCOUNTRY" -cd MYCOLLECTION_DATE -is "MYISOLATION_SOURCE" -sn "MYNOTE" -gc "MYGENOME_COVERAGE" -st "MYSEQUENCING_TECHNOLOGY" -as "MYASSEMBLY_METHOD" -topology MYTOPOLOGY INPUTFILE.gbk</command>
     <home>/Jake/apps/DIYA/scripts</home>
     <inputformat></inputformat>
     <inputfrom>MARC::cmsearch</inputfrom>

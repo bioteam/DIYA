@@ -175,23 +175,23 @@ sub fixAndPrint {
                 $self->readsPerBase( $len, $avg ) if ($avg);
             }
 
-            my $fasta_header = $definition;
-
             # Write to fasta file if there's coverage data
-            # $fasta_header .= " [note=coverage of this contig is ${avg}X"
+            # $definition .= " [note=coverage of this contig is ${avg}X]"
             #  if $avg;
+
+            $definition .= ' [topology=circular]' if ( $self->topology eq 'circular' );
 
             my $str = $seq->subseq( $contig_start, $contig_end );
             my $featureSeq = Bio::Seq->new(
                 -display_id => $contig_name,
-                -desc       => $fasta_header,
+                -desc       => $definition,
                 -seq        => $str
             );
 
             $outfsa->write_seq($featureSeq);
             $outfsa->flush();
 
-            print "fasta_record\t$contig_name\tlength:$len\n"
+            print "fasta_record\t$contig_name\tlength:$len\tdefinition:$definition\n"
               if $self->debug;
         }
 
