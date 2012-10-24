@@ -24,6 +24,10 @@ using that information.
 
 http://moose/minilims/plugins/MIGS/export_mims.php?instance=Bibersteinia_trehalsoi_192_lung_swab
 
+=head2 Example command
+
+./create-cmt-file.pl -i test -s Bibersteinia_trehalsoi_192_lung_swab
+
 =cut
 
 use strict;
@@ -34,7 +38,7 @@ use Cwd 'abs_path';
 
 my ( $id, $html, $strain );
 my $url = 'http://moose/minilims/plugins/MIGS/export_mims.php?instance';
-# Allowd values in MIGS 3.0
+# Allowed values in MIGS 3.0
 my @investigationTypes =
   qw(eukaryote bacteria_archaea plasmid virus organelle metagenome miens-survey miens-culture);
 
@@ -61,7 +65,7 @@ my (@lines) = $data =~ /(.+)\n/g;
 my $text = "StructuredCommentPrefix\t" . '##MIGS:3.0-Data-START##' . "\n";
 
 for my $line ( @lines ) {
-    my ($key,$val) = $line =~ /^(\S+)\s+::\s+(.+)/;
+    my ($key,$val) = $line =~ /^(\S+)\s+::\s+(.*)/;
     $val =~ s/_/ /g;
     $val =~ s/\s+/_/ if ( $key eq 'investigation_type' );
     $text .= "$key\t$val\n";
