@@ -58,7 +58,7 @@ while ( my $seq = $in->next_seq ) {
     $len += $seq->length;
 }
 
-my $cmd = "$loadscript -g $ncbidir -o $outdir -c $count -l $len -n '$name' -m '$page' -a '$assembly' -i '$outdir/$id.fna'";
+my $cmd = "/usr/bin/php $loadscript -g $ncbidir -o $outdir -c $count -l $len -n '$name' -m '$page' -a '$assembly' -i '$outdir/$id.fna'";
 print "$0 loading command is $cmd\n";
 my $output =`$cmd`;
 print $output;

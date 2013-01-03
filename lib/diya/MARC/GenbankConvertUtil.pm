@@ -71,6 +71,8 @@ sub fixAndPrint {
     my ( $self, $ref, $outfeat, $outfsa, $seq, $definition ) = @_;
     my @oldFeatures = @{$ref};
 
+    $definition .= ' [topology=circular]' if ( $self->topology eq 'circular' );
+
     # Fix all the features
   FEATURE:
     for my $feature (@oldFeatures) {
@@ -178,8 +180,6 @@ sub fixAndPrint {
             # Write to fasta file if there's coverage data
             # $definition .= " [note=coverage of this contig is ${avg}X]"
             #  if $avg;
-
-            $definition .= ' [topology=circular]' if ( $self->topology eq 'circular' );
 
             my $str = $seq->subseq( $contig_start, $contig_end );
             my $featureSeq = Bio::Seq->new(
@@ -1984,6 +1984,7 @@ sub edit_asn_file {
     my $text = <MYIN>;
     $text =~ s/<BACTERIALSPECIES>/$species/;
     $text =~ s/<BACTERIALSTRAIN>/$strain/;
+    $text =~ s/genome/complete genome/ if ( $self->topology eq 'circular' );
 
     open MYOUT, ">$asn" or die "Cannot write to file $asn";
     print MYOUT $text;
@@ -2217,6 +2218,12 @@ sub lastBase {
     my ( $self, $base ) = @_;
     $self->{'lastbase'} = $base if defined $base;
     return $self->{'lastbase'};
+}
+
+sub topology {
+    my ( $self, $base ) = @_;
+    $self->{'topology'} = $base if defined $base;
+    return $self->{'topology'};
 }
 
 sub accession_prefix {
