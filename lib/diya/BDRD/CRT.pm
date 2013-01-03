@@ -1,5 +1,5 @@
 #--------------------------------------------------------------------------
-# ©Copyright 2011
+# ©Copyright 2013
 #
 # This file is part of DIYA.
 #
@@ -40,6 +40,7 @@ Brian Osborne, briano@bioteam.net
 package diya::BDRD::CRT;
 
 use strict;
+
 # simplest approach
 use base 'diya';
 
@@ -47,7 +48,6 @@ use base 'diya';
 # use vars qw(@ISA);
 # use diya qw();
 # @ISA = qw(diya);
-
 
 =head2 parse
 
@@ -62,65 +62,69 @@ use base 'diya';
 =cut
 
 sub parse {
-	my ($self,$diya) = @_;
+    my ( $self, $diya ) = @_;
 
-	# Parse CRT output, get features back
-	my $out = $diya->_outputfile('BDRD::CRT');
-	print "Parsing " . $out . "\n" if $diya->verbose;
-	my @crisprs = parse_crt($out);
-	print "Found CRISPRS\n" if ( $diya->verbose && @crisprs );
+    # Parse CRT output, get features back
+    my $out = $diya->_outputfile('BDRD::CRT');
+    print "Parsing " . $out . "\n" if $diya->verbose;
+    my @crisprs = parse_crt($out);
+    print "Found CRISPRS\n" if ( $diya->verbose && @crisprs );
 
-	my $gbkin = $diya->_outputfile("BDRD::rnammer");
-	my $seqin = Bio::SeqIO->new(-file => "$gbkin.gbk", -format => 'genbank');
-	my $seq = $seqin->next_seq;
+    my $gbkin = $diya->_outputfile("BDRD::rnammer");
+    my $seqin = Bio::SeqIO->new( -file => "$gbkin.gbk", -format => 'genbank' );
+    my $seq   = $seqin->next_seq;
 
-	# Add any new features
-	for my $crispr ( @crisprs ) {
-		my %tag;
-		$tag{note} = 'CRISPR';
-		$crispr->set_attributes(-tag => \%tag);
-		$crispr->source_tag('CRISPR Recognition Tool');
-		$seq->add_SeqFeature($crispr);
-	}
+    # Add any new features
+    for my $crispr (@crisprs) {
+        my %tag;
+        $tag{note} = 'CRISPR';
+        $crispr->set_attributes( -tag => \%tag );
+        $crispr->source_tag('CRISPR Recognition Tool');
+        $seq->add_SeqFeature($crispr);
+    }
 
-	# Sort features by location
-	my @features = $seq->remove_SeqFeatures;
-	@features = sort { $a->start <=> $b->start } @features;
-	$seq->add_SeqFeature(@features);
+    # Sort features by location
+    my @features = $seq->remove_SeqFeatures;
+    @features = sort { $a->start <=> $b->start } @features;
+    $seq->add_SeqFeature(@features);
 
-	# Output to Genbank file
-	my $gbkout = $out . ".gbk";
-	my $seqout = Bio::SeqIO->new(-format => 'genbank',
-				     -file   => ">$gbkout");
-	$seqout->write_seq($seq);
+    # Output to Genbank file
+    my $gbkout = $out . ".gbk";
+    my $seqout = Bio::SeqIO->new(
+        -format => 'genbank',
+        -file   => ">$gbkout"
+    );
+    $seqout->write_seq($seq);
 
 }
 
 sub parse_crt {
-	my $file = shift;
-	my @features;
+    my $file     = shift;
+    my $txt      = read_file($file);
+    my @features = ();
 
-	open MYIN,$file;
+    # CRISPR 1   Range: 123524 - 124955
+    while ( $txt =~ /CRISPR\s+\d+\s+Range:\s+(\d+)\s+-\s+(\d+)/g ) {
 
-	while (my $line = <MYIN>) {
+        my $feat = new Bio::SeqFeature::Generic(
+            -start       => $1,
+            -end         => $2,
+            -strand      => 1,
+            -tag         => { inference => "profile:CRT:1.2" },
+            -primary_tag => 'repeat_region'
+        );
+        push @features, $feat;
+    }
 
-		return if ( $line =~ /No CRISPR elements were found/ );
+    @features;
+}
 
-		# CRISPR 1   Range: 123524 - 124955
-		if ( $line =~ /CRISPR\s+\d+\s+Range:\s+(\d+)\s+-\s+(\d+)/g ) {
-
-			my $feat = new Bio::SeqFeature::Generic(-start       => $1,
-    		                                    -end         => $2,
-        		                                -strand      => 1,
-        		                                -tag         => {inference => "profile:CRT:1.2"},
-            		                            -primary_tag => 'repeat_region');
-			push @features,$feat;
-		}
-	}
-
-	return if ! @features;
- 
-	@features;
+sub read_file {
+    my $file = shift;
+    local $/ = undef;
+    open MYIN, $file;
+    my $txt = <MYIN>;
+    $txt;
 }
 
 1;

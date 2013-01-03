@@ -78,245 +78,273 @@ use Bio::Index::Blast;
 use Data::Dumper;
 
 sub parse {
-	my ($self,$diya) = @_;
+    my ( $self, $diya ) = @_;
 
-	my $clustermap = load_clusters_table();
-	my $cddmap = load_cdd_table();
+    my $clustermap = load_clusters_table();
+    my $cddmap     = load_cdd_table();
 
-	print "Cluster map from \'$MYCLUSTERS\' loaded\n" 
-	  if ( defined $clustermap && $diya->verbose );
-   print "CDD map from \'$MYCDD\' loaded\n" 
-     if ( defined $cddmap && $diya->verbose );
+    print "Cluster map from \'$MYCLUSTERS\' loaded\n"
+      if ( defined $clustermap && $diya->verbose );
+    print "CDD map from \'$MYCDD\' loaded\n"
+      if ( defined $cddmap && $diya->verbose );
 
-	my $blastout = $diya->_outputfile("BDRD::rpsblastCDS");
-	print "Indexing \'" . $blastout . "\'\n" if $diya->verbose;
+    my $blastout = $diya->_outputfile("BDRD::rpsblastCDS");
+    print "Indexing \'" . $blastout . "\'\n" if $diya->verbose;
 
-	my $index = Bio::Index::Blast->new(-filename => "$blastout.index",
-												  -write_flag => 1);
-	$index->make_index($blastout);
+    my $index = Bio::Index::Blast->new(
+        -filename   => "$blastout.index",
+        -write_flag => 1
+    );
+    $index->make_index($blastout);
 
-	my $gbk = $diya->_outputfile("BDRD::blastpCDS");
-	my $in = Bio::SeqIO->new(-file => "$gbk.gbk", -format => 'genbank');
-	my $seq = $in->next_seq;
+    my $gbk = $diya->_outputfile("BDRD::blastxCDS");
+    my $in  = Bio::SeqIO->new( -file => "$gbk.gbk", -format => 'genbank' );
+    my $seq = $in->next_seq;
 
-	# Remove all features but add them back after
-	# adding match data to the CDS features
-	my @feats = $seq->remove_SeqFeatures();
+    # Remove all features but add them back after
+    # adding match data to the CDS features
+    my @feats = $seq->remove_SeqFeatures();
 
-	for my $feat (@feats) {
+    for my $feat (@feats) {
 
-		if ( $feat->primary_tag eq 'CDS' ) {
+        if ( $feat->primary_tag eq 'CDS' ) {
 
-			my @locus = $feat->get_tag_values('locus_tag');
-			
-			my $fh;
+            my @locus = $feat->get_tag_values('locus_tag');
 
-			eval { $fh = $index->get_stream($locus[0]); };
+            my $fh;
 
-			if ( $@ ) {
-				print "Problem retrieving " . $locus[0] . " from $blastout.index\n";
-				next;
-			}
+            eval { $fh = $index->get_stream( $locus[0] ); };
 
-			my $blast_report = Bio::SearchIO->new(-noclose => 1,
-												  -format  => 'blast',
-												  -fh      => $fh );
+            if ($@) {
+                print "Problem retrieving "
+                  . $locus[0]
+                  . " from $blastout.index\n";
+                next;
+            }
 
-			my $result  = $blast_report->next_result;
-			my $version = $result->algorithm_version;
-			my $program = $result->algorithm;
+            my $blast_report = Bio::SearchIO->new(
+                -noclose => 1,
+                -format  => 'blast',
+                -fh      => $fh
+            );
 
-			if ( $result->num_hits > 0 ) {
+            my $result  = $blast_report->next_result;
+            my $version = $result->algorithm_version;
+            my $program = $result->algorithm;
 
-				my $tags = get_feat_tags($feat);
+            if ( $result->num_hits > 0 ) {
 
-				my $hit = get_best_hit($result);
-				my $hsp = $hit->next_hsp;
+                my $tags = get_feat_tags($feat);
 
-				print "Found rpsblast hit " . $hit->description . " for $locus[0]\n" if $diya->verbose;
+                my $hit = get_best_hit($result);
+                my $hsp = $hit->next_hsp;
 
-				# get domain id from hit
-				my ($cid) = $hit->description =~ /^(\w+)/;
+                print "Found rpsblast hit "
+                  . $hit->description
+                  . " for $locus[0]\n"
+                  if $diya->verbose;
 
-				if ( defined $clustermap->{$cid} ) {
+                # get domain id from hit
+                my ($cid) = $hit->description =~ /^(\w+)/;
 
-					$tags->{'score'} = $hit->significance;
-					$tags->{'rps_gi'} = $cid;
-					$tags->{'inference'} = "protein motif:RPS-BLAST:2.2.21";
+                if ( defined $clustermap->{$cid} ) {
 
-					# set cluster
-					$tags->{'cluster'} = $clustermap->{$cid}->{'entry'};
-					$tags->{'product'} = $clustermap->{$cid}->{'definition'};
-					$tags->{'group'}   = $clustermap->{$cid}->{'group'};
+                    $tags->{'score'}     = $hit->significance;
+                    $tags->{'rps_gi'}    = $cid;
+                    $tags->{'inference'} = "alignment:RPS-BLAST:2.2.21";
 
-			   } elsif ( defined $cddmap->{$cid} ) {
+                    # set cluster
+                    $tags->{'cluster'} = $clustermap->{$cid}->{'entry'};
+                    $tags->{'product'} = $clustermap->{$cid}->{'definition'};
+                    $tags->{'group'}   = $clustermap->{$cid}->{'group'};
 
-					$tags->{'cluster'} = $cddmap->{$cid}->{'entry'};
-               $tags->{'product'} = $cddmap->{$cid}->{'definition'};
+                }
+                elsif ( defined $cddmap->{$cid} ) {
 
-				}
+                    $tags->{'cluster'} = $cddmap->{$cid}->{'entry'};
+                    $tags->{'product'} = $cddmap->{$cid}->{'definition'};
 
-				my @products = $feat->get_tag_values('product') if 
-				  ( $feat->has_tag('product') );
+                }
 
-				# If this feature is already annotated with a UniRef match
-				if ( $products[0] =~ /RepID=/ && defined $tags->{'product'} ) {
+                my @products = $feat->get_tag_values('product')
+                  if ( $feat->has_tag('product') );
 
-					my $note = "similar to " . $tags->{'product'};
-					$note .= " " . $tags->{'cluster'};
-					$feat->add_tag_value('note',$note);
+                # If this feature is already annotated with a UniRef match
+                if ( $products[0] =~ /RepID=/ && defined $tags->{'product'} ) {
 
-					$seq->add_SeqFeature($feat);
+                    my $note = "similar to " . $tags->{'product'};
+                    $note .= " " . $tags->{'cluster'};
+                    $feat->add_tag_value( 'note', $note );
 
-				} else {
+                    $seq->add_SeqFeature($feat);
 
-					my $CDSfeat = new Bio::SeqFeature::Generic(-primary => 'CDS',
-																			 -start	 => $feat->start,
-																			 -end		 => $feat->end,
-																			 -strand	 => $feat->strand,
-																			 -tag		 => { %{$tags} }	);
-					# add xrefs
-					if ( $cid && $clustermap->{$cid}->{'xref'} ) {
-						for ( @{$clustermap->{$cid}->{'xref'}} ) {
-							$CDSfeat->add_tag_value( 'xref' => $_ );
-						}
-					}
+                }
+                else {
 
-					$seq->add_SeqFeature($CDSfeat);
-				}
+                    my $CDSfeat = new Bio::SeqFeature::Generic(
+                        -primary => 'CDS',
+                        -start   => $feat->start,
+                        -end     => $feat->end,
+                        -strand  => $feat->strand,
+                        -tag     => { %{$tags} }
+                    );
 
-			} else {
+                    # add xrefs
+                    if ( $cid && $clustermap->{$cid}->{'xref'} ) {
+                        for ( @{ $clustermap->{$cid}->{'xref'} } ) {
+                            $CDSfeat->add_tag_value( 'xref' => $_ );
+                        }
+                    }
 
-				$seq->add_SeqFeature($feat);
+                    $seq->add_SeqFeature($CDSfeat);
+                }
 
-			}
+            }
+            else {
 
-	} else {
+                $seq->add_SeqFeature($feat);
 
-		$seq->add_SeqFeature($feat);
+            }
 
-	}
-}
+        }
+        else {
 
-	my $outfile = $blastout . ".gbk";
- 	my $seqo = Bio::SeqIO->new(-file	=> ">$outfile",
- 										-format	=> 'genbank');
- 	$seqo->write_seq($seq);
-	print "Genbank output file is \'$outfile\'\n" if $diya->verbose;
+            $seq->add_SeqFeature($feat);
+
+        }
+    }
+
+    my $outfile = $blastout . ".gbk";
+    my $seqo    = Bio::SeqIO->new(
+        -file   => ">$outfile",
+        -format => 'genbank'
+    );
+    $seqo->write_seq($seq);
+    print "Genbank output file is \'$outfile\'\n" if $diya->verbose;
 }
 
 sub get_feat_tags {
-	my $feat = shift;
-	my %tags;
+    my $feat = shift;
+    my %tags;
 
-   for my $tag ($feat->get_all_tags) {
-		my @vals = $feat->get_tag_values($tag);
-		$tags{$tag} = $vals[0];
-	}
-	\%tags;
+    for my $tag ( $feat->get_all_tags ) {
+        my @vals = $feat->get_tag_values($tag);
+        $tags{$tag} = $vals[0];
+    }
+    \%tags;
 }
 
 sub get_best_hit {
-	my $result = shift;
-	my $best;
-	my $bits = 0;
+    my $result = shift;
+    my $best;
+    my $bits = 0;
 
-	while ( my $hit = $result->next_hit ) {
-		my $hsp = $hit->next_hsp;
+    while ( my $hit = $result->next_hit ) {
+        my $hsp = $hit->next_hsp;
 
-		if ( $hsp->bits > $bits ) {
-			$bits = $hsp->bits;
-			$best = $hit;
-		}
+        if ( $hsp->bits > $bits ) {
+            $bits = $hsp->bits;
+            $best = $hit;
+        }
 
-	}
-	return $best;
+    }
+    return $best;
 }
 
 # parse contents of Clusters.bcp into %cluster-map
 sub load_clusters_table {
 
-	local $/ = "////\n";
+    local $/ = "////\n";
 
-	my %clustermap;
+    my %clustermap;
 
-	open MYIN,$MYCLUSTERS or die "Cannot open file $MYCLUSTERS";
+    open MYIN, $MYCLUSTERS or die "Cannot open file $MYCLUSTERS";
 
-	while (<MYIN>) {
+    while (<MYIN>) {
 
-		my $rec = $_;
+        my $rec = $_;
 
-		my ($top, $bottom) = split(/PROTEINS/, $rec);
+        my ( $top, $bottom ) = split( /PROTEINS/, $rec );
 
-		my ($entry) = $top =~ /ENTRY\s+(\w*)/;
-		my ($definition) = $top =~ /DEFINITION\s+(.+)/;
-		my ($group) = $top =~ /COG_GROUP\s+(.+)/;
-		my @xrefs = $top =~ /XREF\s+(\w+)/g;
+        my ($entry)      = $top =~ /ENTRY\s+(\w*)/;
+        my ($definition) = $top =~ /DEFINITION\s+(.+)/;
+        my ($group)      = $top =~ /COG_GROUP\s+(.+)/;
+        my @xrefs        = $top =~ /XREF\s+(\w+)/g;
 
-		my %cluster = ('entry'			=> $entry,
-							'definition'	=> $definition,
-							'group'			=> $group,
-							'xref'			=> \@xrefs,
-						  );
+        my %cluster = (
+            'entry'      => $entry,
+            'definition' => $definition,
+            'group'      => $group,
+            'xref'       => \@xrefs,
+        );
 
-		$clustermap{$entry} = \%cluster if ( $entry );
+        $clustermap{$entry} = \%cluster if ($entry);
 
-		for my $xref ( @xrefs ) {
-			$clustermap{$xref} = \%cluster;
-		}
-	}
-	\%clustermap;
+        for my $xref (@xrefs) {
+            $clustermap{$xref} = \%cluster;
+        }
+    }
+    \%clustermap;
 }
 
 # parse contents of cddid_all.tbl file into %cddmap
 sub load_cdd_table {
 
-	my %cddmap;
+    my %cddmap;
 
-	open MYIN,$MYCDD or die "Cannot open file $MYCDD";
+    open MYIN, $MYCDD or die "Cannot open file $MYCDD";
 
-	while ( my $line = <MYIN> ) {
-		# Examples:
-		# 33678	COG3889	COG3889	Predicted solute binding protein [General function prediction only]	872
-		# 33328  COG3525 Chb N-acetyl-beta-hexosaminidase [Carbohydrate transport and metabolism] 732
-		if ( $line =~ /^\d+\s+(COG\d+)\s+\S+\s+([^[]+)\s/ ) {
-			my ($id,$def) = ($1,$2);
-			$def =~ s/\s+$//;
-			$def =~ s/\s+/ /g;
-			my  %cluster = ('entry'      => $id,
-								 'definition' => $def );
-			$cddmap{$id} = \%cluster;
-		}
+    while ( my $line = <MYIN> ) {
 
-		if ( $line =~ /^\d+\s+(CHL\d+)\s+([^;]+?)\s+\d+$/ ) {
-         my ($id,$def) = ($1,$2);
-         $def =~ s/\s+$//;
-         $def =~ s/\s+/ /g;
-			my  %cluster = ('entry'      => $id,
-								 'definition' => $def );
-			$cddmap{$id} = \%cluster;
-		}
+# Examples:
+# 33678	COG3889	COG3889	Predicted solute binding protein [General function prediction only]	872
+# 33328  COG3525 Chb N-acetyl-beta-hexosaminidase [Carbohydrate transport and metabolism] 732
+        if ( $line =~ /^\d+\s+(COG\d+)\s+\S+\s+([^[]+)\s/ ) {
+            my ( $id, $def ) = ( $1, $2 );
+            $def =~ s/\s+$//;
+            $def =~ s/\s+/ /g;
+            my %cluster = (
+                'entry'      => $id,
+                'definition' => $def
+            );
+            $cddmap{$id} = \%cluster;
+        }
 
-		if ( $line =~ /^\d+\s+(KOG\d+)\s+KOG\d+\s+KOG\d+,\s+([^,[]+)/ ) {
-			my ($id,$def) = ($1,$2);
-         $def =~ s/\s+$//;
-         $def =~ s/\s+/ /g;
-			my  %cluster = ('entry'      => $id,
-								 'definition' => $def );
-			$cddmap{$id} = \%cluster;
-		}
+        if ( $line =~ /^\d+\s+(CHL\d+)\s+([^;]+?)\s+\d+$/ ) {
+            my ( $id, $def ) = ( $1, $2 );
+            $def =~ s/\s+$//;
+            $def =~ s/\s+/ /g;
+            my %cluster = (
+                'entry'      => $id,
+                'definition' => $def
+            );
+            $cddmap{$id} = \%cluster;
+        }
 
-		# 103623	PRK08948	PRK08948	2-octaprenyl-6-methoxyphenyl hydroxylase; Validated	392
-		if ( $line =~ /^\d+\s+(PRK\d+)\s+\w+\s+([^;]+)/ ) {
-			my ($id,$def) = ($1,$2);
-         $def =~ s/\s+$//;
-         $def =~ s/\s+/ /g;
-			my  %cluster = ('entry'      => $id,
-								 'definition' => $def );
-			$cddmap{$id} = \%cluster;
-		}
-	}
-	\%cddmap;
+        if ( $line =~ /^\d+\s+(KOG\d+)\s+KOG\d+\s+KOG\d+,\s+([^,[]+)/ ) {
+            my ( $id, $def ) = ( $1, $2 );
+            $def =~ s/\s+$//;
+            $def =~ s/\s+/ /g;
+            my %cluster = (
+                'entry'      => $id,
+                'definition' => $def
+            );
+            $cddmap{$id} = \%cluster;
+        }
+
+# 103623 PRK08948 PRK08948 2-octaprenyl-6-methoxyphenyl hydroxylase; Validated	392
+        if ( $line =~ /^\d+\s+(PRK\d+)\s+\w+\s+([^;]+)/ ) {
+            my ( $id, $def ) = ( $1, $2 );
+            $def =~ s/\s+$//;
+            $def =~ s/\s+/ /g;
+            my %cluster = (
+                'entry'      => $id,
+                'definition' => $def
+            );
+            $cddmap{$id} = \%cluster;
+        }
+    }
+    \%cddmap;
 }
 
 1;

@@ -59,70 +59,81 @@ use Bio::SeqIO;
 use Data::Dumper;
 
 sub parse {
-	my ($self,$diya) = @_;
+    my ( $self, $diya ) = @_;
 
-	my $PRIMARY_TAG = "gene";
-	my $LOCUS_TAG_NUMBER = 0; # starting number
-	my ($seq,$out);
+    my $PRIMARY_TAG      = "gene";
+    my $LOCUS_TAG_NUMBER = 0;        # starting number
+    my ( $seq, $out );
 
-	if ( defined $MYSEQID ) {
-		$out = $MYSEQID;
-	} else {
-		$out = $diya->_outputfile('BDRD::glimmer3');
-	}
-	print "Parsing $out.predict\n" if $diya->verbose;
+    if ( defined $MYSEQID ) {
+        $out = $MYSEQID;
+    }
+    else {
+        $out = $diya->_outputfile('BDRD::glimmer3');
+    }
+    print "Parsing $out.predict\n" if $diya->verbose;
 
-	my $parser = Bio::Tools::Glimmer->new(-file   => "$out.predict",
-										  -format => 'Glimmer');
+    my $parser = Bio::Tools::Glimmer->new(
+        -file   => "$out.predict",
+        -format => 'Glimmer'
+    );
 
-	if ( defined $MYSEQID ) {
-		my $gbk = "$MYSEQID.gbk";
+    if ( defined $MYSEQID ) {
+        my $gbk = "$MYSEQID.gbk";
 
-		if ( ! -e $gbk ) {
-			my $dir = $diya->outputdir;
-			$gbk = "$dir/$gbk";
-		}
+        if ( !-e $gbk ) {
+            my $dir = $diya->outputdir;
+            $gbk = "$dir/$gbk";
+        }
 
-		my $in = Bio::SeqIO->new(-file => "$gbk",
-								 -format => 'genbank' );
-		$seq = $in->next_seq;
+        my $in = Bio::SeqIO->new(
+            -file   => "$gbk",
+            -format => 'genbank'
+        );
+        $seq = $in->next_seq;
 
-		print "Sequence is $gbk\n" if $diya->verbose;
+        print "Sequence is $gbk\n" if $diya->verbose;
 
-	} else {
-		$seq = $diya->_sequence;
-	}
+    }
+    else {
+        $seq = $diya->_sequence;
+    }
 
-	while ( my $feature = $parser->next_feature ) {
-		my %tags;
-		$tags{locus_tag} = $MYSEQID . '_' . ($LOCUS_TAG_NUMBER += 10);
-		$tags{inference} = 'ab initio prediction:glimmer3:3.0.2';
+    while ( my $feature = $parser->next_feature ) {
+        my %tags;
+        $tags{locus_tag} = $MYSEQID . '_' . ( $LOCUS_TAG_NUMBER += 10 );
+        $tags{inference} = 'ab initio prediction:glimmer3:3.0.2';
 
-		my $feat = Bio::SeqFeature::Generic->new(-primary    => $PRIMARY_TAG,
-												 -source_tag => 'glimmer3',
-											     -start 	 => $feature->start,
-												 -end		 => $feature->end,
-											     -strand	 => $feature->strand,
-											     -tag		 => { %tags } );
+        my $feat = Bio::SeqFeature::Generic->new(
+            -primary    => $PRIMARY_TAG,
+            -source_tag => 'glimmer3',
+            -start      => $feature->start,
+            -end        => $feature->end,
+            -strand     => $feature->strand,
+            -tag        => {%tags}
+        );
 
-		# Add feature to seq object
-		$seq->add_SeqFeature($feat);
-	}
+        # Add feature to seq object
+        $seq->add_SeqFeature($feat);
+    }
 
-	# Sort features by location
-	my @features = $seq->get_SeqFeatures;
-	# sort features by start position
-	@features = sort { $a->start <=> $b->start } @features;
-	$seq->remove_SeqFeatures;
-	$seq->add_SeqFeature(@features);
+    # Sort features by location
+    my @features = $seq->get_SeqFeatures;
 
-	# Output
-	my $outfile = $diya->_outputfile('BDRD::glimmer3');
+    # sort features by start position
+    @features = sort { $a->start <=> $b->start } @features;
+    $seq->remove_SeqFeatures;
+    $seq->add_SeqFeature(@features);
 
-	my $seqo = Bio::SeqIO->new(-format => 'genbank',
-							   -file   => ">$outfile.gbk");
-	$seqo->write_seq($seq);
-	$diya->_sequence($seq);
+    # Output
+    my $outfile = $diya->_outputfile('BDRD::glimmer3');
+
+    my $seqo = Bio::SeqIO->new(
+        -format => 'genbank',
+        -file   => ">$outfile.gbk"
+    );
+    $seqo->write_seq($seq);
+    $diya->_sequence($seq);
 
 }
 
