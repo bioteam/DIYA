@@ -44,70 +44,74 @@ Brian Osborne, briano@bioteam.net
 package diya::BDRD::phagefinder;
 
 use strict;
-use base 'diya'; 
+use base 'diya';
 
 sub parse {
-	my ($self,$diya) = @_;
+    my ( $self, $diya ) = @_;
 
-	my $LOCUS_TAG_NUMBER = 0;
+    my $LOCUS_TAG_NUMBER = 0;
 
-	my $out = $diya->_outputfile('BDRD::phagefinder');
-	print "Parsing " . $out . "\n" if $diya->verbose;
+    my $out = $diya->_outputfile('BDRD::phagefinder');
+    print "Parsing " . $out . "\n" if $diya->verbose;
 
-	my $gbk = $diya->_outputfile("BDRD::cmsearch");
-	my $in = Bio::SeqIO->new(
-		-file => "$gbk.gbk", 
-		-format => 'genbank',
-	);
-	my $seq = $in->next_seq;
+    my $gbk = $diya->_outputfile("BDRD::cmsearch");
+    my $in  = Bio::SeqIO->new(
+        -file   => "$gbk.gbk",
+        -format => 'genbank',
+    );
+    my $seq = $in->next_seq;
 
-	# Retrieve Phage_Finder output
-	open INFILE, $out;
-	my @tabfile = <INFILE>;
+    # Retrieve Phage_Finder output
+    open INFILE, $out;
+    my @tabfile = <INFILE>;
 
-	for my $line (@tabfile) {
+    for my $line (@tabfile) {
 
-		my @col = split "\t", $line;
+        my @col = split "\t", $line;
 
-		my ($start, $end, $strand);
-		if ($col[3] <= $col[4]) {
-			$start = $col[3];
-			$end = $col[4]; 
-			$strand = '+';
-		} else {
-			$start = $col[4];
-			$end = $col[3];
-			$strand = '-';
-		}
+        my ( $start, $end, $strand );
+        if ( $col[3] <= $col[4] ) {
+            $start  = $col[3];
+            $end    = $col[4];
+            $strand = '+';
+        }
+        else {
+            $start  = $col[4];
+            $end    = $col[3];
+            $strand = '-';
+        }
 
-		my %tag;
-		$tag{locus_tag} = $seq->display_id . "_p" . ($LOCUS_TAG_NUMBER += 10);
-		my $feat = Bio::SeqFeature::Generic->new(
+        my %tag;
+        $tag{locus_tag} = $seq->display_id . "_p" . ( $LOCUS_TAG_NUMBER += 10 );
+        my $feat = Bio::SeqFeature::Generic->new(
             -start        => $start,
             -end          => $end,
             -strand       => $strand,
-            -tag          => {inference => "profile:Phage_Finder:1.0"},
+            -tag          => { inference => "profile:Phage_Finder:1.0" },
             -primary_tag  => 'misc_feature',
-				-note         => 'bacteriophage',
+            -note         => 'bacteriophage',
             -source_tag   => 'Phage_Finder',
             -display_name => $col[6] . ' ' . $col[7],
         );
-		$feat->set_attributes(-tag => \%tag);
-		$seq->add_SeqFeature($feat);
-	}
+        $feat->set_attributes( -tag => \%tag );
+        $seq->add_SeqFeature($feat);
+    }
 
-	# Sort features by location
-	my @features = $seq->remove_SeqFeatures;
-	# sort features by start position
-	@features = sort { $a->start <=> $b->start } @features;
-	$seq->add_SeqFeature(@features);
+    # Sort features by location
+    my @features = $seq->remove_SeqFeatures;
 
-	# Output
-	my $outfile = $out . ".gbk";
+    # sort features by start position
+    @features = sort { $a->start <=> $b->start } @features;
+    $seq->add_SeqFeature(@features);
 
-	my $seqo = Bio::SeqIO->new(-format => 'genbank',
-							   -file   => ">$outfile");
-	$seqo->write_seq($seq);
+    # Output
+    my $outfile = $out . ".gbk";
+
+    my $seqo = Bio::SeqIO->new(
+        -format => 'genbank',
+        -file   => ">$outfile"
+    );
+    $seqo->write_seq($seq);
 
 }
 

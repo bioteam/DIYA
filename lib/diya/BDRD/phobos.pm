@@ -40,6 +40,7 @@ Brian Osborne, briano@bioteam.net
 package diya::BDRD::phobos;
 
 use strict;
+
 # simplest approach
 use base 'diya';
 
@@ -47,7 +48,6 @@ use base 'diya';
 # use vars qw(@ISA);
 # use diya qw();
 # @ISA = qw(diya);
-
 
 =head2 parse
 
@@ -62,73 +62,78 @@ use base 'diya';
 =cut
 
 sub parse {
-	my ($self,$diya) = @_;
+    my ( $self, $diya ) = @_;
 
-	# Parse phobos output, get features back
-	my $out = $diya->_outputfile('BDRD::phobos');
-	print "Parsing " . $out . "\n" if $diya->verbose;
-	my @repeats = parse_phobos($out);
-	print "Found repeats\n" if ( $diya->verbose && @repeats );
+    # Parse phobos output, get features back
+    my $out = $diya->_outputfile('BDRD::phobos');
+    print "Parsing " . $out . "\n" if $diya->verbose;
+    my @repeats = parse_phobos($out);
+    print "Found repeats\n" if ( $diya->verbose && @repeats );
 
-	# Get the annotated sequence from the previous step
-	my $gbkin = $diya->_outputfile("BDRD::CRT");
-	my $seqin = Bio::SeqIO->new(-file => "$gbkin.gbk", -format => 'genbank');
-	my $seq = $seqin->next_seq;
+    # Get the annotated sequence from the previous step
+    my $gbkin = $diya->_outputfile("BDRD::CRT");
+    my $seqin = Bio::SeqIO->new( -file => "$gbkin.gbk", -format => 'genbank' );
+    my $seq   = $seqin->next_seq;
 
-	# Add any new features from phobos
-	for my $repeat ( @repeats ) {
-		$repeat->source_tag('phobos');
-		$seq->add_SeqFeature($repeat);
-	}
+    # Add any new features from phobos
+    for my $repeat (@repeats) {
+        $repeat->source_tag('phobos');
+        $seq->add_SeqFeature($repeat);
+    }
 
-	# Sort features by location
-	my @features = $seq->remove_SeqFeatures;
-	@features = sort { $a->start <=> $b->start } @features;
-	$seq->add_SeqFeature(@features);
+    # Sort features by location
+    my @features = $seq->remove_SeqFeatures;
+    @features = sort { $a->start <=> $b->start } @features;
+    $seq->add_SeqFeature(@features);
 
-	# Output to Genbank file
-	my $gbkout = $out . ".gbk";
-	my $seqout = Bio::SeqIO->new(-format => 'genbank',
-				                 -file   => ">$gbkout");
-	$seqout->write_seq($seq);
+    # Output to Genbank file
+    my $gbkout = $out . ".gbk";
+    my $seqout = Bio::SeqIO->new(
+        -format => 'genbank',
+        -file   => ">$gbkout"
+    );
+    $seqout->write_seq($seq);
 
 }
 
 sub parse_phobos {
-	my $file = shift;
-	my ($txt,$version) = read_file($file);
-	my @features;
+    my $file = shift;
+    my ( $txt, $version ) = read_file($file);
+    my @features;
 
 # contig00007	Phobos	tandem-repeat	8849	8866	100.00	.	.	Name="repeat_region 8849-8
 # 866 unit_size 9 repeat_number 2.000 perfection 100.000 unit ATCGCCGCC"
 
-	while ( $txt =~ /^\S+\s+Phobos\s+tandem-repeat\s+(\d+)\s+(\d+)/g ) {
-
-		my $feat = new Bio::SeqFeature::Generic(-start       => $1,
-    		                                    -end         => $2,
-        		                                -strand      => 1,
-        		                                -tag         => {inference => "similar to DNA sequence:phobos:$version",
-        		                                				 rpt_type  => 'tandem' },
-            		                            -primary_tag => 'repeat_region');
-        push @features,$feat;
+    while ( $txt =~ /^\S+\s+Phobos\s+tandem-repeat\s+(\d+)\s+(\d+)/g ) {
+        my $feat = new Bio::SeqFeature::Generic(
+            -start  => $1,
+            -end    => $2,
+            -strand => 1,
+            -tag    => {
+                inference => "nucleotide motif:$version",
+                rpt_type  => 'tandem'
+            },
+            -primary_tag => 'repeat_region'
+        );
+        push @features, $feat;
     }
 
-	return if ( ! @features );
+    return 0 if ( !@features );
 
-	@features;
+    @features;
 }
 
 sub read_file {
-	my $file = shift;
-	my ($txt,$version);
+    my $file = shift;
+    my ( $txt, $version );
 
-	open MYIN,$file;
-	while (<MYIN>) {
-	    $version = $1 if /version\s+(\S+)/;
-	    $txt .= $_ if ( ! /^#/ );	
-	}
+    open MYIN, $file;
+    while (<MYIN>) {
+        $version = $1 if /version\s+(\S+)/;
+        $txt .= $_ if ( !/^#/ );
+    }
 
-	($txt,$version);
+    ( $txt, $version );
 }
 
 1;

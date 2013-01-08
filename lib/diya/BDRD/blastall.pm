@@ -49,61 +49,68 @@ use Bio::SeqIO;
 use Data::Dumper;
 
 sub parse {
-	my ($self,$diya) = @_;
+    my ( $self, $diya ) = @_;
 
-	my $blastout = $diya->_outputfile("blastall");
-	print "Parsing \'" . $blastout . "\'\n" if $diya->verbose;
+    my $blastout = $diya->_outputfile("blastall");
+    print "Parsing \'" . $blastout . "\'\n" if $diya->verbose;
 
-	my $blastparser = Bio::SearchIO->new(-file => $OUTPUT,
-									     -format => 'blast' );
-	my $version = $blastparser->version;
-	my $program = $blastparser->program;
+    my $blastparser = Bio::SearchIO->new(
+        -file   => $OUTPUT,
+        -format => 'blast'
+    );
+    my $version = $blastparser->version;
+    my $program = $blastparser->program;
 
-	my $seq = $diya->_sequence;
+    my $seq = $diya->_sequence;
 
-	# Remove all features but add them back after
-	# adding match data to the CDS features
-	my @feats = $seq->remove_SeqFeatures();
+    # Remove all features but add them back after
+    # adding match data to the CDS features
+    my @feats = $seq->remove_SeqFeatures();
 
-	for my $feat (@feats) {
-		if ( $feat->primary_tag eq 'CDS' ) {
-	 
-			my @locus = $feat->get_tag_values('locus_tag');
+    for my $feat (@feats) {
+        if ( $feat->primary_tag eq 'CDS' ) {
 
-			my %tags;
-			( $tags{locus_tag}, $tags{score}, $tags{product} ) = 
-			   get_match_data($blastparser, $locus[0]);
-		
-			$tags{inference} = "similar to AA sequence:$program:$version";
+            my @locus = $feat->get_tag_values('locus_tag');
 
-			my $feat = new Bio::SeqFeature::Generic(-primary => 'CDS',
-																 -start	 => $feat->start,
-																 -end		 => $feat->end,
-																 -strand	 => $feat->strand,
-																 -tag		 => { %tags }	);
-			$seq->add_SeqFeature($feat);				
-	} else {
-			$seq->add_SeqFeature($feat);			
-	}
-}
+            my %tags;
+            ( $tags{locus_tag}, $tags{score}, $tags{product} ) =
+              get_match_data( $blastparser, $locus[0] );
 
-	my $outfile = $blastout . ".gbk";
- 	my $seqo = Bio::SeqIO->new(-file	=> ">$outfile",
- 										-format	=> 'genbank');
- 	$seqo->write_seq($seq);
-	print "Genbank output file is \'$outfile\'\n" if $diya->verbose;
+            $tags{inference} = "alignment:$program:$version";
+
+            my $feat = new Bio::SeqFeature::Generic(
+                -primary => 'CDS',
+                -start   => $feat->start,
+                -end     => $feat->end,
+                -strand  => $feat->strand,
+                -tag     => {%tags}
+            );
+            $seq->add_SeqFeature($feat);
+        }
+        else {
+            $seq->add_SeqFeature($feat);
+        }
+    }
+
+    my $outfile = $blastout . ".gbk";
+    my $seqo    = Bio::SeqIO->new(
+        -file   => ">$outfile",
+        -format => 'genbank'
+    );
+    $seqo->write_seq($seq);
+    print "Genbank output file is \'$outfile\'\n" if $diya->verbose;
 }
 
 # This is not efficient - what's the best way to get a hit by its name?
 sub get_match_data {
-	my ($parser,$locus) = @_;
+    my ( $parser, $locus ) = @_;
 
-	while( my $result = $parser->next_result ) {
-		while( my $hit = $result->next_hit ) {
-			return ($locus, $hit->bits, $hit->description) 
-			  if ( $result->query_name eq $locus );
-		}
-	}
+    while ( my $result = $parser->next_result ) {
+        while ( my $hit = $result->next_hit ) {
+            return ( $locus, $hit->bits, $hit->description )
+              if ( $result->query_name eq $locus );
+        }
+    }
 }
 
 1;

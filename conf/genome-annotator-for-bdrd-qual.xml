@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This Diya conf file can be used to take 454 assemblies and a *qual file as input
+and output an annotated Genbank file and corresponding ASN.1 that can be submitted to 
+NCBI.
+
+Example command:
+
+nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-bdrd-new.xml \
+-set MYUNIREFD=/Jake/data/mirror/uniprot/uniref50.fasta -set MYSTRAIN=test0001 \
+-set MYSPECIES='Test test' -set MYRPSD=/Jake/data/mirror/ncbi/CDD/Cdd -set MYSEQID=test0001 \
+-set MYCLUSTERS=/Jake/data/mirror/ncbi/CDD/Clusters.bcp \
+-set MYCDD=/Jake/data/mirror/ncbi/CDD/cddid_all.tbl -set MYQUALFILE=454MiniContigs.qual \
+-set MYTAXID=12345 454MiniContigs.fna > test0001.out &
+
+1. copy all relevant files to a working directory
+2. run glimmer3
+3. run blastx of predicted peptides against UniRef50
+4. run rpsblast of predicted peptides against CDD
+5. run tRNAscanSE
+6. run rnammer
+7. run CRT
+8. run phobos
+9. correct of annotation text
+10. create ASN and associated files for NCBI submission
+
+-->
+
+<conf>
+  <order>
+   <names>assemble_pseudocontig make-single-fa BDRD::glimmer3 extractCDS
+   BDRD::blastxCDS BDRD::rpsblastCDS BDRD::tRNAscanSE BDRD::rnammer BDRD::CRT
+   BDRD::phobos gbconvert cleanup
+   </names> 
+  </order>
+    <script>
+    <name>assemble_pseudocontig</name>
+    <executable>diya-assemble_pseudocontig.pl</executable>
+    <command>-bin /Jake/apps/bin -infile INPUTFILE -species MYSPECIES -strain MYSTRAIN -seqid MYSEQID -outdir OUTPUTDIR</command>
+    <home>/Jake/apps/DIYA/scripts</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </script>
+  <script>
+    <name>make-single-fa</name>
+    <executable>make-single-fa.pl</executable>
+    <command>MYSEQID.gbk OUTPUTDIR</command>
+    <home>/Jake/apps/DIYA/scripts</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </script>
+  <parser> 
+    <name>bdrd::glimmer3</name>
+    <executable>g3-from-scratch.csh</executable>
+    <command>MYSEQID.fa MYSEQID</command>
+    <home>/Jake/apps/glimmer3.02/scripts</home>
+    <inputfrom></inputfrom>
+    <inputformat></inputformat>
+  </parser>
+  <script>
+    <name>extractCDS</name>
+    <executable>extractCDS.pl</executable>
+    <command>INPUTFILE OUTPUTFILE</command>
+    <home>/Jake/apps/DIYA/scripts</home>
+    <inputfrom>BDRD::glimmer3</inputfrom>
+    <inputformat></inputformat>
+  </script>
+  <parser>
+    <name>BDRD::blastxCDS</name>
+    <executable>bt-batchblast.pl</executable>
+   <command>-i INPUTFILE -p blastx -d MYUNIREFD -o OUTPUTFILE -e .001 -v 1 -b 1 --sync</command>
+    <home>/Jake/apps/DIYA/scripts</home>
+    <inputformat></inputformat>
+    <inputfrom>extractCDS</inputfrom>
+  </parser>
+  <parser>
+    <name>BDRD::rpsblastCDS</name>
+    <executable>bt-batchrpsblast.pl</executable>
+    <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1 --sync</command>
+    <home>/Jake/apps/DIYA/scripts</home>
+    <inputformat></inputformat>
+    <inputfrom>extractCDS</inputfrom>
+  </parser>
+  <parser>
+    <name>BDRD::tRNAscanSE</name>
+    <executable>tRNAscan-SE</executable>
+    <command>-B -o OUTPUTFILE MYSEQID.fa</command>
+    <home>/Jake/apps/tRNAscan-SE-1.23</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <parser>
+    <name>BDRD::rnammer</name>
+    <executable>rnammer</executable>
+    <command>-S bac --gff OUTPUTFILE MYSEQID.fa</command>
+    <home>/Jake/apps/rnammer-1.2</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <parser>
+    <name>BDRD::CRT</name>
+    <executable>java</executable>
+    <command>-cp /Jake/apps/CRT/CRT1.2-CLI.jar crt MYSEQID.fa OUTPUTFILE</command>
+    <home>/usr/bin</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <parser>
+    <name>BDRD::phobos</name>
+    <executable>phobos-linux-gcc4.1.2</executable>
+    <command>-M exact -u 9 -U 1000 --outputFormat 2 MYSEQID.fa OUTPUTFILE</command>
+    <home>/Jake/apps/bin</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </parser>
+  <script>
+    <name>gbconvert</name>
+    <executable>gbconvert.pl</executable>
+    <command>-agp -q MYQUALFILE -t MYTAXID INPUTFILE.gbk</command>
+    <home>/Jake/apps/DIYA/scripts</home>
+    <inputformat></inputformat>
+    <inputfrom>BDRD::cmsearch</inputfrom>
+  </script>
+  <script>
+    <name>cleanup</name>
+    <executable>cleanup.sh</executable>
+    <command>MYSEQID OUTPUTDIR</command>
+    <home>/Jake/apps/DIYA/scripts</home>
+    <inputformat></inputformat>
+    <inputfrom></inputfrom>
+  </script>
+  <run>
+    <mode>serial</mode>
+  </run>
+</conf>

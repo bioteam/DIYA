@@ -47,48 +47,57 @@ use Bio::SeqIO;
 use Bio::SeqFeature::Generic;
 
 sub parse {
-	my ($self,$diya) = @_;
+    my ( $self, $diya ) = @_;
 
-	my $LOCUS_TAG_NUMBER = 0;
+    my $LOCUS_TAG_NUMBER = 0;
 
-	#my $gbk = $diya->_sequence;
+    #my $gbk = $diya->_sequence;
 
-	my $rin = $diya->_outputfile('BDRD::tRNAscanSE') . ".gbk";
-	my $in = Bio::SeqIO->new(-file => $rin, -format => 'genbank');
-	my $gbk = $in->next_seq;
+    my $rin = $diya->_outputfile('BDRD::tRNAscanSE') . ".gbk";
+    my $in  = Bio::SeqIO->new( -file => $rin, -format => 'genbank' );
+    my $gbk = $in->next_seq;
 
-	my $rout = $diya->_outputfile('BDRD::rnammer');
+    my $rout = $diya->_outputfile('BDRD::rnammer');
 
-	open MYIN,$rout or die "Cannot read file $rout";
+    open MYIN, $rout or die "Cannot read file $rout";
 
-	while ( my $line = <MYIN> ) {
+    while ( my $line = <MYIN> ) {
 
-		if ( $line =~ /^\S+\s+(\w+)-([\d.]+)\s+rRNA\s+(\d+)\s+(\d+)\s+(\S+)\s+[+-]\s+\.\s+(\d+s)/ ) {
-			my %tags;
+        if ( $line =~
+/^\S+\s+(\w+)-([\d.]+)\s+rRNA\s+(\d+)\s+(\d+)\s+(\S+)\s+[+-]\s+\.\s+(\d+s)/
+          )
+        {
+            my %tags;
 
-			$tags{locus_tag} = $gbk->display_id . "_r" . ($LOCUS_TAG_NUMBER += 10);
-			$tags{note} = "$1 score=$5";
-			$tags{product} = "$6 ribosomal rna";
-			$tags{inference} = "profile:$1:$2";
+            $tags{locus_tag} =
+              $gbk->display_id . "_r" . ( $LOCUS_TAG_NUMBER += 10 );
+            $tags{note}      = "$1 score=$5";
+            $tags{product}   = "$6 ribosomal rna";
+            $tags{inference} = "profile:$1:$2";
 
-			my $feat = Bio::SeqFeature::Generic->new(-primary    => 'rRNA',
-																  -source_tag => 'rnammer',
-																  -start      => $3,
-																  -end        => $4,
-																  -tag        => { %tags } );
-			$gbk->add_SeqFeature($feat);
-		}
-	}
+            my $feat = Bio::SeqFeature::Generic->new(
+                -primary    => 'rRNA',
+                -source_tag => 'rnammer',
+                -start      => $3,
+                -end        => $4,
+                -tag        => {%tags}
+            );
+            $gbk->add_SeqFeature($feat);
+        }
+    }
 
-	# Sort features by location
-	my @features = $gbk->remove_SeqFeatures;
-	# sort features by start position
-	@features = sort { $a->start <=> $b->start } @features;
-	$gbk->add_SeqFeature(@features);
+    # Sort features by location
+    my @features = $gbk->remove_SeqFeatures;
 
-	my $seqo = Bio::SeqIO->new(-format => 'genbank',
-										-file	  => ">$rout.gbk");
-	$seqo->write_seq($gbk);
+    # sort features by start position
+    @features = sort { $a->start <=> $b->start } @features;
+    $gbk->add_SeqFeature(@features);
+
+    my $seqo = Bio::SeqIO->new(
+        -format => 'genbank',
+        -file   => ">$rout.gbk"
+    );
+    $seqo->write_seq($gbk);
 }
 
 1;
