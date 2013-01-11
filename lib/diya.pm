@@ -610,6 +610,7 @@ use Cwd qw( cwd );
 use Data::Merger qw( merger );
 use File::Basename qw( basename fileparse );
 use POSIX;
+
 # From BioPerl
 use Bio::Tools::GuessSeqFormat;
 use Bio::SeqIO;
@@ -619,8 +620,9 @@ $VERSION = '1.0';
 $Data::Dumper::Purity = 1;
 
 # Add a variable here if you want to set it using --set
-@EXPORT_OK = qw($VERSION $ID $SEQFILE $MYSPECIES $MYSTRAIN $PROJECT $CONF $OUTPUT $MYSEQID
-					 $MYCLUSTERS $MYCDD $MYLEN );
+@EXPORT_OK =
+  qw($VERSION $ID $SEQFILE $MYSPECIES $MYSTRAIN $PROJECT $CONF $OUTPUT $MYSEQID
+  $MYCLUSTERS $MYCDD $MYLEN );
 
 =head1 METHODS
 
@@ -646,23 +648,22 @@ Public methods are listed first, followed by private methods prefixed with '_'.
 =cut
 
 sub new {
-	my ($module,@args) = @_;
-	my $class = ref($module) || $module;
-	my $self = {};
-	bless($self,$class);
+    my ( $module, @args ) = @_;
+    my $class = ref($module) || $module;
+    my $self = {};
+    bless( $self, $class );
 
-	# Defaults
-	$self->verbose(0);
-	$self->mode('serial');
+    # Defaults
+    $self->verbose(0);
+    $self->mode('serial');
 
-	$self->_initialize(@args);
-	$self->_greeting if $self->verbose;
-	$self->_diyahome;
-	$self->_get_options;
+    $self->_initialize(@args);
+    $self->_greeting if $self->verbose;
+    $self->_diyahome;
+    $self->_get_options;
 
-	return $self;
+    return $self;
 }
-
 
 =head2 read_conf
 
@@ -676,37 +677,39 @@ sub new {
 =cut
 
 sub read_conf {
-	my ($self, $confpath) = @_;
-	my $conf;
+    my ( $self, $confpath ) = @_;
+    my $conf;
 
-	if ( $confpath ) {
-		die "Conf file $confpath not found\n" if (! -e $confpath);
-		$self->_use_conf($confpath);
-	} else {
-		$confpath = $self->_use_conf;
-	}
+    if ($confpath) {
+        die "Conf file $confpath not found\n" if ( !-e $confpath );
+        $self->_use_conf($confpath);
+    }
+    else {
+        $confpath = $self->_use_conf;
+    }
 
-	print "Using \'$confpath\'\n" if $self->verbose;
+    print "Using \'$confpath\'\n" if $self->verbose;
 
-	if ( -e $confpath ) {
-		print "Reading \'$confpath\'\n" if $self->verbose;
-		$conf = XMLin($confpath, ForceArray => 1 );
-	} else {
-		die "Could not find conf file $confpath";
-	}
+    if ( -e $confpath ) {
+        print "Reading \'$confpath\'\n" if $self->verbose;
+        $conf = XMLin( $confpath, ForceArray => 1 );
+    }
+    else {
+        die "Could not find conf file $confpath";
+    }
 
-	# if someone has already set some values using a method or
-	# by using a command-line option then do not overwrite them
-	if ( defined $self->_conf ) {
-		my $oldconf = $self->_conf;
-		merger($conf, $oldconf);
-	}
+    # if someone has already set some values using a method or
+    # by using a command-line option then do not overwrite them
+    if ( defined $self->_conf ) {
+        my $oldconf = $self->_conf;
+        merger( $conf, $oldconf );
+    }
 
-	$self->_conf($conf);
-	
-	# print Dumper $conf if $self->verbose;
+    $self->_conf($conf);
 
-	1;
+    # print Dumper $conf if $self->verbose;
+
+    1;
 }
 
 =head2 run
@@ -721,58 +724,61 @@ sub read_conf {
 =cut
 
 sub run {
-	my $self = shift;
-	my $conf = $self->_conf;
-	my $filecount;
+    my $self = shift;
+    my $conf = $self->_conf;
+    my $filecount;
 
-	die "No configuration found - make sure to call read_conf() before run()" 
-	  if ( ! defined $conf );
-	
-	# The file count is set to the number of input sequence files, if input 
-	# files are specified at the command-line. If no input files are specified 
-	# it is assumed that the pipeline is just run once and the file count is 1
+    die "No configuration found - make sure to call read_conf() before run()"
+      if ( !defined $conf );
 
-	if ( @ARGV ) {
-		$self->inputfile(@ARGV);
-		$filecount = $#ARGV + 1;
-	} else {
-		$filecount = 1;
-	}
+    # The file count is set to the number of input sequence files, if input
+    # files are specified at the command-line. If no input files are specified
+    # it is assumed that the pipeline is just run once and the file count is 1
 
-	while ( $filecount ) {
-		print "File count is $filecount\n" if $self->verbose;
+    if (@ARGV) {
+        $self->inputfile(@ARGV);
+        $filecount = $#ARGV + 1;
+    }
+    else {
+        $filecount = 1;
+    }
 
-		my $file = $self->_next_inputfile;
-		$self->{_lastsgeid} = undef;
-		$self->_check_outputdir;
+    while ($filecount) {
+        print "File count is $filecount\n" if $self->verbose;
 
-		my $stepcount = 0;
+        my $file = $self->_next_inputfile;
+        $self->{_lastsgeid} = undef;
+        $self->_check_outputdir;
 
-		for my $step ( $self->order ) {
-			$stepcount++;
-			print "Preparing to run \'$step\', step count of $stepcount\n" 
-			  if $self->verbose;
+        my $stepcount = 0;
 
-			my $type = $self->_get_type($step);			
+        for my $step ( $self->order ) {
+            $stepcount++;
+            print "Preparing to run \'$step\', step count of $stepcount\n"
+              if $self->verbose;
 
-			my $modulename = $self->_load_app_module($step) 
-			  if ( $type eq 'parser' );
+            my $type = $self->_get_type($step);
 
-			$self->_check_input_sequence($step,$file) if $file;
-			$self->_check_inputfile($step);
-			$self->_check_executable($step);
-			$self->_make_outputfilename($step);
+            my $modulename = $self->_load_app_module($step)
+              if ( $type eq 'parser' );
 
-			my $fullcommand = $self->_make_command($step);
-		
-			$self->_execute($fullcommand, $stepcount, $modulename, $type, $file);
-		}
+            $self->_check_input_sequence( $step, $file ) if $file;
+            $self->_check_inputfile($step);
+            $self->_check_executable($step);
+            $self->_make_outputfilename($step);
 
-		$filecount--;
-		# Delay 1 second to assure that timestamps on output files differ
-		sleep(1);
-	}
-	1;
+            my $fullcommand = $self->_make_command($step);
+
+            $self->_execute( $fullcommand, $stepcount, $modulename, $type,
+                $file );
+        }
+
+        $filecount--;
+
+        # Delay 1 second to assure that timestamps on output files differ
+        sleep(1);
+    }
+    1;
 }
 
 =head2 new_parser
@@ -787,12 +793,12 @@ sub run {
 =cut
 
 sub new_parser {
-	my ($caller,@args) = @_;
-	my $class = ref($caller) || $caller;
-	my $self = {};
+    my ( $caller, @args ) = @_;
+    my $class = ref($caller) || $caller;
+    my $self = {};
 
-	bless($self,$class);
-	return $self;
+    bless( $self, $class );
+    return $self;
 }
 
 =head2 order
@@ -811,43 +817,44 @@ sub new_parser {
 =cut
 
 sub order {
-	my ($self,@new_order) = @_;
-	my $conf = $self->_conf;
-	my @current_order;
+    my ( $self, @new_order ) = @_;
+    my $conf = $self->_conf;
+    my @current_order;
 
-	if ( ! @new_order ) {
-		@current_order = split /\s+/, $conf->{order}->[0]->{names}->[0];
-		
-		# if <order> is empty then XML::Simple puts a hash there
-		if ( $current_order[0] =~ /HASH\(\S+\)/ ) {
-			print "No names found in <order>\n" if $self->verbose;
-			return;
-		}
+    if ( !@new_order ) {
+        @current_order = split /\s+/, $conf->{order}->[0]->{names}->[0];
 
-		print "Current <order> is \'@current_order\'\n\n" if 
-		  $self->verbose;
-		return @current_order;
-	}
+        # if <order> is empty then XML::Simple puts a hash there
+        if ( $current_order[0] =~ /HASH\(\S+\)/ ) {
+            print "No names found in <order>\n" if $self->verbose;
+            return;
+        }
 
-	my @conf_scripts = $self->_scripts;
-	my @conf_modules = $self->_parsers;
-	die "No parsers found - you may need to run read_conf()" if ( ! @conf_modules );
-	
-	LOOP: foreach my $exe (@new_order) {
-		next LOOP if ( grep /^$exe$/, @conf_modules );
+        print "Current <order> is \'@current_order\'\n\n"
+          if $self->verbose;
+        return @current_order;
+    }
 
-		next LOOP if ( grep /^$exe$/, @conf_scripts );
+    my @conf_scripts = $self->_scripts;
+    my @conf_modules = $self->_parsers;
+    die "No parsers found - you may need to run read_conf()"
+      if ( !@conf_modules );
 
-		die "Cannot use new order: the name \'$exe\' can not be found in " .
-		  $self->{use_conf};		  
-	}
+  LOOP: foreach my $exe (@new_order) {
+        next LOOP if ( grep /^$exe$/, @conf_modules );
 
-	my $new_order = join ' ', @new_order;
-	$conf->{order}->[0]->{names}->[0] = $new_order;
-	print "New <order> is \'" . $conf->{order}->[0]->{names}->[0] . "\'\n" 
-	  if $self->verbose;
+        next LOOP if ( grep /^$exe$/, @conf_scripts );
 
-	return @new_order;
+        die "Cannot use new order: the name \'$exe\' can not be found in "
+          . $self->{use_conf};
+    }
+
+    my $new_order = join ' ', @new_order;
+    $conf->{order}->[0]->{names}->[0] = $new_order;
+    print "New <order> is \'" . $conf->{order}->[0]->{names}->[0] . "\'\n"
+      if $self->verbose;
+
+    return @new_order;
 }
 
 =head2 write_conf
@@ -864,28 +871,29 @@ sub order {
 =cut
 
 sub write_conf {
-	my ($self,$confname) = @_;
-	my $conf = $self->_conf;
+    my ( $self, $confname ) = @_;
+    my $conf = $self->_conf;
 
-	if ( ! defined $confname ) {
-		my $timestamp = strftime("%Y_%m_%d_%H_%M_%S", localtime);
-		$confname = $timestamp . "-diya.conf";
-		print "No name given for new diya.conf file - " .
-		  "will use \'$confname\'\n" if $self->verbose;
-	}
+    if ( !defined $confname ) {
+        my $timestamp = strftime( "%Y_%m_%d_%H_%M_%S", localtime );
+        $confname = $timestamp . "-diya.conf";
+        print "No name given for new diya.conf file - "
+          . "will use \'$confname\'\n"
+          if $self->verbose;
+    }
 
-	my $header = '<?xml version="1.0" encoding="UTF-8"?>
+    my $header = '<?xml version="1.0" encoding="UTF-8"?>
 <!-- $Id: diya.pm 340 2009-04-24 15:03:35Z briano $ -->
 
 ';
-	open MYOUT,">$confname" or die "Cannot create conf file named $confname";
-	print MYOUT $header;
-	close MYOUT;
+    open MYOUT, ">$confname" or die "Cannot create conf file named $confname";
+    print MYOUT $header;
+    close MYOUT;
 
-	open MYOUT,">>$confname" or die "Cannot add to conf file named $confname";
-	print MYOUT XMLout($conf, noattr => 1, RootName => 'conf');
-	close MYOUT;
-	$confname;
+    open MYOUT, ">>$confname" or die "Cannot add to conf file named $confname";
+    print MYOUT XMLout( $conf, noattr => 1, RootName => 'conf' );
+    close MYOUT;
+    $confname;
 }
 
 =head2 verbose
@@ -900,16 +908,17 @@ sub write_conf {
 =cut
 
 sub verbose {
-	my ($self,$verbose) = @_;
+    my ( $self, $verbose ) = @_;
 
-	if ( ! defined $verbose ) {
-		return $self->{verbose};
-	} else {
-		die "Set verbose() to 1 or 0, not $verbose" if ( $verbose !~ /^[10]$/ );
-		$self->{verbose} = $verbose;		
-	}
+    if ( !defined $verbose ) {
+        return $self->{verbose};
+    }
+    else {
+        die "Set verbose() to 1 or 0, not $verbose" if ( $verbose !~ /^[10]$/ );
+        $self->{verbose} = $verbose;
+    }
 
-	return $self->{verbose};
+    return $self->{verbose};
 }
 
 =head2 project
@@ -924,16 +933,18 @@ sub verbose {
 =cut
 
 sub project {
-	my ($self,$project) = @_;
+    my ( $self, $project ) = @_;
 
-	if ( ! defined $project ) {
-		return $self->{verbose};
-	} else {
-		die "Set project() to a number, not \'$project\'" if ( $project !~ /^\d+$/ );
-		$self->{project} = $project;		
-	}
+    if ( !defined $project ) {
+        return $self->{verbose};
+    }
+    else {
+        die "Set project() to a number, not \'$project\'"
+          if ( $project !~ /^\d+$/ );
+        $self->{project} = $project;
+    }
 
-	return $self->{project};
+    return $self->{project};
 }
 
 =head2 outputdir
@@ -954,22 +965,23 @@ sub project {
 =cut
 
 sub outputdir {
-	my ($self,$dir) = @_;
+    my ( $self, $dir ) = @_;
 
-	$self->{outputdir} = $dir if defined $dir;
+    $self->{outputdir} = $dir if defined $dir;
 
-	$self->{outputdir} .= "/" if ( $self->{outputdir} !~ m|/$| );
+    $self->{outputdir} .= "/" if ( $self->{outputdir} !~ m|/$| );
 
-	if (! defined $self->{outputdir}) {
-		print "No output directory defined - will create one when run() is called\n"
-		  if $self->verbose;
-		return 0;
-	}
+    if ( !defined $self->{outputdir} ) {
+        print
+          "No output directory defined - will create one when run() is called\n"
+          if $self->verbose;
+        return 0;
+    }
 
-	print "Using \'" . $self->{outputdir} . "\' as output directory\n" 
-	  if $self->verbose;
-	$self->{_outputdir} = $self->{outputdir};
-	return $self->{outputdir};
+    print "Using \'" . $self->{outputdir} . "\' as output directory\n"
+      if $self->verbose;
+    $self->{_outputdir} = $self->{outputdir};
+    return $self->{outputdir};
 }
 
 =head2 mode
@@ -984,18 +996,20 @@ sub outputdir {
 =cut
 
 sub mode {
-	my ($self,$mode) = @_;
-	my @modes = qw(sge serial lsf);
+    my ( $self, $mode ) = @_;
+    my @modes = qw(sge serial lsf);
 
-	if ( defined $mode ) {
-		die "mode() was called with \'$mode\' but the only available modes are: @modes"
-		  if ( ! grep /^$mode$/i, @modes );
-		$self->{conf}->{run}->{mode} = $mode;
-	}
+    if ( defined $mode ) {
+        die
+"mode() was called with \'$mode\' but the only available modes are: @modes"
+          if ( !grep /^$mode$/i, @modes );
+        $self->{conf}->{run}->{mode} = $mode;
+    }
 
-	print "<mode> for the pipeline is \'" . $self->{conf}->{run}->{mode} . "\'\n"
-	  if $self->verbose;
-	return $self->{conf}->{run}->{mode};
+    print "<mode> for the pipeline is \'"
+      . $self->{conf}->{run}->{mode} . "\'\n"
+      if $self->verbose;
+    return $self->{conf}->{run}->{mode};
 }
 
 =head2 cleanup
@@ -1010,11 +1024,11 @@ sub mode {
 =cut
 
 sub cleanup {
-	my $self = shift;
-	my $dir = $self->outputdir();
-	system "rm -fr $dir";
-	print "Removed directory \'$dir\'\n" if $self->verbose;
-	1;
+    my $self = shift;
+    my $dir  = $self->outputdir();
+    system "rm -fr $dir";
+    print "Removed directory \'$dir\'\n" if $self->verbose;
+    1;
 }
 
 =head2 inputfile
@@ -1029,12 +1043,11 @@ sub cleanup {
 =cut
 
 sub inputfile {
-	my ($self, @files) = @_;
-	push @{$self->{inputfiles}}, @files if @files;
-	my @arr = @{$self->{inputfiles}};
-	
-	print "Using \'@arr\' as input files\n" if $self->verbose.
-	return @arr;
+    my ( $self, @files ) = @_;
+    push @{ $self->{inputfiles} }, @files if @files;
+    my @arr = @{ $self->{inputfiles} };
+
+    print "Using \'@arr\' as input files\n" if $self->verbose . return @arr;
 }
 
 =head2 _next_inputfile
@@ -1050,17 +1063,19 @@ sub inputfile {
 =cut
 
 sub _next_inputfile {
-	my $self = shift;
+    my $self = shift;
 
-	if ( ! defined @{$self->{inputfiles}} 
-		  || scalar @{$self->{inputfiles}} == 0 ) {
-		print "No input files\n" if $self->verbose; 
-		return 0;
-	}
+    if (  !defined @{ $self->{inputfiles} }
+        || scalar @{ $self->{inputfiles} } == 0 )
+    {
+        print "No input files\n" if $self->verbose;
+        return 0;
+    }
 
-	$self->{inputfile} = shift @{$self->{inputfiles}};
-	print "Next input file is \'" . $self->{inputfile} . "\'\n" if $self->verbose; 
-	return $self->{inputfile};
+    $self->{inputfile} = shift @{ $self->{inputfiles} };
+    print "Next input file is \'" . $self->{inputfile} . "\'\n"
+      if $self->verbose;
+    return $self->{inputfile};
 }
 
 =head2 _execute
@@ -1075,67 +1090,72 @@ sub _next_inputfile {
 =cut
 
 sub _execute {
-	my ($self, $fullcommand, $count, $modulename, $type, $file) = @_;
+    my ( $self, $fullcommand, $count, $modulename, $type, $file ) = @_;
 
-	my $output = `$fullcommand`;
+    my $output = `$fullcommand`;
 
-	# serial mode execution
-	if ( $self->mode ne 'sge' && $self->mode ne 'lsf' ) {
-		if ( $? == 0 ) {
-			# if $CHILD_ERROR == 0
-			print $output, "\n";
-			if ( $modulename ) {
-				my $parser = $modulename->new_parser;
-				print "Created \'$modulename\' object\n" if $self->verbose;
-				$parser->parse($self);
-			}
-			return;
-		} else {
-			print "Child error: $?\n";
-			if ( $output ) {
-				die $output, "\n";
-			} else {
-				exit 1;
-			} 
-		}
-	}
-	if ($self->mode eq 'lsf' && $output=~/<(\d+)>/)
-	{
-		# Extract job id from output
-		$output=$1;
-	}
-	# Handle SGE logic
-	if ( $? == 0 ) {
-		if ( $output =~ /^(\d+)$/ )	{
-			print "sge job id is $1\n" if $self->verbose();
-			$self->_lastsgeid($1);
-		} else {
-			print $output, "\n";
-			die "Failed in extracting job id from sge submission output\n";
-		}
-	} else {
-		print $output, "\n";
-		die "sge submission fails\n";	
-	}
-	
-	
-	if (!defined($modulename))
-	{
-		return;
-	}
-	
-	#handle the parse logic only if $modulename is defined.
-	my $scriptfile = $self->{outputdir} . "/interscript_$count.pl";
-	open(OUT, ">$scriptfile") or die "can not open $scriptfile for writing";
-	# if the sequence is dumped, the object inheritance is broken when it is
-	# revaluated in the generated script below. 
-	# to solve this issue, we do not dump the sequence object. Instead
-	# the sequence object is rebuilt in the generated script by calling _reconstruct_sequence 
-	my $sequence = $self->_sequence();
-	$self->{sequence} = undef;
-	my $diyastr = Data::Dumper->Dump( [ $self], ["diya"] );
-		
-	print OUT qq(#!/usr/bin/perl
+    # serial mode execution
+    if ( $self->mode ne 'sge' && $self->mode ne 'lsf' ) {
+        if ( $? == 0 ) {
+
+            # if $CHILD_ERROR == 0
+            print $output, "\n";
+            if ($modulename) {
+                my $parser = $modulename->new_parser;
+                print "Created \'$modulename\' object\n" if $self->verbose;
+                $parser->parse($self);
+            }
+            return;
+        }
+        else {
+            print "Child error: $?\n";
+            if ($output) {
+                die $output, "\n";
+            }
+            else {
+                exit 1;
+            }
+        }
+    }
+    if ( $self->mode eq 'lsf' && $output =~ /<(\d+)>/ ) {
+
+        # Extract job id from output
+        $output = $1;
+    }
+
+    # Handle SGE logic
+    if ( $? == 0 ) {
+        if ( $output =~ /^(\d+)$/ ) {
+            print "sge job id is $1\n" if $self->verbose();
+            $self->_lastsgeid($1);
+        }
+        else {
+            print $output, "\n";
+            die "Failed in extracting job id from sge submission output\n";
+        }
+    }
+    else {
+        print $output, "\n";
+        die "sge submission fails\n";
+    }
+
+    if ( !defined($modulename) ) {
+        return;
+    }
+
+    #handle the parse logic only if $modulename is defined.
+    my $scriptfile = $self->{outputdir} . "/interscript_$count.pl";
+    open( OUT, ">$scriptfile" ) or die "can not open $scriptfile for writing";
+
+# if the sequence is dumped, the object inheritance is broken when it is
+# revaluated in the generated script below.
+# to solve this issue, we do not dump the sequence object. Instead
+# the sequence object is rebuilt in the generated script by calling _reconstruct_sequence
+    my $sequence = $self->_sequence();
+    $self->{sequence} = undef;
+    my $diyastr = Data::Dumper->Dump( [$self], ["diya"] );
+
+    print OUT qq(#!/usr/bin/perl
 use strict;
 use diya;
 use $modulename;
@@ -1146,39 +1166,44 @@ $diyastr;
 \$diya->_reconstruct_sequence();
 \$parser->parse(\$diya,'$file');
 );
-	close(OUT);
-	$self->_sequence($sequence);
+    close(OUT);
+    $self->_sequence($sequence);
 
-	`chmod uog+x $scriptfile`;
+    `chmod uog+x $scriptfile`;
 
-	my $cwd = getcwd();
-	my $sgeid = $self->_lastsgeid();
-	my $outputdir = $self->outputdir();
-	my $intercommand = "qsub -b y -V -cwd -e $outputdir/intercmd_${count}.err -o $outputdir/intercmd_${count}.out -N intercmd -terse -hold_jid $sgeid $scriptfile";
-	if ($self->mode eq 'lsf')
-	{
-		$intercommand = "bsub -e $outputdir/intercmd_${count}.err -o $outputdir/intercmd_${count}.out -J intercmd -w $sgeid $scriptfile";
-				
-	}
-	print "command is \'$intercommand\'\n" if $self->verbose();
-	$output = `$intercommand`;
-	if ($self->mode eq 'lsf' && $output=~/<(\d+)>/)
-	{
-		#extract jobid from lsf.
-		$output=$1;
-	}
-	if ( $? == 0 ) {
-		if ( $output =~ /^(\d+)$/ ) {
-			print "sge job id is $1\n" if $self->verbose();
-			$self->_lastsgeid($1);
-		} else {
-			print $output, "\n";
-			die "failed in extracting job id from sge submission output\n";
-		}
-	} else {
-		print $output, "\n";
-		die "sge submission fails\n";	
-	}	
+    my $cwd       = getcwd();
+    my $sgeid     = $self->_lastsgeid();
+    my $outputdir = $self->outputdir();
+    my $intercommand =
+"qsub -b y -V -cwd -e $outputdir/intercmd_${count}.err -o $outputdir/intercmd_${count}.out " .
+"-N intercmd -terse -hold_jid $sgeid $scriptfile";
+    if ( $self->mode eq 'lsf' ) {
+        $intercommand =
+"bsub -e $outputdir/intercmd_${count}.err -o $outputdir/intercmd_${count}.out -J intercmd " .
+"-w $sgeid $scriptfile";
+
+    }
+    print "command is \'$intercommand\'\n" if $self->verbose();
+    $output = `$intercommand`;
+    if ( $self->mode eq 'lsf' && $output =~ /<(\d+)>/ ) {
+
+        #extract jobid from lsf.
+        $output = $1;
+    }
+    if ( $? == 0 ) {
+        if ( $output =~ /^(\d+)$/ ) {
+            print "sge job id is $1\n" if $self->verbose();
+            $self->_lastsgeid($1);
+        }
+        else {
+            print $output, "\n";
+            die "failed in extracting job id from sge submission output\n";
+        }
+    }
+    else {
+        print $output, "\n";
+        die "sge submission fails\n";
+    }
 }
 
 =head2 _reconstruct_sequence
@@ -1195,11 +1220,13 @@ $diyastr;
 =cut
 
 sub _reconstruct_sequence {
-	my $self = shift;
-	my $in = Bio::SeqIO->new(-format => $self->{__sequenceformat}, 
-									 -file   => $self->{__sequencefile});
-	my $seq = $in->next_seq;
-	$self->_sequence($seq);
+    my $self = shift;
+    my $in   = Bio::SeqIO->new(
+        -format => $self->{__sequenceformat},
+        -file   => $self->{__sequencefile}
+    );
+    my $seq = $in->next_seq;
+    $self->_sequence($seq);
 }
 
 =head2 _check_executable
@@ -1213,10 +1240,10 @@ sub _reconstruct_sequence {
 =cut
 
 sub _check_executable {
-	my ($self,$step) = @_;
-	my $exe = $self->_home($step) . $self->_executable($step);
-	die "Executable \'$exe\' not found" if ( ! -e $exe ); 
-	1;
+    my ( $self, $step ) = @_;
+    my $exe = $self->_home($step) . $self->_executable($step);
+    die "Executable \'$exe\' not found" if ( !-e $exe );
+    1;
 }
 
 =head2 _check_input_sequence
@@ -1232,56 +1259,62 @@ sub _check_executable {
 =cut
 
 sub _check_input_sequence {
-	my ($self,$module,$file) = @_;
-	
-	my $requiredformat = $self->_inputformat($module);
+    my ( $self, $module, $file ) = @_;
 
-	my $guesser = Bio::Tools::GuessSeqFormat->new( -file => $file );
-	my $inputformat = $guesser->guess;
-	print "Format of \'$file\' is \'$inputformat\'\n" if $self->verbose;
+    my $requiredformat = $self->_inputformat($module);
 
-	my $in = Bio::SeqIO->new(-format => $inputformat, -file => $file);
-	my $seq = $in->next_seq;
-	$self->_sequence($seq);
+    my $guesser = Bio::Tools::GuessSeqFormat->new( -file => $file );
+    my $inputformat = $guesser->guess;
+    print "Format of \'$file\' is \'$inputformat\'\n" if $self->verbose;
 
-	if (! $requiredformat) {
-		print "No <inputformat> found for step \'$module\', no conversion needed\n"
-		  if $self->verbose;
-		return $file;
-	}
-	
-	print "Step is \'$module\', input file format looks like \'$inputformat\',". 
-	  " required format is \'$requiredformat\'\n" if $self->verbose;
+    my $in = Bio::SeqIO->new( -format => $inputformat, -file => $file );
+    my $seq = $in->next_seq;
+    $self->_sequence($seq);
 
-	# keep these two values so that _reconstruct_sequence can work.
-	$self->{__sequenceformat} = $inputformat;
-	$self->{__sequencefile} = $file;
+    if ( !$requiredformat ) {
+        print
+          "No <inputformat> found for step \'$module\', no conversion needed\n"
+          if $self->verbose;
+        return $file;
+    }
 
-	if ( $requiredformat !~ /$inputformat/i ) {
-		
-		print "Format of \'$file\' does not match required format, will convert file" .
-		  " to \'$requiredformat\'\n" if $self->verbose;
+    print "Step is \'$module\', input file format looks like \'$inputformat\',"
+      . " required format is \'$requiredformat\'\n"
+      if $self->verbose;
 
-		my $newfile = basename($file);
+    # keep these two values so that _reconstruct_sequence can work.
+    $self->{__sequenceformat} = $inputformat;
+    $self->{__sequencefile}   = $file;
 
-		if ( $newfile =~ /(\S+)\.\S+$/ ) {
-			$newfile = $1 . "." . $requiredformat;
-		} else {
-			$newfile = $file . "." . $requiredformat;
-		}
+    if ( $requiredformat !~ /$inputformat/i ) {
 
-		$newfile = $self->{outputdir} . $newfile;
-		print "New file name is \'$newfile\'\n" if $self->verbose;
+        print
+"Format of \'$file\' does not match required format, will convert file"
+          . " to \'$requiredformat\'\n"
+          if $self->verbose;
 
-		my $out = Bio::SeqIO->new(-format => $requiredformat, -file => ">$newfile" );
-		$out->write_seq($seq);
+        my $newfile = basename($file);
 
-		$self->{inputfile} = $newfile;
+        if ( $newfile =~ /(\S+)\.\S+$/ ) {
+            $newfile = $1 . "." . $requiredformat;
+        }
+        else {
+            $newfile = $file . "." . $requiredformat;
+        }
 
-		return $newfile;
-	}
+        $newfile = $self->{outputdir} . $newfile;
+        print "New file name is \'$newfile\'\n" if $self->verbose;
 
-	$file;
+        my $out =
+          Bio::SeqIO->new( -format => $requiredformat, -file => ">$newfile" );
+        $out->write_seq($seq);
+
+        $self->{inputfile} = $newfile;
+
+        return $newfile;
+    }
+
+    $file;
 }
 
 =head2 _check_inputfile
@@ -1297,46 +1330,54 @@ sub _check_input_sequence {
 =cut
 
 sub _check_inputfile {
-	my ($self,$module) = @_;
-	my $conf = $self->_conf;
-	my $inputmodule = $self->_inputfrom($module);
+    my ( $self, $module ) = @_;
+    my $conf        = $self->_conf;
+    my $inputmodule = $self->_inputfrom($module);
 
-	if ( $inputmodule ) {
-		if ( $self->{$inputmodule}->{outputfile} ) {
-			$self->{$module}->{inputfile} = $self->{$inputmodule}->{outputfile};
-			print "Output file from \'$inputmodule\' will be used as input file for \'$module\'\n"
-			  if $self->verbose;
-			return $self->{$inputmodule}->{outputfile};
-		} else {
-			die "No output file from \'$inputmodule\' found - " .
-			  "make sure that \'$inputmodule\' runs before \'$module\'";
-		}
-	} else {
+    if ($inputmodule) {
+        if ( $self->{$inputmodule}->{outputfile} ) {
+            $self->{$module}->{inputfile} = $self->{$inputmodule}->{outputfile};
+            print
+"Output file from \'$inputmodule\' will be used as input file for \'$module\'\n"
+              if $self->verbose;
+            return $self->{$inputmodule}->{outputfile};
+        }
+        else {
+            die "No output file from \'$inputmodule\' found - "
+              . "make sure that \'$inputmodule\' runs before \'$module\'";
+        }
+    }
+    else {
 
-		if ( defined $self->{inputfile} ) {
-		
-			$self->{$module}->{inputfile} = $self->{inputfile};
-			print "\'" . $self->{$module}->{inputfile} . "\' will be used as input file for \'$module\'\n"
-			  if $self->verbose;
+        if ( defined $self->{inputfile} ) {
 
-			# Copy input file to output directory if it is not present there
-			my $outputdir = $self->outputdir;
-			my $inputfile = $self->{$module}->{inputfile};
-			my $filename = fileparse($inputfile);
+            $self->{$module}->{inputfile} = $self->{inputfile};
+            print "\'"
+              . $self->{$module}->{inputfile}
+              . "\' will be used as input file for \'$module\'\n"
+              if $self->verbose;
 
-			if ( ! -e "$outputdir$filename" ) {
-				print "Copying \'$filename\' to \'$outputdir\'\n" if $self->verbose;
-				system "cp $inputfile $outputdir" ;
-			}
+            # Copy input file to output directory if it is not present there
+            my $outputdir = $self->outputdir;
+            my $inputfile = $self->{$module}->{inputfile};
+            my $filename  = fileparse($inputfile);
 
-			$self->{$module}->{inputfile} = "$outputdir$filename";
-			print "\'" . $self->{$module}->{inputfile} . "\' will be used as input file for \'$module\'\n"
-			  if $self->verbose;
-			
-			return $self->{$module}->{inputfile};
+            if ( !-e "$outputdir$filename" ) {
+                print "Copying \'$filename\' to \'$outputdir\'\n"
+                  if $self->verbose;
+                system "cp $inputfile $outputdir";
+            }
 
-		}
-	}	
+            $self->{$module}->{inputfile} = "$outputdir$filename";
+            print "\'"
+              . $self->{$module}->{inputfile}
+              . "\' will be used as input file for \'$module\'\n"
+              if $self->verbose;
+
+            return $self->{$module}->{inputfile};
+
+        }
+    }
 }
 
 =head2 _check_outputdir
@@ -1355,35 +1396,39 @@ sub _check_inputfile {
 =cut
 
 sub _check_outputdir {
-	my $self = shift;
+    my $self = shift;
 
-	if ( ! defined $self->{outputdir} ) {
-		my $timestamp = strftime("%Y_%m_%d_%H_%M_%S", localtime);
-		$self->{outputdir} = $self->_diyahome . $timestamp . "_diya";
-		$self->{_outputdir} = $self->{outputdir};
-		print "No output directory defined, will use \'" . $self->{outputdir} .
-		  "\'\n" if $self->verbose;
-	}
+    if ( !defined $self->{outputdir} ) {
+        my $timestamp = strftime( "%Y_%m_%d_%H_%M_%S", localtime );
+        $self->{outputdir}  = $self->_diyahome . $timestamp . "_diya";
+        $self->{_outputdir} = $self->{outputdir};
+        print "No output directory defined, will use \'"
+          . $self->{outputdir} . "\'\n"
+          if $self->verbose;
+    }
 
-	if ( $self->mode eq 'sge' ) {
-		my $filenum = scalar($self->inputfile); 
-		if ( $filenum > 0 ) {
-			$self->{outputdir} = $self->{_outputdir} . "_$filenum";
-		} else {
-			$self->{outputdir} = $self->{_outputdir};
-		}
-	}
+    if ( $self->mode eq 'sge' ) {
+        my $filenum = scalar( $self->inputfile );
+        if ( $filenum > 0 ) {
+            $self->{outputdir} = $self->{_outputdir} . "_$filenum";
+        }
+        else {
+            $self->{outputdir} = $self->{_outputdir};
+        }
+    }
 
-	if (! -d $self->{outputdir}) {
-		print "Directory \'" . $self->{outputdir} . "\' does not exist, will create it\n" 
-		  if $self->verbose;
-		my $dir = $self->{outputdir};
-		system("mkdir $dir");
-	}
-	
-	$self->{outputdir} .= "/" if ( $self->{outputdir} !~ m|/$| );
+    if ( !-d $self->{outputdir} ) {
+        print "Directory \'"
+          . $self->{outputdir}
+          . "\' does not exist, will create it\n"
+          if $self->verbose;
+        my $dir = $self->{outputdir};
+        system("mkdir $dir");
+    }
 
-	return $self->{outputdir};
+    $self->{outputdir} .= "/" if ( $self->{outputdir} !~ m|/$| );
+
+    return $self->{outputdir};
 }
 
 =head2 _make_command
@@ -1399,77 +1444,91 @@ sub _check_outputdir {
 =cut
 
 sub _make_command {
-	my ($self,$module) = @_;
-	my @substitutions = qw( INPUTFILE OUTPUTFILE );
-	
-	my $cmd = $self->_home($module) . $self->_executable($module);
-	$cmd .=  " " . $self->_command($module) if ( $self->_command($module) ); 
-	print "\'$module\' command before substitution is \'$cmd\'\n" if $self->verbose;
+    my ( $self, $module ) = @_;
+    my @substitutions = qw( INPUTFILE OUTPUTFILE );
 
-	# First substitute any values specific to steps
-	for my $word (@substitutions) {
-		my $lcword = lc $word;
-		my $val = $self->{$module}->{$lcword};
-		if ( $val ) {
-			print "\'$word\' will be substituted with \'$val\'\n" if $self->verbose;
-			# Arguments need to be single-quoted if they contain a space
-			if ( $val =~ m|\s| ) {
-				$cmd =~ s/$word/'$val'/g;
-			} else {
-				$cmd =~ s/$word/$val/g;
-			}
-		}
-	}
-	print "\'$module\' command after parser-specific substitution is \'$cmd\'\n"
-	  if $self->verbose;
+    my $cmd = $self->_home($module) . $self->_executable($module);
+    $cmd .= " " . $self->_command($module) if ( $self->_command($module) );
+    print "\'$module\' command before substitution is \'$cmd\'\n"
+      if $self->verbose;
 
-	# Second, substitute any values not specific to a specific step, like OUTPUTDIR
-	my @global_subs = qw( OUTPUTDIR );
-	for my $word ( @global_subs ) {
-		my $val = $self->outputdir if ( $word eq 'OUTPUTDIR' ); 
-		print "\'$word\' will be substituted with \'$val\'\n" if $self->verbose;
-		$cmd =~ s/$word/$val/g;
-	}
-	print "\'$module\' command after global substitution is \'$cmd\'\n" if $self->verbose;
+    # First substitute any values specific to steps
+    for my $word (@substitutions) {
+        my $lcword = lc $word;
+        my $val    = $self->{$module}->{$lcword};
+        if ($val) {
+            print "\'$word\' will be substituted with \'$val\'\n"
+              if $self->verbose;
 
-	# Last, substitute the values of any globals created by using --set NAME=VAL
-	for my $word ( keys %{$self->{substitutions}} ) {
-		# Arguments need to be single-quoted if they contain a space
-		if ( $self->{substitutions}->{$word} =~ m|\s| ) {
-			$cmd =~ s/$word/'$self->{substitutions}->{$word}'/g;
-		} else {
-			$cmd =~ s/$word/$self->{substitutions}->{$word}/g;
-		}
-		print "\'$word\' will be substituted with \'" . $self->{substitutions}->{$word} . "\'\n"
-		  if $self->verbose;
-	}
-	print "\'$module\' command after variable substitution is \'$cmd\'\n" if $self->verbose;
+            # Arguments need to be single-quoted if they contain a space
+            if ( $val =~ m|\s| ) {
+                $cmd =~ s/$word/'$val'/g;
+            }
+            else {
+                $cmd =~ s/$word/$val/g;
+            }
+        }
+    }
+    print "\'$module\' command after parser-specific substitution is \'$cmd\'\n"
+      if $self->verbose;
 
-	my $lastsgeid = $self->_lastsgeid;
+ # Second, substitute any values not specific to a specific step, like OUTPUTDIR
+    my @global_subs = qw( OUTPUTDIR );
+    for my $word (@global_subs) {
+        my $val = $self->outputdir if ( $word eq 'OUTPUTDIR' );
+        print "\'$word\' will be substituted with \'$val\'\n" if $self->verbose;
+        $cmd =~ s/$word/$val/g;
+    }
+    print "\'$module\' command after global substitution is \'$cmd\'\n"
+      if $self->verbose;
 
-	if ( $self->mode eq 'sge' ) {
-			my $joberr = $self->outputdir()."/".$self->_executable($module) . ".err";
-			my $jobout = $self->outputdir()."/".$self->_executable($module) . ".out";
-			my $name   = $self->_executable($module);
-			my $holdid = "";
-			if ( defined($lastsgeid) )	{
-				$holdid = "-hold_jid $lastsgeid";
-			}
-			$cmd = "qsub -b y -V -cwd -e $joberr -o $jobout -N $name -terse $holdid $cmd";
-	} elsif ($self->mode eq 'lsf')
-	{
-			my $joberr = $self->outputdir()."/".$self->_executable($module) . ".err";
-			my $jobout = $self->outputdir()."/".$self->_executable($module) . ".out";
-			my $name   = $self->_executable($module);
-			my $holdid = "";
-			if ( defined($lastsgeid) )	{
-				$holdid = "-w $lastsgeid";
-			}
-			$cmd = "bsub -e $joberr -o $jobout -J $name $holdid $cmd";
-	}
-	
-	print "Command is \'$cmd\'\n" if ( $self->verbose && $self->mode eq 'sge' );
-	return $cmd;
+    # Last, substitute the values of any globals created by using --set NAME=VAL
+    for my $word ( keys %{ $self->{substitutions} } ) {
+
+        # Arguments need to be single-quoted if they contain a space
+        if ( $self->{substitutions}->{$word} =~ m|\s| ) {
+            $cmd =~ s/$word/'$self->{substitutions}->{$word}'/g;
+        }
+        else {
+            $cmd =~ s/$word/$self->{substitutions}->{$word}/g;
+        }
+        print "\'$word\' will be substituted with \'"
+          . $self->{substitutions}->{$word} . "\'\n"
+          if $self->verbose;
+    }
+    print "\'$module\' command after variable substitution is \'$cmd\'\n"
+      if $self->verbose;
+
+    my $lastsgeid = $self->_lastsgeid;
+
+    if ( $self->mode eq 'sge' ) {
+        my $joberr =
+          $self->outputdir() . "/" . $self->_executable($module) . ".err";
+        my $jobout =
+          $self->outputdir() . "/" . $self->_executable($module) . ".out";
+        my $name   = $self->_executable($module);
+        my $holdid = "";
+        if ( defined($lastsgeid) ) {
+            $holdid = "-hold_jid $lastsgeid";
+        }
+        $cmd =
+"qsub -b y -V -cwd -e $joberr -o $jobout -N $name -terse $holdid $cmd";
+    }
+    elsif ( $self->mode eq 'lsf' ) {
+        my $joberr =
+          $self->outputdir() . "/" . $self->_executable($module) . ".err";
+        my $jobout =
+          $self->outputdir() . "/" . $self->_executable($module) . ".out";
+        my $name   = $self->_executable($module);
+        my $holdid = "";
+        if ( defined($lastsgeid) ) {
+            $holdid = "-w $lastsgeid";
+        }
+        $cmd = "bsub -e $joberr -o $jobout -J $name $holdid $cmd";
+    }
+
+    print "Command is \'$cmd\'\n" if ( $self->verbose && $self->mode eq 'sge' );
+    return $cmd;
 }
 
 =head2 _make_outputfilename
@@ -1485,16 +1544,17 @@ sub _make_command {
 =cut
 
 sub _make_outputfilename {
-	my ($self,$module) = @_;
+    my ( $self, $module ) = @_;
 
-	my $timestamp = strftime("%Y_%m_%d_%H_%M_%S", localtime);
-	my $filename = "$timestamp-$module.out";
-	$filename = $self->outputdir . $filename;
-	$self->{$module}->{outputfile} = $filename;
-	print "Output file name for \'$module\' is \'" . $self->{$module}->{outputfile}  .
-	  "\'\n" if $self->verbose;
+    my $timestamp = strftime( "%Y_%m_%d_%H_%M_%S", localtime );
+    my $filename = "$timestamp-$module.out";
+    $filename = $self->outputdir . $filename;
+    $self->{$module}->{outputfile} = $filename;
+    print "Output file name for \'$module\' is \'"
+      . $self->{$module}->{outputfile} . "\'\n"
+      if $self->verbose;
 
-	return $self->{$module}->{outputfile} ;
+    return $self->{$module}->{outputfile};
 }
 
 =head2 _lastsgeid
@@ -1510,13 +1570,14 @@ sub _make_outputfilename {
 =cut
 
 sub _lastsgeid {
-	my ($self,$id) = @_;
+    my ( $self, $id ) = @_;
 
-	if ( $id ) {
-		return $self->{_lastsgeid} = $id;
-	} else {
-		 $self->{_lastsgeid};
-	}
+    if ($id) {
+        return $self->{_lastsgeid} = $id;
+    }
+    else {
+        $self->{_lastsgeid};
+    }
 }
 
 =head2 _outputfile
@@ -1532,15 +1593,18 @@ sub _lastsgeid {
 =cut
 
 sub _outputfile {
-	my ($self,$module) = @_;
+    my ( $self, $module ) = @_;
 
-	if ( $self->{$module}->{outputfile} ) {
-		print "Found output file \'" .  $self->{$module}->{outputfile} .
-		  "\' for \'$module\'\n" if $self->verbose;
-		return $self->{$module}->{outputfile};
-	} else {
-		die "No output file name for parser \'$module\' found";
-	}
+    if ( $self->{$module}->{outputfile} ) {
+        print "Found output file \'"
+          . $self->{$module}->{outputfile}
+          . "\' for \'$module\'\n"
+          if $self->verbose;
+        return $self->{$module}->{outputfile};
+    }
+    else {
+        die "No output file name for parser \'$module\' found";
+    }
 }
 
 =head2 _greeting
@@ -1555,16 +1619,15 @@ sub _outputfile {
 =cut
 
 sub _greeting {
-	my $self = shift;
-	my $greeting = "
+    my $self     = shift;
+    my $greeting = "
 Do It Yourself Annotator (diya) v. $VERSION;
 \t--help for usage
 \t--license for copyright information
 
 ";
-	print $greeting;
+    print $greeting;
 }
-
 
 =head2 _help
 
@@ -1578,11 +1641,9 @@ Do It Yourself Annotator (diya) v. $VERSION;
 =cut
 
 sub _help {
-	my $self = shift;
-	eval {
-		system "perldoc diya";
-	};
-	print "Error using _help(), you must install diya first\n" if $@;
+    my $self = shift;
+    eval { system "perldoc diya"; };
+    print "Error using _help(), you must install diya first\n" if $@;
 }
 
 =head2 _diyahome
@@ -1599,17 +1660,19 @@ sub _help {
 =cut
 
 sub _diyahome {
-	my $self = shift;
+    my $self = shift;
 
-	if ( ! defined $ENV{DIYAHOME} or ! $ENV{DIYAHOME} ) {
-		$self->{diyahome} = cwd();
-	} else {
-		$self->{diyahome} = $ENV{DIYAHOME};
-	}
+    if ( !defined $ENV{DIYAHOME} or !$ENV{DIYAHOME} ) {
+        $self->{diyahome} = cwd();
+    }
+    else {
+        $self->{diyahome} = $ENV{DIYAHOME};
+    }
 
-	$self->{diyahome} .= "/" if ( $self->{diyahome} !~ m|/$| );
-	print "The diya home directory is \'" . $self->{diyahome} . "\'\n"  if $self->verbose;
-	return $self->{diyahome};
+    $self->{diyahome} .= "/" if ( $self->{diyahome} !~ m|/$| );
+    print "The diya home directory is \'" . $self->{diyahome} . "\'\n"
+      if $self->verbose;
+    return $self->{diyahome};
 }
 
 =head2 _conf
@@ -1625,9 +1688,9 @@ sub _diyahome {
 =cut
 
 sub _conf {
-	my ($self,$conf) = @_;
-	$self->{conf} = $conf if $conf;
-	return $self->{conf};
+    my ( $self, $conf ) = @_;
+    $self->{conf} = $conf if $conf;
+    return $self->{conf};
 }
 
 =head2 _executable
@@ -1644,21 +1707,26 @@ sub _conf {
 =cut
 
 sub _executable {
- 	my ($self, $name) = @_;
-	my $conf = $self->_conf;
+    my ( $self, $name ) = @_;
+    my $conf = $self->_conf;
 
-	my @types = qw(parser script);
+    my @types = qw(parser script);
 
-	for my $type ( @types ) {
-		for my $key ( @{$conf->{$type}} ) {
-			if ( $key->{name}->[0] eq $name ) {
-				print "Found <executable> \'" . $key->{executable}->[0] . "\' for \'" .
-				  $name . "\' in \'" . $self->_use_conf . "\'\n" if $self->verbose;
-				return $key->{executable}->[0];
-			}
-		}
-	}
-	die "Could not find <executable> for \'$name\'";
+    for my $type (@types) {
+        for my $key ( @{ $conf->{$type} } ) {
+            if ( $key->{name}->[0] eq $name ) {
+                print "Found <executable> \'"
+                  . $key->{executable}->[0]
+                  . "\' for \'"
+                  . $name
+                  . "\' in \'"
+                  . $self->_use_conf . "\'\n"
+                  if $self->verbose;
+                return $key->{executable}->[0];
+            }
+        }
+    }
+    die "Could not find <executable> for \'$name\'";
 }
 
 =head2 _parsers
@@ -1674,18 +1742,18 @@ sub _executable {
 =cut
 
 sub _parsers {
-	my $self = shift;
-	my $conf = $self->_conf;
-	my @modules;
+    my $self = shift;
+    my $conf = $self->_conf;
+    my @modules;
 
-	for my $module ( @{$conf->{parser}} ) {
-		$module->{name}->[0] =~ s/\s+//g;
-		push @modules, $module->{name}->[0];
-	}
-	print "Parsers in \'" . $self->{use_conf} . "\': \'@modules\'\n" if 
-	  $self->verbose;
+    for my $module ( @{ $conf->{parser} } ) {
+        $module->{name}->[0] =~ s/\s+//g;
+        push @modules, $module->{name}->[0];
+    }
+    print "Parsers in \'" . $self->{use_conf} . "\': \'@modules\'\n"
+      if $self->verbose;
 
-	return @modules;
+    return @modules;
 }
 
 =head2 _scripts
@@ -1701,18 +1769,18 @@ sub _parsers {
 =cut
 
 sub _scripts {
-	my $self = shift;
-	my $conf = $self->_conf;
-	my @scripts;
+    my $self = shift;
+    my $conf = $self->_conf;
+    my @scripts;
 
-	for my $script ( @{$conf->{script}} ) {
-		$script->{name}->[0] =~ s/\s+//g;
-		push @scripts, $script->{name}->[0];
-	}
-	print "Scripts in \'" . $self->{use_conf} . "\': \'@scripts\'\n" if 
-	  $self->verbose;
+    for my $script ( @{ $conf->{script} } ) {
+        $script->{name}->[0] =~ s/\s+//g;
+        push @scripts, $script->{name}->[0];
+    }
+    print "Scripts in \'" . $self->{use_conf} . "\': \'@scripts\'\n"
+      if $self->verbose;
 
-	return @scripts;
+    return @scripts;
 }
 
 =head2 _sequence
@@ -1728,15 +1796,16 @@ sub _scripts {
 =cut
 
 sub _sequence {
-	my ($self,$seq) = @_;
+    my ( $self, $seq ) = @_;
 
-	if ( ! defined $seq ) {
-		return $self->{sequence};
-	} else {
-		$self->{sequence} = $seq;		
-	}
+    if ( !defined $seq ) {
+        return $self->{sequence};
+    }
+    else {
+        $self->{sequence} = $seq;
+    }
 
-	return $self->{sequence};
+    return $self->{sequence};
 }
 
 =head2 _home
@@ -1752,21 +1821,24 @@ sub _sequence {
 =cut
 
 sub _home {
-	my ($self, $name) = @_;
-	my $conf = $self->_conf;
-	my @types = qw(parser script);
+    my ( $self, $name ) = @_;
+    my $conf  = $self->_conf;
+    my @types = qw(parser script);
 
-	for my $type ( @types ) {
-		for my $key ( @{$conf->{$type}} ) {
-			if ( $key->{name}->[0] eq $name ) {
-				$key->{home}->[0] .= "/" if ( $key->{home}->[0] !~ m|/$| );
-				print "Found <home> \'" . $key->{home}->[0] . "\' for \'" .
-				  $name . "\'\n" if $self->verbose;
-				return $key->{home}->[0];
-			}
-		}
-	}
-	die "Could not find <home> for \'$name\'";
+    for my $type (@types) {
+        for my $key ( @{ $conf->{$type} } ) {
+            if ( $key->{name}->[0] eq $name ) {
+                $key->{home}->[0] .= "/" if ( $key->{home}->[0] !~ m|/$| );
+                print "Found <home> \'"
+                  . $key->{home}->[0]
+                  . "\' for \'"
+                  . $name . "\'\n"
+                  if $self->verbose;
+                return $key->{home}->[0];
+            }
+        }
+    }
+    die "Could not find <home> for \'$name\'";
 }
 
 =head2 _inputfrom
@@ -1782,27 +1854,32 @@ sub _home {
 =cut
 
 sub _inputfrom {
-	my ($self,$name) = @_;
-	my $conf = $self->_conf;
-	my @types = qw(parser script);
+    my ( $self, $name ) = @_;
+    my $conf  = $self->_conf;
+    my @types = qw(parser script);
 
-	for my $type ( @types ) {
-		for my $key ( @{$conf->{$type}} ) {
-			if ( $key->{name}->[0] eq $name ) {
-				# if there's an empty hash there, which is what XML::Simple does
-				if ( ref $key->{inputfrom}->[0] eq 'HASH' ) {
-					print "No <inputfrom> found for \'" .
-					  $name . "\'\n" if $self->verbose;
-					return 0;
-				} else {
-					print "Found <inputfrom> \'" . $key->{inputfrom}->[0] . "\' for \'" .
-					  $name . "\'\n" if $self->verbose;
-					return $key->{inputfrom}->[0];
-				}
-			}
-		}
-	}
-	die "No <inputfrom> found for \'$name\'";
+    for my $type (@types) {
+        for my $key ( @{ $conf->{$type} } ) {
+            if ( $key->{name}->[0] eq $name ) {
+
+                # if there's an empty hash there, which is what XML::Simple does
+                if ( ref $key->{inputfrom}->[0] eq 'HASH' ) {
+                    print "No <inputfrom> found for \'" . $name . "\'\n"
+                      if $self->verbose;
+                    return 0;
+                }
+                else {
+                    print "Found <inputfrom> \'"
+                      . $key->{inputfrom}->[0]
+                      . "\' for \'"
+                      . $name . "\'\n"
+                      if $self->verbose;
+                    return $key->{inputfrom}->[0];
+                }
+            }
+        }
+    }
+    die "No <inputfrom> found for \'$name\'";
 }
 
 =head2 _command
@@ -1819,26 +1896,32 @@ sub _inputfrom {
 
 sub _command {
 
-	my ($self,$name) = @_;
-	my $conf = $self->_conf;
-	my @types = qw(parser script);
-	my $type = "";
+    my ( $self, $name ) = @_;
+    my $conf  = $self->_conf;
+    my @types = qw(parser script);
+    my $type  = "";
 
-	for $type ( @types ) {
-		for my $key ( @{$conf->{$type}} ) {
-			if ( $key->{name}->[0] eq $name ) {
-				# if there is an empty hash, created by XML::Simple from the *conf
-				if ( ref $key->{command}->[0] eq 'HASH' ) {
-					print "No <command> for $type \'" . $name . "\'\n" if $self->verbose;
-					return;
-				} elsif (  $key->{command}->[0] ) {
-					print "Found <command> \'" . $key->{command}->[0] . "\' for \'" .
-					  $name . "\'\n" if $self->verbose;
-					return $key->{command}->[0];
-				}
-			}
-		}
-	}
+    for $type (@types) {
+        for my $key ( @{ $conf->{$type} } ) {
+            if ( $key->{name}->[0] eq $name ) {
+
+              # if there is an empty hash, created by XML::Simple from the *conf
+                if ( ref $key->{command}->[0] eq 'HASH' ) {
+                    print "No <command> for $type \'" . $name . "\'\n"
+                      if $self->verbose;
+                    return;
+                }
+                elsif ( $key->{command}->[0] ) {
+                    print "Found <command> \'"
+                      . $key->{command}->[0]
+                      . "\' for \'"
+                      . $name . "\'\n"
+                      if $self->verbose;
+                    return $key->{command}->[0];
+                }
+            }
+        }
+    }
 }
 
 =head2 _inputformat
@@ -1854,25 +1937,31 @@ sub _command {
 =cut
 
 sub _inputformat {
-	my ($self,$name) = @_;
-	my $conf = $self->_conf;
-	
-	return 0 if ( $self->_get_type($name) eq 'script' );
+    my ( $self, $name ) = @_;
+    my $conf = $self->_conf;
 
-	for my $key ( @{$conf->{parser}} ) {
-		if ( $key->{name}->[0] eq $name ) {
-			# if XML::Simple has created an empty hash
-			if ( ref $key->{inputformat}->[0] eq 'HASH' ) {
-				print "No <inputformat> for \'" . $name . "\'\n" if $self->verbose;
-				return 0;
-			} else {
-				print "Found <inputformat> \'" . $key->{inputformat}->[0] . 
-				  "\' for \'" . $name . "\'\n" if $self->verbose;
-				return $key->{inputformat}->[0];	
-			} 
-		}
-	}
-	die "Could not find input format for " . $name;
+    return 0 if ( $self->_get_type($name) eq 'script' );
+
+    for my $key ( @{ $conf->{parser} } ) {
+        if ( $key->{name}->[0] eq $name ) {
+
+            # if XML::Simple has created an empty hash
+            if ( ref $key->{inputformat}->[0] eq 'HASH' ) {
+                print "No <inputformat> for \'" . $name . "\'\n"
+                  if $self->verbose;
+                return 0;
+            }
+            else {
+                print "Found <inputformat> \'"
+                  . $key->{inputformat}->[0]
+                  . "\' for \'"
+                  . $name . "\'\n"
+                  if $self->verbose;
+                return $key->{inputformat}->[0];
+            }
+        }
+    }
+    die "Could not find input format for " . $name;
 }
 
 =head2 _use_conf
@@ -1888,41 +1977,41 @@ sub _inputformat {
 =cut
 
 sub _use_conf {
-	my ($self,$use_conf) = @_;
-	
-	# If a conf file is already specified, e.g. from the command-line
-	my $existing_conf = $self->_conf;
+    my ( $self, $use_conf ) = @_;
 
-	if ( -e $existing_conf ) {
-		print "Conf file \'$existing_conf\' will be used\n" 
-		  if $self->verbose;
-		return;
-	}
+    # If a conf file is already specified, e.g. from the command-line
+    my $existing_conf = $self->_conf;
 
-	if ( $use_conf ) {
-		$self->{use_conf} = $use_conf;
-		return $self->{use_conf};
-	}
+    if ( -e $existing_conf ) {
+        print "Conf file \'$existing_conf\' will be used\n"
+          if $self->verbose;
+        return;
+    }
 
-	return $self->{use_conf} if $self->{use_conf};
+    if ($use_conf) {
+        $self->{use_conf} = $use_conf;
+        return $self->{use_conf};
+    }
 
-	# if no conf file name is provided look in $DIYAHOME
-	my $diyahome = $self->_diyahome;
-	if ( -e $diyahome . "diya.conf" ) {
-		$self->{use_conf} = $diyahome . "diya.conf";
-		print "Will use \'" . $self->{use_conf} . "\'\n" if $self->verbose;
-		return $self->{use_conf};
-	}
-	
-	# if no conf file is found in $DIYAHOME look in current directory
-	my $cwd = cwd();
-	if ( -e $cwd . "/diya.conf" ) {
-		$self->{use_conf} = $cwd . "/diya.conf";
-		print "Will use \'" . $self->{use_conf} . "\'\n" if $self->verbose;
-		return $self->{use_conf};
-	}
+    return $self->{use_conf} if $self->{use_conf};
 
-	die "Could not find diya.conf in $cwd or $diyahome";
+    # if no conf file name is provided look in $DIYAHOME
+    my $diyahome = $self->_diyahome;
+    if ( -e $diyahome . "diya.conf" ) {
+        $self->{use_conf} = $diyahome . "diya.conf";
+        print "Will use \'" . $self->{use_conf} . "\'\n" if $self->verbose;
+        return $self->{use_conf};
+    }
+
+    # if no conf file is found in $DIYAHOME look in current directory
+    my $cwd = cwd();
+    if ( -e $cwd . "/diya.conf" ) {
+        $self->{use_conf} = $cwd . "/diya.conf";
+        print "Will use \'" . $self->{use_conf} . "\'\n" if $self->verbose;
+        return $self->{use_conf};
+    }
+
+    die "Could not find diya.conf in $cwd or $diyahome";
 }
 
 =head2 _initialize
@@ -1938,17 +2027,17 @@ sub _use_conf {
 =cut
 
 sub _initialize {
-	my $self = shift;
-	# my @params = qw(verbose conf file);
+    my $self = shift;
 
-	while ( @_ ) {
-		( my $key = shift ) =~ s/^-//;
-		$self->{$key} = shift;
-	}
- 	if (exists($self->{mode}))
- 	{
- 		$self->mode($self->{mode});
- 	}
+    # my @params = qw(verbose conf file);
+
+    while (@_) {
+        ( my $key = shift ) =~ s/^-//;
+        $self->{$key} = shift;
+    }
+    if ( exists( $self->{mode} ) ) {
+        $self->mode( $self->{mode} );
+    }
 }
 
 =head2 _get_type
@@ -1963,20 +2052,20 @@ sub _initialize {
 =cut
 
 sub _get_type {
-	my ($self, $name) = @_;
-	my $conf = $self->_conf;
-	my @types = qw( parser script );
+    my ( $self, $name ) = @_;
+    my $conf  = $self->_conf;
+    my @types = qw( parser script );
 
-	for my $type ( @types ) {
- 		for my $key (  @{$conf->{$type}} ) {			
-			if ( $key->{name}->[0] eq $name){
-				print "\'$name\' is a \'$type\'\n" if $self->verbose;
-				return $type;
-			}
- 		}
-	}
+    for my $type (@types) {
+        for my $key ( @{ $conf->{$type} } ) {
+            if ( $key->{name}->[0] eq $name ) {
+                print "\'$name\' is a \'$type\'\n" if $self->verbose;
+                return $type;
+            }
+        }
+    }
 
-	die "No type found for \'$name\' in " . $self->_use_conf;
+    die "No type found for \'$name\' in " . $self->_use_conf;
 }
 
 =head2 _load_app_module
@@ -1991,33 +2080,31 @@ sub _get_type {
 =cut
 
 sub _load_app_module {
-	my ($self, $module) = @_;
+    my ( $self, $module ) = @_;
 
-	$module = "diya::" . $module;
+    $module = "diya::" . $module;
 
-	if ($module !~ /^([\w:]+)$/) {
-		print "\'$module\' is an illegal Perl package name\n" if $self->verbose;
-		$module =~ s/[^\w:]//g;
-		print "Will try to use \'$module\' instead\n" if $self->verbose;
-	}
+    if ( $module !~ /^([\w:]+)$/ ) {
+        print "\'$module\' is an illegal Perl package name\n" if $self->verbose;
+        $module =~ s/[^\w:]//g;
+        print "Will try to use \'$module\' instead\n" if $self->verbose;
+    }
 
-	my $modulepath = $module . ".pm";
-	$modulepath =~ s|::|/|g;
+    my $modulepath = $module . ".pm";
+    $modulepath =~ s|::|/|g;
 
-	# e.g. require "diya/tRNAscanSE.pm"
-	eval {
-		require "$modulepath";
-	};
-	
-	die "$@" if $@;
-	print "Loaded module \'$module\'\n" if $self->verbose;
-	
-  return $module;
+    # e.g. require "diya/tRNAscanSE.pm"
+    eval { require "$modulepath"; };
+
+    die "$@" if $@;
+    print "Loaded module \'$module\'\n" if $self->verbose;
+
+    return $module;
 }
 
 sub _license {
-	my $self = shift;
-print "
+    my $self = shift;
+    print "
 #--------------------------------------------------------------------------
 # Copyright 2008
 #
@@ -2053,57 +2140,61 @@ print "
 =cut
 
 sub _get_options {
-	my $self = shift;
-	
-	use Getopt::Long;
+    my $self = shift;
 
-	GetOptions("mode=s"    => sub { 
-					  my ($name,$val) = @_;
-					  $self->mode($val); 
-				  },
+    use Getopt::Long;
 
-				  "verbose=i" => sub { 
-					  my ($name, $val) = @_;
-					  $self->verbose($val);
-				  },
+    GetOptions(
+        "mode=s" => sub {
+            my ( $name, $val ) = @_;
+            $self->mode($val);
+        },
 
-				  "project=i" => sub { 
-					  my ($name, $val) = @_;
-					  $self->project($val); 
-				  },
+        "verbose=i" => sub {
+            my ( $name, $val ) = @_;
+            $self->verbose($val);
+        },
 
-				  "outputdir=s" => sub { 
-					  my ($name, $val) = @_;
-					  $self->outputdir($val); 
-				  },
+        "project=i" => sub {
+            my ( $name, $val ) = @_;
+            $self->project($val);
+        },
 
-				  "conf=s"    => sub { 
-					  my ($name, $val) = @_;
-					  $self->_use_conf($val); 
-				  },
+        "outputdir=s" => sub {
+            my ( $name, $val ) = @_;
+            $self->outputdir($val);
+        },
 
-				  "license"	  => sub { 
-					  $self->_license; 
-				  },
+        "conf=s" => sub {
+            my ( $name, $val ) = @_;
+            $self->_use_conf($val);
+        },
 
-				  "help|h"	  => sub { 
-					  $self->_help; 
-				  },
+        "license" => sub {
+            $self->_license;
+        },
 
- 				  "set=s%"	  => sub {
- 					  my ($op, $name, $value) = @_;
- 					  if ( defined $name && defined $value ) {
- 						  $$name = $value;
- 						  $self->{substitutions}->{$name} = $value;
- 						  print "--set: the value of the global variable " . '$' . $name . 
- 							 " will be \'" . $value . "\'\n" if $self->verbose;
- 					  }
- 				  }
-				 );
+        "help|h" => sub {
+            $self->_help;
+        },
 
-	  # "debug"			 => \$DEBUG,
-	  # "cleanup|clean" => \$CLEANUP,
-	  # "save"			 => \$SAVE,
+        "set=s%" => sub {
+            my ( $op, $name, $value ) = @_;
+            if ( defined $name && defined $value ) {
+                $$name = $value;
+                $self->{substitutions}->{$name} = $value;
+                print "--set: the value of the global variable " . '$'
+                  . $name
+                  . " will be \'"
+                  . $value . "\'\n"
+                  if $self->verbose;
+            }
+        }
+    );
+
+    # "debug"			 => \$DEBUG,
+    # "cleanup|clean" => \$CLEANUP,
+    # "save"			 => \$SAVE,
 }
 
 1;
