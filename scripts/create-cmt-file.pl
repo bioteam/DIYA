@@ -71,7 +71,7 @@ for my $line ( @lines ) {
     $text .= "$key\t$val\n";
 }
 
-$text .= "StructuredCommentPrefix\t" . '##MIGS:3.0-Data-END##' . "\n";
+$text .= "StructuredCommentSuffix\t" . '##MIGS:3.0-Data-END##' . "\n";
 print "Text is:\n$text\n";
 
 `mkdir $ncbidir` if ( ! -d $ncbidir );
