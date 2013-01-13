@@ -22,7 +22,7 @@ my $testconf = "t/data/blast.conf";
 my $tmpdir   = "t/tmp/blast";
 my $script   = 'formatdb';
 my $module   = 'MARC::blastall';
-my $path     = '/usr/local/share/apps/ncbi/bin';
+my $path     = '/usr/local/bin';
 
 use_ok('diya');
 

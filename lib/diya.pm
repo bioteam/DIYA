@@ -604,7 +604,7 @@ package diya;
 use strict qw(vars subs);
 use vars qw($VERSION @EXPORT_OK);
 use base 'Exporter';
-use XML::Simple;
+use XML::Twig;
 use Data::Dumper;
 use Cwd qw( cwd );
 use Data::Merger qw( merger );
@@ -692,18 +692,22 @@ sub read_conf {
 
     if ( -e $confpath ) {
         print "Reading \'$confpath\'\n" if $self->verbose;
-        $conf = XMLin( $confpath, ForceArray => 1 );
+        #$conf = XMLin( $confpath, ForceArray => 1 );
+        my $twig = XML::Twig->new;
+        $twig->parsefile($confpath);
+        $conf = $twig->root;
     }
     else {
         die "Could not find conf file $confpath";
     }
 
+    # TODO: the merge of new and existing
     # if someone has already set some values using a method or
     # by using a command-line option then do not overwrite them
-    if ( defined $self->_conf ) {
-        my $oldconf = $self->_conf;
-        merger( $conf, $oldconf );
-    }
+    # if ( defined $self->_conf ) {
+    #     my $oldconf = $self->_conf;
+    #     merger( $conf, $oldconf );
+    # }
 
     $self->_conf($conf);
 
@@ -804,14 +808,13 @@ sub new_parser {
 =head2 order
 
  Name    : order
- Usage   : $diya->order( @array ) or $order = $diya->order
+ Usage   : $diya->order( @array ) or @order = $diya->order
  Function: get or set the order of the steps to be run
  Returns : array of step names
  Args    : To set pass an array of one or more step names the parsers and
            scripts must exist in the conf file in the <parser> and
            <script> sections
- Example : $pipeline->order( qw(tRNAscanSE blastall) )  or 
-           $pipeline->order('tRNAscanSE') or
+ Example : $pipeline->order( qw(tRNAscanSE blastall) ) or
            @my_order = $self->order
 
 =cut
@@ -819,42 +822,39 @@ sub new_parser {
 sub order {
     my ( $self, @new_order ) = @_;
     my $conf = $self->_conf;
-    my @current_order;
 
-    if ( !@new_order ) {
-        @current_order = split /\s+/, $conf->{order}->[0]->{names}->[0];
+    if ( ! $self->{'order'} ) {
+        my $order = $self->_get_one_attr('order');
+        my @order = split /\s+/, $order;
 
-        # if <order> is empty then XML::Simple puts a hash there
-        if ( $current_order[0] =~ /HASH\(\S+\)/ ) {
-            print "No names found in <order>\n" if $self->verbose;
-            return;
-        }
+        die "No names found in <order> in " . $self->{use_conf} if ( ! $order[0] );
 
-        print "Current <order> is \'@current_order\'\n\n"
+        print "Current <order> is \'@order\'\n"
           if $self->verbose;
-        return @current_order;
+        $self->{'order'} = \@order;
+
     }
 
-    my @conf_scripts = $self->_scripts;
-    my @conf_modules = $self->_parsers;
-    die "No parsers found - you may need to run read_conf()"
-      if ( !@conf_modules );
+    if ( @new_order ) {
 
-  LOOP: foreach my $exe (@new_order) {
+      my @conf_scripts = $self->_scripts;
+      my @conf_modules = $self->_parsers;
+
+      LOOP:
+      foreach my $exe (@new_order) {
         next LOOP if ( grep /^$exe$/, @conf_modules );
-
         next LOOP if ( grep /^$exe$/, @conf_scripts );
 
         die "Cannot use new order: the name \'$exe\' can not be found in "
           . $self->{use_conf};
-    }
+      }
 
-    my $new_order = join ' ', @new_order;
-    $conf->{order}->[0]->{names}->[0] = $new_order;
-    print "New <order> is \'" . $conf->{order}->[0]->{names}->[0] . "\'\n"
-      if $self->verbose;
+      $self->{'order'} = \@new_order;
+      print "New <order> is \' @new_order \'\n"
+        if $self->verbose;
+  }
 
-    return @new_order;
+  return @{$self->{'order'}};
 }
 
 =head2 write_conf
@@ -883,16 +883,16 @@ sub write_conf {
     }
 
     my $header = '<?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: diya.pm 340 2009-04-24 15:03:35Z briano $ -->
 
 ';
     open MYOUT, ">$confname" or die "Cannot create conf file named $confname";
     print MYOUT $header;
     close MYOUT;
 
-    open MYOUT, ">>$confname" or die "Cannot add to conf file named $confname";
-    print MYOUT XMLout( $conf, noattr => 1, RootName => 'conf' );
-    close MYOUT;
+    # TODO
+    # open MYOUT, ">>$confname" or die "Cannot add to conf file named $confname";
+    # print MYOUT XMLout( $conf, noattr => 1, RootName => 'conf' );
+    # close MYOUT;
     $confname;
 }
 
@@ -1003,13 +1003,13 @@ sub mode {
         die
 "mode() was called with \'$mode\' but the only available modes are: @modes"
           if ( !grep /^$mode$/i, @modes );
-        $self->{conf}->{run}->{mode} = $mode;
+        $self->{'mode'} = $mode;
     }
 
     print "<mode> for the pipeline is \'"
-      . $self->{conf}->{run}->{mode} . "\'\n"
-      if $self->verbose;
-    return $self->{conf}->{run}->{mode};
+      . $self->{'mode'} . "\'\n" if $self->verbose;
+
+    return $self->{'mode'};
 }
 
 =head2 cleanup
@@ -1241,6 +1241,7 @@ sub _reconstruct_sequence {
 
 sub _check_executable {
     my ( $self, $step ) = @_;
+
     my $exe = $self->_home($step) . $self->_executable($step);
     die "Executable \'$exe\' not found" if ( !-e $exe );
     1;
@@ -1531,6 +1532,29 @@ sub _make_command {
     return $cmd;
 }
 
+=head2 _get_one_attr
+
+ Name    : _get_one_attr
+ Usage   : 
+ Function: 
+ Returns : attribute
+ Args    : 
+ Example :
+
+=cut
+
+sub _get_one_attr {
+    my ( $self, $field, $attribute ) = @_;
+    my $conf = $self->_conf;
+    my @ds = $conf->descendants($field);
+    if ($attribute) {
+        return $ds[0]->att($attribute);
+    }
+    else {
+        return $ds[0]->text;
+    }
+}
+
 =head2 _make_outputfilename
 
  Name    : _make_outputfilename
@@ -1707,26 +1731,9 @@ sub _conf {
 =cut
 
 sub _executable {
-    my ( $self, $name ) = @_;
-    my $conf = $self->_conf;
-
-    my @types = qw(parser script);
-
-    for my $type (@types) {
-        for my $key ( @{ $conf->{$type} } ) {
-            if ( $key->{name}->[0] eq $name ) {
-                print "Found <executable> \'"
-                  . $key->{executable}->[0]
-                  . "\' for \'"
-                  . $name
-                  . "\' in \'"
-                  . $self->_use_conf . "\'\n"
-                  if $self->verbose;
-                return $key->{executable}->[0];
-            }
-        }
-    }
-    die "Could not find <executable> for \'$name\'";
+  my ( $self, $name ) = @_;
+  my $exec = $self->_get_val($name,'executable');
+  $exec;
 }
 
 =head2 _parsers
@@ -1743,17 +1750,23 @@ sub _executable {
 
 sub _parsers {
     my $self = shift;
-    my $conf = $self->_conf;
-    my @modules;
+    my @parsers;
 
-    for my $module ( @{ $conf->{parser} } ) {
-        $module->{name}->[0] =~ s/\s+//g;
-        push @modules, $module->{name}->[0];
+    if ( ! $self->{'parser'} ) {
+      my $conf = $self->_conf;
+      my @parents = $conf->descendants('parser');
+      
+      for my $parent (@parents) {
+        my @children = $parent->descendants('name');
+        push @parsers, $children[0]->first_child->text;
+      }
+      $self->{'parser'} = \@parsers;
     }
-    print "Parsers in \'" . $self->{use_conf} . "\': \'@modules\'\n"
+
+    print "Parsers in \'" . $self->{use_conf} . "\': \'@{$self->{'parser'}}\'\n"
       if $self->verbose;
 
-    return @modules;
+    return @{$self->{'parser'}};
 }
 
 =head2 _scripts
@@ -1770,17 +1783,70 @@ sub _parsers {
 
 sub _scripts {
     my $self = shift;
-    my $conf = $self->_conf;
     my @scripts;
 
-    for my $script ( @{ $conf->{script} } ) {
-        $script->{name}->[0] =~ s/\s+//g;
-        push @scripts, $script->{name}->[0];
+    if ( ! $self->{'script'} ) {
+      my $conf = $self->_conf;
+      my @parents = $conf->descendants('script');
+      
+      for my $parent (@parents) {
+        my @children = $parent->descendants('name');
+        push @scripts, $children[0]->first_child->text;
+      }
+      $self->{'script'} = \@scripts;
     }
-    print "Scripts in \'" . $self->{use_conf} . "\': \'@scripts\'\n"
+
+    print "Scripts in \'" . $self->{use_conf} . "\': \'@{$self->{'script'}}\'\n"
       if $self->verbose;
 
-    return @scripts;
+    return @{$self->{'script'}};
+}
+
+=head2 _get_val
+
+ Name    : _get_val
+ Usage   : $diya->_get_val(<name>,<sub field>)
+ Function:  
+ Returns : value
+ Args    : 
+ Example : $diya->_get_val('blastall','executable')
+
+=cut
+
+sub _get_val {
+  my ($self,$name,$attr) = @_;
+  my $conf = $self->_conf;
+
+  my @parsers = $conf->descendants('parser');
+
+    for my $parser ( @parsers ) {
+      my @fields = $parser->descendants('name');
+      if ( $name eq $fields[0]->first_child->text ) {
+        my @vals = $parser->descendants($attr);
+        if ( defined $vals[0]->first_child ) {
+          return $vals[0]->first_child->text;
+        } else {
+          return '';
+        }
+      }
+    }
+
+    my @scripts = $conf->descendants('script');
+
+    for my $script ( @scripts ) {
+      my @fields = $script->descendants('name');
+      if ( $name eq $fields[0]->first_child->text ) {
+        my @vals = $script->descendants($attr);
+
+        if ( defined $vals[0]->first_child ) {
+          return $vals[0]->first_child->text;
+        } else {
+          return '';
+        }
+      }
+    }
+
+  die "Could not find value for \'$name\' and \'$attr\'";
 }
 
 =head2 _sequence
@@ -1814,31 +1880,17 @@ sub _sequence {
  Usage   : 
  Function: return the home or location corresponding to an executable, 
            private method called by _make_command and _check_executable
- Returns :  
+ Returns : directory name
  Args    : parser or script name 
  Example : $path = $self->_home($exe)
 
 =cut
 
 sub _home {
-    my ( $self, $name ) = @_;
-    my $conf  = $self->_conf;
-    my @types = qw(parser script);
-
-    for my $type (@types) {
-        for my $key ( @{ $conf->{$type} } ) {
-            if ( $key->{name}->[0] eq $name ) {
-                $key->{home}->[0] .= "/" if ( $key->{home}->[0] !~ m|/$| );
-                print "Found <home> \'"
-                  . $key->{home}->[0]
-                  . "\' for \'"
-                  . $name . "\'\n"
-                  if $self->verbose;
-                return $key->{home}->[0];
-            }
-        }
-    }
-    die "Could not find <home> for \'$name\'";
+  my ( $self, $name ) = @_;
+  my $home = $self->_get_val($name,'home');
+  $home .= '/' if ( $home !~ /\/$/ );
+  $home;
 }
 
 =head2 _inputfrom
@@ -1854,32 +1906,9 @@ sub _home {
 =cut
 
 sub _inputfrom {
-    my ( $self, $name ) = @_;
-    my $conf  = $self->_conf;
-    my @types = qw(parser script);
-
-    for my $type (@types) {
-        for my $key ( @{ $conf->{$type} } ) {
-            if ( $key->{name}->[0] eq $name ) {
-
-                # if there's an empty hash there, which is what XML::Simple does
-                if ( ref $key->{inputfrom}->[0] eq 'HASH' ) {
-                    print "No <inputfrom> found for \'" . $name . "\'\n"
-                      if $self->verbose;
-                    return 0;
-                }
-                else {
-                    print "Found <inputfrom> \'"
-                      . $key->{inputfrom}->[0]
-                      . "\' for \'"
-                      . $name . "\'\n"
-                      if $self->verbose;
-                    return $key->{inputfrom}->[0];
-                }
-            }
-        }
-    }
-    die "No <inputfrom> found for \'$name\'";
+  my ( $self, $name ) = @_;
+  my $exec = $self->_get_val($name,'inputfrom');
+  $exec;
 }
 
 =head2 _command
@@ -1895,33 +1924,10 @@ sub _inputfrom {
 =cut
 
 sub _command {
+  my ( $self, $name ) = @_;
 
-    my ( $self, $name ) = @_;
-    my $conf  = $self->_conf;
-    my @types = qw(parser script);
-    my $type  = "";
-
-    for $type (@types) {
-        for my $key ( @{ $conf->{$type} } ) {
-            if ( $key->{name}->[0] eq $name ) {
-
-              # if there is an empty hash, created by XML::Simple from the *conf
-                if ( ref $key->{command}->[0] eq 'HASH' ) {
-                    print "No <command> for $type \'" . $name . "\'\n"
-                      if $self->verbose;
-                    return;
-                }
-                elsif ( $key->{command}->[0] ) {
-                    print "Found <command> \'"
-                      . $key->{command}->[0]
-                      . "\' for \'"
-                      . $name . "\'\n"
-                      if $self->verbose;
-                    return $key->{command}->[0];
-                }
-            }
-        }
-    }
+  my $cmd = $self->_get_val($name,'command');
+  $cmd;
 }
 
 =head2 _inputformat
@@ -1937,31 +1943,13 @@ sub _command {
 =cut
 
 sub _inputformat {
-    my ( $self, $name ) = @_;
-    my $conf = $self->_conf;
+  my ( $self, $name ) = @_;
+  my $conf = $self->_conf;
 
-    return 0 if ( $self->_get_type($name) eq 'script' );
+  return 0 if ( $self->_get_type($name) eq 'script' );
 
-    for my $key ( @{ $conf->{parser} } ) {
-        if ( $key->{name}->[0] eq $name ) {
-
-            # if XML::Simple has created an empty hash
-            if ( ref $key->{inputformat}->[0] eq 'HASH' ) {
-                print "No <inputformat> for \'" . $name . "\'\n"
-                  if $self->verbose;
-                return 0;
-            }
-            else {
-                print "Found <inputformat> \'"
-                  . $key->{inputformat}->[0]
-                  . "\' for \'"
-                  . $name . "\'\n"
-                  if $self->verbose;
-                return $key->{inputformat}->[0];
-            }
-        }
-    }
-    die "Could not find input format for " . $name;
+  my $format = $self->_get_val($name,'inputformat');
+  $format;
 }
 
 =head2 _use_conf
@@ -2046,26 +2034,26 @@ sub _initialize {
  Usage   : $type = $diya->_get_type($step)
  Function: return 'script' or 'parser', private method called by run()
  Returns : 'script' or 'parser'
- Args    : 
+ Args    : name of a script or parser
  Example : 
 
 =cut
 
 sub _get_type {
-    my ( $self, $name ) = @_;
-    my $conf  = $self->_conf;
-    my @types = qw( parser script );
+  my ( $self, $name ) = @_;
+  my $conf  = $self->_conf;
 
-    for my $type (@types) {
-        for my $key ( @{ $conf->{$type} } ) {
-            if ( $key->{name}->[0] eq $name ) {
-                print "\'$name\' is a \'$type\'\n" if $self->verbose;
-                return $type;
-            }
-        }
+  for my $type ( qw(parser script) ) {
+    my @things = $conf->descendants($type);
+    for my $thing ( @things ) {
+      my @names = $thing->descendants('name');
+      if ( $name eq $names[0]->first_child->text ) {
+        return $type;
+      }
     }
+  }
 
-    die "No type found for \'$name\' in " . $self->_use_conf;
+  die "No type found for \'$name\' in " . $self->_use_conf;
 }
 
 =head2 _load_app_module

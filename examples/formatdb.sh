@@ -1,5 +1,9 @@
-#!/bin/csh
+#!/bin/bash
 
-/usr/local/share/apps/ncbi/bin/formatdb -p $argv[2] -V T -i $argv[1]
+formatdb -p $2 -V T -i $1
 
-rm formatdb.log
+if [[ -e formatdb.log ]] 
+then
+	rm formatdb.log
+fi
+
