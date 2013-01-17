@@ -1,50 +1,50 @@
-#!/usr/bin/perl
-#--------------------------------------------------------------------------
-# ©Copyright 2008
-#
-# This file is part of DIYA.
-#
-# DIYA is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# DIYA is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with the diya package.  If not, see <http://www.gnu.org/licenses/>.
-#--------------------------------------------------------------------------
+#!/arch/bin/perl
+###################################################################
+# This software is proprietary to The BioTeam, Inc.
+# This document may not be distributed or duplicated, in any part 
+# or in any manner without the written permission from The BioTeam, 
+# except for the express purpose for which it was shared. 
+# Copyright 2009. All Rights Reserved.
+###################################################################
+#$ -S /arch/bin/perl
+
+=head1 NAME
+
+bt-sge-rpsblast_runner.pl
+
+=head1 DESCRIPTION
+
+The execution portion of bt-sge-batchrpsblast.
+
+=cut
 
 use strict;
 use Getopt::Long;
 use Bio::SeqIO;
 use File::Basename;
 
-$ENV{BLASTMAT} = "/common/data/blastmat" unless defined($ENV{BLASTMAT});
+$ENV{BLASTMAT} = "/common/data/blastmat" unless (defined($ENV{BLASTMAT}));
 
-my ($query, $id, $blast_output, $db, $localdata);
+my ($query, $id, $blast_output, $db, $tmp_output, $localdata);
 my $chunk_size = 1;
+my $bindir     = '/arch/bin';
+
 Getopt::Long::Configure(("pass_through", "no_auto_abbrev", "no_ignore_case"));
 GetOptions("chunk=i"      => \$chunk_size,
            "localdata=s"  => \$localdata,
            "id=i"         => \$id,
            "d=s"          => \$db,
            "i=s"          => \$query,
-           "o=s"          => \$blast_output );
+           "o=s"          => \$blast_output
+          );
 my $more_args = join(" ", @ARGV);
 
 # SGE gives us the string "undefined" in the environment variable above if 
 # we're not running in a task array.
-$id = $ENV{SGE_TASK_ID} if ( ! $id );
+$id = $ENV{SGE_TASK_ID} unless ($id);
 $id = 1 if ($id eq "undefined");
 
-my $timestamp = strftime("%Y_%m_%d_%H_%M_%S", localtime);
-my $tmp_output= "/tmp/rpsblast-${timestamp}.tmp";
-# my $tmp_output= sprintf("/tmp/rpsblast.%05d.tmp", $$);
-
+$tmp_output= sprintf("/tmp/blastall.%05d.tmp", $$);
 #
 # Fountain of debugging info
 #
@@ -57,7 +57,6 @@ print STDERR "id        = $id\n";
 print STDERR "more_args = $more_args\n";
 print STDERR "temp output = $tmp_output\n";
 print STDERR "db to use... = $db\n";
-
 #
 # If local data cache is available and specified on the command line,
 # use it.
@@ -76,19 +75,16 @@ if ($localdata) {
   }
 }
 
-unless (-e $query) {
-  die "Unable to locate query file $query\n";
-}
-
+die "Unable to locate query file $query\n" unless (-e $query);
 #
 # Make a private query file with just our inputs.
 #
 my $queryIO  = new Bio::SeqIO( -format => 'Fasta', -file => $query);
 my ($query_local, $query_path, $query_suffix) = fileparse($query);
 my $query_fn = sprintf("/tmp/%s.%d", $query_local, $id);
-unless (open(QUERY, ">$query_fn")) {
-  die "unable to open private query $query_fn for writing\n";
-};
+
+die "unable to open private query $query_fn for writing" unless (open(QUERY, ">$query_fn"));
+
 my $out = Bio::SeqIO->new(-format => 'Fasta', 
                           -fh     => \*QUERY);
 my $counter = 1;
@@ -101,30 +97,28 @@ while (my $seq = $queryIO->next_seq()) {
   $seq_count++;
 }
 close(QUERY);
-
 #
 # Construct the BLAST command
 #
 my $tmp_output_dir;
-unless ($tmp_output_dir) { $tmp_output_dir = "rpsblast_tmp"; }
+$tmp_output_dir = "rpsblast_tmp" unless ($tmp_output_dir);
 my ($blast_local, $blast_path, $blast_suffix) = fileparse($blast_output);
 my $output_fn = sprintf("$tmp_output_dir/%s.%-5d", $blast_local, $id);
-my $blast_cmd = "/arch/bin/rpsblast " . 
-                "-i $query_fn  " .
-                "-o $tmp_output " . 
-                "-d $db " .
+my $blast_cmd = "$bindir/rpsblast " . 
+                "-query $query_fn  " .
+                "-out $tmp_output " . 
+                "-db $db " .
                 $more_args;
 print STDERR "BLAST Cmd:  $blast_cmd\n";
 system($blast_cmd);
 
-unless (-e $tmp_output_dir) { `mkdir $tmp_output_dir`; }
+`mkdir $tmp_output_dir` unless (-e $tmp_output_dir);
 my $cmd = "/bin/cp $tmp_output $output_fn\n";
 print STDERR "$cmd\n";
 print STDERR `$cmd`;
-
 #
 # Clean up after ourselves.
 #
-system("rm -f $query_fn");
-system("rm -f $tmp_output");
+unlink($query_fn);
+unlink($tmp_output);
 
