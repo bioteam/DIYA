@@ -1,4 +1,4 @@
-#!/arch/bin/perl
+#!/usr/bin/env perl
 ###################################################################
 # This software is proprietary to The BioTeam, Inc.
 # This document may not be distributed or duplicated, in any part
