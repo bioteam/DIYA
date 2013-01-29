@@ -109,15 +109,15 @@ sub parse {
 
         if ( $feat->primary_tag eq 'CDS' ) {
 
-            my @locus = $feat->get_tag_values('locus_tag');
+            my ($locus) = $feat->get_tag_values('locus_tag');
 
             my $fh;
 
-            eval { $fh = $index->get_stream( $locus[0] ); };
+            eval { $fh = $index->get_stream( $locus ); };
 
             if ($@) {
                 print "Problem retrieving "
-                  . $locus[0]
+                  . $locus
                   . " from $blastout.index\n";
                 next;
             }
@@ -141,7 +141,7 @@ sub parse {
 
                 print "Found rpsblast hit "
                   . $hit->description
-                  . " for $locus[0]\n"
+                  . " for $locus\n"
                   if $diya->verbose;
 
                 # get domain id from hit
@@ -166,11 +166,11 @@ sub parse {
 
                 }
 
-                my @products = $feat->get_tag_values('product')
+                my ($product) = $feat->get_tag_values('product')
                   if ( $feat->has_tag('product') );
 
                 # If this feature is already annotated with a UniRef match
-                if ( $products[0] =~ /RepID=/ && defined $tags->{'product'} ) {
+                if ( $product =~ /RepID=/ && defined $tags->{'product'} ) {
 
                     my $note = "similar to " . $tags->{'product'};
                     $note .= " " . $tags->{'cluster'};
@@ -332,7 +332,7 @@ sub load_cdd_table {
             $cddmap{$id} = \%cluster;
         }
 
-# 103623 PRK08948 PRK08948 2-octaprenyl-6-methoxyphenyl hydroxylase; Validated	392
+# 103623	PRK08948	PRK08948	2-octaprenyl-6-methoxyphenyl hydroxylase; Validated	392
         if ( $line =~ /^\d+\s+(PRK\d+)\s+\w+\s+([^;]+)/ ) {
             my ( $id, $def ) = ( $1, $2 );
             $def =~ s/\s+$//;
