@@ -28,8 +28,8 @@ my $in  = "t/data/contig1.fa";
 
 SKIP: {
 
-	skip("Skipping test, /usr/local/share/apps/ncbi/bin/blastall not found", 2) 
-	  unless (-e "/usr/local/share/apps/ncbi/bin/blastall");
+	skip("Skipping test, /usr/local/bin/blastall not found", 2) 
+	  unless (-e "/usr/local/bin/blastall");
 
 	system "t/data/diya-blast.pl --set DB=$tmp/$fa --set OUTPUT=$tmp/$out --set INPUT=$in";
 

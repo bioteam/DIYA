@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ###################################################################
 # This software is proprietary to The BioTeam, Inc.
 # This document may not be distributed or duplicated, in any part
@@ -9,13 +9,13 @@
 
 =head1 NAME
 
-bt-batchrpsblast.pl
+bt-sge-batchblast.pl
 
 =head1 DESCRIPTION
 
-bt-batchrpsblast is a high throughput solution for BLAST processing.  
+bt-batchblast is a high throughput solution for BLAST processing.  
 Its syntax is similar to blastall, except that -o and -i are required arguments
-(STDIN and STDOUT streams are not yet supported). LSF version.
+(STDIN and STDOUT streams are not yet supported).
 
 =cut
 
@@ -26,11 +26,15 @@ use Getopt::Long;
 use POSIX qw(ceil);
 use File::Basename;
 
-my ( $query, $jobname, $sync, $project, $arch );
+$ENV{BLASTMAT} = "/common/data/blastmat" if ( !defined $ENV{BLASTMAT} );
+
+my (
+    $query, $nocwd, $jobname, $sync, $project, $arch
+);
 my $chunk          = 1;
 my $output         = "stdout.txt";
-my $tmp_output_dir = "rpsblast_tmp";
-my $bindir         = '/Jake/apps/DIYA/scripts';
+my $tmp_output_dir = "batchblast_tmp";
+my $bindir         = '/common/bin';
 
 Getopt::Long::Configure( "pass_through", "no_auto_abbrev", "no_ignore_case" );
 GetOptions(
@@ -41,14 +45,15 @@ GetOptions(
     "sync"      => \$sync,
     "jobname=s" => \$jobname,
     "arch=s"    => \$arch,
-    "project=s" => \$project
+    "project=s" => \$project,
+    "nocwd=i"   => \$nocwd
 );
 my $more_args = join( " ", @ARGV );
 
 $tmp_output_dir = File::Spec->rel2abs($tmp_output_dir);
 $output         = File::Spec->rel2abs($output);
 die "ERROR:  Please delete temp directory $tmp_output_dir or specify a new one"
-  if ( -e $tmp_output_dir );
+  if -e $tmp_output_dir;
 `mkdir $tmp_output_dir`;
 
 die "Unable to find query file $query" if ( !-e $query );
@@ -57,6 +62,7 @@ die "Unable to find query file $query" if ( !-e $query );
 my $count = `grep '>' $query | wc -l`;
 chomp $count;
 print STDERR "Counted $count sequences in query $query\n";
+
 my $splits = ceil( $count / $chunk );
 if ( $splits > 500 ) {
     $splits = 500;
@@ -70,32 +76,34 @@ if ( $splits > 500 ) {
     }
 }
 
-# Submit an array job of $splits tasks, each doing
-# $count / $splits query sequences.
+# Submit an array job of SPLITS tasks, each doing
+# num_seqs / SPLITS query sequences.
 print STDERR "Submitting $splits jobs of $chunk queries.\n";
 
 $jobname = "Job$$-blast" unless $jobname;
 
 print STDERR "BLASTMAT = $ENV{BLASTMAT}\n";
-my $cmd = "bsub -o batchrpsblast.stdout -e batchrpsblast.stderr ";
+my $cmd = "qsub ";
+$cmd .= "-l arch=$arch " if $arch;
+if ( $splits > 1 ) { $cmd .= "-t 1-$splits "; }
 
-if ( $splits > 1 ) {
-    $cmd .= "-J \"$jobname" . "[1-$splits]\" ";
+if ($nocwd) {
+    $cmd .= "-o batchblast.stdout -e batchblast.stderr -N \"$jobname\" ";
 }
 else {
-    $cmd .= "-J $jobname -K ";
+    $cmd .= "-cwd -o batchblast.stdout -e batchblast.stderr -N \"$jobname\" ";
 }
 
 if ($project) { $cmd .= "-P $project "; }
-
 $cmd .=
-    "$bindir/bt-rpsblast_runner.pl "
+    "$bindir/bt-blast_runner.pl "
   . "-i $query "
   . "-o $output "
   . "--chunk $chunk ";
+
 if ($main::LOCALDATA) { $cmd .= "--localdata $main::LOCALDATA "; }
 $cmd .= "$more_args";
-print STDERR "bsub cmd:  $cmd\n";
+print STDERR "qsub cmd:  $cmd\n";
 system($cmd);
 
 my ( $base_outputname, $outputpath ) = fileparse($output);
@@ -105,7 +113,7 @@ my $cleanfn = "cleanup.sh";
 open( OUTPUT, ">$cleanfn" );
 print OUTPUT <<EOF;
 #!/bin/sh
-#BSUB -L /bin/sh
+#\$ -q all.q
 
 echo "waiting for jobs to finish"
 
@@ -119,11 +127,9 @@ close OUTPUT;
 `chmod +x $cleanfn`;
 
 my $finishUp =
-"bsub -J \"$jobname.cleanup\" -o batchrpsblast.stdout -e batchrpsblast.stderr -w $jobname ";
-$finishUp .= "-K " if $sync;
-$finishUp .= "< $cleanfn";
+"qsub -cwd -N \"$jobname.cleanup\" -hold_jid \"$jobname\" -o batchblast.stdout -e batchblast.stderr ";
+if ($sync) { $finishUp .= "-sync y "; }
+$finishUp .= " $cleanfn";
 system($finishUp);
 
 `rm $cleanfn`;
-
-__END__

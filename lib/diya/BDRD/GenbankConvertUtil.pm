@@ -1,5 +1,5 @@
 #--------------------------------------------------------------------------
-# ©Copyright 2013
+# ©Copyright 2011
 #
 # This file is part of DIYA.
 #
@@ -53,18 +53,18 @@ use Bio::SeqIO;
 use FileHandle;
 use Date::Format qw(time2str);
 
-my ( $spacer_start, $spacer_end, $contig_start, $contig_end );
+my ($spacer_start, $spacer_end, $contig_start, $contig_end);
 
 sub new {
-    my ( $module, @args ) = @_;
-    my $class = ref($module) || $module;
-    my $self = {};
+	my ($module,@args) = @_;
+	my $class = ref($module) || $module;
+	my $self = {};
 
-    bless( $self, $class );
+	bless($self,$class);
 
-    $self->_initialize(@args);
+	$self->_initialize(@args);
 
-    $self;
+	$self;
 }
 
 sub fixAndPrint {
@@ -191,8 +191,7 @@ sub fixAndPrint {
             $outfsa->write_seq($featureSeq);
             $outfsa->flush();
 
-            print
-"fasta_record\t$contig_name\tlength:$len\tdefinition:$definition\n"
+            print "fasta_record\t$contig_name\tlength:$len\tdefinition:$definition\n"
               if $self->debug;
         }
 
@@ -416,25 +415,23 @@ sub fixAndPrint {
 }
 
 sub list_primary_tags {
-    my $self = shift;
-    my $file = $self->{file};
+	my $self = shift;
+	my $file = $self->{file};
 
-    my $in = Bio::SeqIO->new(
-        -file   => $file,
-        -format => 'genbank'
-    );
-    my $seq = $in->next_seq;
+	my $in = Bio::SeqIO->new(-file => $file,
+						     -format => 'genbank');
+	my $seq = $in->next_seq;
 
-    my %tags;
+	my %tags;
 
-    for my $feat ( $seq->get_SeqFeatures ) {
-        my $tag = $feat->primary_tag;
-        $tags{$tag}++;
-    }
+	for my $feat ($seq->get_SeqFeatures) {
+		my $tag = $feat->primary_tag;
+		$tags{$tag}++;
+   }
 
-    for my $tag ( keys %tags ) {
-        print "$tag\t$tags{$tag}\n";
-    }
+	for my $tag (keys %tags) {
+		print "$tag\t$tags{$tag}\n";
+	}
 }
 
 sub fix_feature {
@@ -545,6 +542,10 @@ sub fix_feature {
     }
 
     elsif ( $feat->primary_tag eq 'tRNA' ) {
+
+        # Add inference tag
+        $feat->add_tag_value( 'inference', 'profile:tRNAscan-SE:1.23' )
+          if ( !$feat->has_tag("inference") );
 
         # Edit note tag
         if ( $feat->has_tag("note") ) {
@@ -787,126 +788,71 @@ sub fix_uniref {
 sub correct_spelling {
     my $product = shift;
 
-    my @strs = (
-        'Lipoprotein_5',
-        'Lipoprotein 5',
-        'Catabolite protein activator',
-        'catabolite protein activator',
-        'Accessory protein regulator ([A-Z])',
-        'accessory protein regulator $1',
-        'Penicillin V acylase\. Cysteine peptidase\.',
-        'penicillin V acylase; cysteine peptidase;',
-        'FtsH-2 peptidase. Metallo peptidase. MEROPS family M41,',
-        'FtsH-2 peptidase; Metallo peptidase; MEROPS family M41;',
-        'Camelysin\.',
-        'Camelysin;',
-        'Metallo peptidase\.',
-        'Metallo peptidase;',
-        'D-Ala-D-Ala carboxypeptidase A\.',
-        'D-Ala-D-Ala carboxypeptidase A;',
-        'Serine peptidase\.',
-        'Serine peptidase;',
-        'carboxypeptidase DacF\.',
-        'carboxypeptidase DacF;',
-        'acetoincleaving',
-        'acetoin cleaving',
-        'dyhydrogenase',
-        'dehydrogenase',
-        'carrierprotein',
-        'carrier protein',
-        'proteinl',
-        'protein',
-        'POLY\(A\) POLYMERASE \' TRNA NUCLEOTIDYLTRANSFERASE',
-        'tRNA nucleotidyltransferase',
-        'MOSQUITOCIDAL TOXIN PROTEIN',
-        'mosquitocidal toxin protein',
-        'MONO-ADP-RIBOSYLTRANSFERASE C3',
-        'mono-ADP-ribosyltransferase C3',
-        'hyothetical',
-        'hypothetical',
-        'biosynthsis',
-        'biosynthesis',
-        'AMIDOHYDROLASE',
-        'amidohydrolase',
-        'ACETOIN TRANSPORT PERMEASE PROTEIN',
-        'acetoin transport permease protein',
-        '(trasporter|transoprted|tranporter)',
-        'transporter',
-        '3-OXOADIPATE ENOL-LACTONASE',
-        '3-oxoadipate enol-lactonase',
-        '4\'\'\'\'-phosphopantetheinyl',
-        'phosphopantetheinyl',
-        ' \(And other\) ',
-        ' ',
-        'sensor\(S\)',
-        'sensors',
-        'TRANSPOSON',
-        'Transposon',
-        'INVERTASE',
-        'Invertase',
-        '\bsopre\b',
-        'spore',
-        'proteintic',
-        'protein',
-        'NAD\(P\)H',
-        'NADPH',
-        'spaning',
-        'spanning',
-        'proetin',
-        'protein',
-        'Hypotethical',
-        'hypothetical',
-        'reguatory',
-        'regulatory',
-        'fibre',
-        'fiber',
-        'Uncharacterised',
-        'uncharacterized',
-        'putaive',
-        'putative',
-        'haemin',
-        'hemin',
-        'Haemolytic',
-        'Hemolytic',
-        'unknow ',
-        'unknown ',
-        'haemagglutinin',
-        'hemagglutinin',
-        'PERIPLASMIC PROTEIN',
-        'periplasmic protein',
-        'MITOCHONDRIAL TRANSPORTER ATM1 \(Atm1\)',
-        'Mitochondrial transporter Atm1',
-        'Protein C\. Serine peptidase\.',
-        'Protein C serine peptidase',
-        'unkown',
-        'unknown',
-        'addtional',
-        'additional',
-        'protein protein',
-        'protein',
-        'similar to Similar',
-        'similar',
-        '^Acyl\stransferasesregion$',
-        'Acyl transferase',
-        'permease-associated\sregion$',
-        'permease domain protein',
-        'Fragment',
-        'fragment',
-        'Putative',
-        'putative',
-        'characteris',
-        'characteriz',
-        '[Uu]ncharacterized',
-        'putative',
-        '[Ss]ulphate',
-        'sulfate',
-        '- \(pentapeptide',
-        '-(pentapeptide',
-        'genes activator',
-        'gene activator'
-    );
+my @strs = (
+'Lipoprotein_5', 'Lipoprotein 5',
+'Catabolite protein activator', 'catabolite protein activator',
+'Accessory protein regulator ([A-Z])', 'accessory protein regulator $1',
+'Penicillin V acylase\. Cysteine peptidase\.', 'penicillin V acylase; cysteine peptidase;',
+'FtsH-2 peptidase. Metallo peptidase. MEROPS family M41,', 'FtsH-2 peptidase; Metallo peptidase; MEROPS family M41;',
+'Camelysin\.', 'Camelysin;',
+'Metallo peptidase\.', 'Metallo peptidase;',
+'D-Ala-D-Ala carboxypeptidase A\.', 'D-Ala-D-Ala carboxypeptidase A;',
+'Serine peptidase\.', 'Serine peptidase;',
+'carboxypeptidase DacF\.', 'carboxypeptidase DacF;',
+'acetoincleaving', 'acetoin cleaving',
+'dyhydrogenase', 'dehydrogenase',
+'carrierprotein', 'carrier protein',
+'proteinl', 'protein',
+'POLY\(A\) POLYMERASE \' TRNA NUCLEOTIDYLTRANSFERASE', 'tRNA nucleotidyltransferase',
+'MOSQUITOCIDAL TOXIN PROTEIN', 'mosquitocidal toxin protein',
+'MONO-ADP-RIBOSYLTRANSFERASE C3', 'mono-ADP-ribosyltransferase C3',
+'hyothetical', 'hypothetical',
+'biosynthsis', 'biosynthesis',
+'AMIDOHYDROLASE', 'amidohydrolase',
+'ACETOIN TRANSPORT PERMEASE PROTEIN', 'acetoin transport permease protein',
+'(trasporter|transoprted|tranporter)', 'transporter',
+'3-OXOADIPATE ENOL-LACTONASE', '3-oxoadipate enol-lactonase',
+'4\'\'\'\'-phosphopantetheinyl', 'phosphopantetheinyl',
+' \(And other\) ', ' ',
+'sensor\(S\)', 'sensors',
+'TRANSPOSON', 'Transposon',
+'INVERTASE', 'Invertase',
+'\bsopre\b', 'spore',
+'proteintic', 'protein',
+'NAD\(P\)H', 'NADPH',
+'spaning', 'spanning',
+'proetin', 'protein',
+'Hypotethical', 'hypothetical',
+'reguatory', 'regulatory',
+'fibre', 'fiber',
+'Uncharacterised', 'uncharacterized',
+'putaive', 'putative',
+'haemin', 'hemin',
+'Haemolytic', 'Hemolytic',
+'unknow ', 'unknown ',
+'haemagglutinin', 'hemagglutinin',
+'PERIPLASMIC PROTEIN', 'periplasmic protein',
+'MITOCHONDRIAL TRANSPORTER ATM1 \(Atm1\)', 'Mitochondrial transporter Atm1',
+'Protein C\. Serine peptidase\.', 'Protein C serine peptidase',
+'unkown', 'unknown',
+'addtional', 'additional',
+'protein protein', 'protein',
+'similar to Similar', 'similar',
+'^Acyl\stransferasesregion$', 'Acyl transferase',
+'permease-associated\sregion$', 'permease domain protein',
+'Fragment', 'fragment',
+'Putative', 'putative',
+'characteris', 'characteriz',
+'[Uu]ncharacterized', 'putative',
+'[Ss]ulphate', 'sulfate',
+'- \(pentapeptide', '-(pentapeptide',
+'genes activator', 'gene activator',
+'ANTIGEN','antigen',
+'PROTEASE','protease',
 
-    while ( my ( $search, $replace ) = splice( @strs, 0, 2 ) ) {
+);
+
+    while ( my ($search,$replace) = splice(@strs,0,2) ) {
         $product =~ s/$search/$replace/;
     }
 
@@ -917,26 +863,26 @@ sub remove_loci {
     my $product = shift;
 
     my @strs = (
-        '(Uncharacterized adenine-specific methylase)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(hydrolase)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(metalloprotease)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(Phosphodiesterase),?\s+[\d{1,}a-z{1,}\/-_]+',
-        '(reductase)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(transport protein)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(phosphotransferase)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(Uncharacterised conserved protein)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(Uncharacterized MFS-type transporter)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(Uncharacterized transporter)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(Pirin-like protein)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(Uncharacterized protease)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(HAD-superfamily hydrolase, subfamily IB,)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(Uncharacterized mscS family protein)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(Shikimate 5-dehydrogenase-like protein)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(Peptidase T-like protein)\s+[\d{1,}a-z{1,}\/-_]+',
+'(Uncharacterized adenine-specific methylase)\s+[\d{1,}a-z{1,}\/-_]+',
+'(hydrolase)\s+[\d{1,}a-z{1,}\/-_]+',
+'(metalloprotease)\s+[\d{1,}a-z{1,}\/-_]+',
+'(Phosphodiesterase),?\s+[\d{1,}a-z{1,}\/-_]+',
+'(reductase)\s+[\d{1,}a-z{1,}\/-_]+',
+'(transport protein)\s+[\d{1,}a-z{1,}\/-_]+',
+'(phosphotransferase)\s+[\d{1,}a-z{1,}\/-_]+',
+'(Uncharacterised conserved protein)\s+[\d{1,}a-z{1,}\/-_]+',
+'(Uncharacterized MFS-type transporter)\s+[\d{1,}a-z{1,}\/-_]+',
+'(Uncharacterized transporter)\s+[\d{1,}a-z{1,}\/-_]+',
+'(Pirin-like protein)\s+[\d{1,}a-z{1,}\/-_]+',
+'(Uncharacterized protease)\s+[\d{1,}a-z{1,}\/-_]+',
+'(HAD-superfamily hydrolase, subfamily IB,)\s+[\d{1,}a-z{1,}\/-_]+',
+'(Uncharacterized mscS family protein)\s+[\d{1,}a-z{1,}\/-_]+',
+'(Shikimate 5-dehydrogenase-like protein)\s+[\d{1,}a-z{1,}\/-_]+',
+'(Peptidase T-like protein)\s+[\d{1,}a-z{1,}\/-_]+',
 '(Uncharacterized ABC transporter ATP-binding protein)\s+[\d{1,}a-z{1,}\/-_]+',
-        '(Uncharacterized acyl-CoA thioester hydrolase)\s+[\d{1,}a-z{1,}\/-_]+',
-        'UPF\d+\s+(\w+-binding protein)',
-        '^([^()]+ \([^)]+\)) \([^)]+\)'
+'(Uncharacterized acyl-CoA thioester hydrolase)\s+[\d{1,}a-z{1,}\/-_]+',
+'UPF\d+\s+(\w+-binding protein)',
+'^([^()]+ \([^)]+\)) \([^)]+\)'
     );
 
     # No loci in product names, e.g 'hydrolase LC_123'
@@ -951,96 +897,98 @@ sub add_trailing {
     my $product = shift;
 
     my @strs = (
-        '^\s*\w+\s+repeat\s*$',                      '-containing protein',
-        'transcriptional\sregulator,\sPadR-like\s*', ' protein',
-        'DinB\sfamily\ssuperfamily\s*',              ' protein',
-        'YfhF-\s*',                                  '-like',
-        'WbqC-\s*',                                  '-like',
-        'Zinc\sfinger,\sCHC2-\s*$',                  '-like',
-        'Tetratricopeptide\sTPR_4\s*$',              ' containing protein',
-        'sensor\shistidine\skinase\sdomain\s*$',     ' containing protein',
-        'SWIM\szinc\sfinger\s*$',                    ' containing protein',
-        'Tetratricopeptides\(TPR\)\srepeat\s*$',     ' containing protein',
-        'transporter\srelated$',                     ' protein',
-        '^(\w+)\sbinding\sdomain$',                  ' protein',
-        '(\S+-like)$',                               ' protein',
-        'SpoVR like',                                ' protein',
-        'Glutathione S-transferase domain',          ' protein'
-    );
+'^\s*\w+\s+repeat\s*$',                       '-containing protein',
+'transcriptional\sregulator,\sPadR-like\s*',  ' protein',	
+'DinB\sfamily\ssuperfamily\s*',               ' protein',
+'YfhF-\s*',                                   '-like',
+'WbqC-\s*',                                   '-like',
+'Zinc\sfinger,\sCHC2-\s*$',                   '-like',
+'Tetratricopeptide\sTPR_4\s*$',               ' containing protein',
+'sensor\shistidine\skinase\sdomain\s*$',      ' containing protein',
+'SWIM\szinc\sfinger\s*$',                     ' containing protein',
+'Tetratricopeptides\(TPR\)\srepeat\s*$',      ' containing protein',
+'transporter\srelated$',                      ' protein',
+'^(\w+)\sbinding\sdomain$',                   ' protein',
+'(\S+-like)$',                                ' protein',
+'SpoVR like',                                 ' protein',
+'Glutathione S-transferase domain',           ' protein'
+);
 
-    while ( my ( $str, $add ) = splice( @strs, 0, 2 ) ) {
+    while ( my ($str,$add) = splice(@strs,0,2) ) {
         $product .= $add if ( $product =~ /$str/i );
     }
 
     $product;
 }
 
-sub remove_similar {
-    my $product = shift;
 
-    my @strs = (
+
+sub remove_similar {
+	my $product = shift;
+
+my @strs = (
 '^Similar to (acetyltransferase|exochitinase|restin isoform b|permease protein of ABC transport system|protein gp49 from prophage N15)',
 '^Similar to (fimbrial subunit type 1|bacteriophage integrase|vgrG protein|base plate protein gp25 of Bacteriophage|bacteriophage tail fiber assembly protein|protein V)',
-        '^Related to (galactoside O-acetyltransferase)/',
-        '^Strongly similar to (S-adenosylmethionine synthetase)',
-        '^Exhibited considerable similarity to a small (polypeptide \(RepA\))',
+'^Related to (galactoside O-acetyltransferase)/',
+'^Strongly similar to (S-adenosylmethionine synthetase)',
+'^Exhibited considerable similarity to a small (polypeptide \(RepA\))',
 '^Similarities with (transcription regulator LysR family|alpha replication protein of prophage|Photorhabdus cytotoxin|tail fiber protein)'
-    );
+);
 
-    # Remove phrases like 'similar to...'
+	# Remove phrases like 'similar to...'
     for my $str (@strs) {
         return $1 if $product =~ /$str/i;
     }
 
-    $product;
+	$product;
 }
 
 sub make_singular {
-    my $product = shift;
+	my $product = shift;
 
-    my @strs = (
-        'GTPases',              'GTPase',
-        'variants',             'variant',
-        'synthetases',          'synthetase',
-        'glucosidases',         'glucosidase',
-        'thioredoxins',         'thioredoxin',
-        'asparaginases',        'asparaginase',
-        'acetylases',           'acetylase',
-        'enzymes',              'enzyme',
-        'Flavodoxins',          'Flavodoxin',
-        'toxins',               'toxin',
-        'Permeases',            'Permease',
-        'components',           'component',
-        'proteins',             'protein',
-        'systems',              'system',
-        'regulators',           'regulator',
-        'phosphatases',         'phosphatase',
-        'determinants',         'determinant',
-        'recombinases',         'recombinase',
-        'transferases',         'transferase',
-        'ATPases',              'ATPase',
-        'exporters',            'exporter',
-        'hydrolases',           'hydrolase',
-        'reductases',           'reductase',
-        'cytochromes',          'cytochrome',
-        'proteases',            'protease',
-        'kinases',              'kinase',
-        'transporters',         'transporter',
-        'oxidases',             'oxidase',
-        'helicases',            'helicase',
-        'synthases',            'synthase',
-        'peptidases',           'peptidase',
-        'Dehydrogenases',       'Dehydrogenase',
-        'lyase.+?and.+?lyases', 'lyase',
-        'protein protein',      'protein',
-        'solvents',             'solvent'
-    );
+	my @strs = (
+'GTPases', 'GTPase',
+'variants', 'variant',
+'synthetases', 'synthetase',
+'glucosidases', 'glucosidase',
+'thioredoxins', 'thioredoxin',
+'asparaginases', 'asparaginase',
+'acetylases', 'acetylase',
+'enzymes', 'enzyme',
+'Flavodoxins', 'Flavodoxin',
+'toxins', 'toxin',
+'Permeases', 'Permease',
+'components', 'component',
+'proteins', 'protein',
+'systems', 'system',
+'regulators', 'regulator',
+'phosphatases', 'phosphatase',
+'determinants', 'determinant',
+'recombinases', 'recombinase',
+'transferases', 'transferase',
+'ATPases', 'ATPase',
+'exporters', 'exporter',
+'hydrolases', 'hydrolase',
+'reductases', 'reductase',
+'cytochromes', 'cytochrome',
+'proteases', 'protease',
+'kinases', 'kinase',
+'transporters', 'transporter',
+'oxidases', 'oxidase',
+'helicases', 'helicase',
+'synthases', 'synthase',
+'peptidases', 'peptidase',
+'Dehydrogenases', 'Dehydrogenase',
+'lyase.+?and.+?lyases', 'lyase',
+'protein protein', 'protein',
+'solvents', 'solvent'
+);
 
-    while ( my ( $search, $replace ) = splice( @strs, 0, 2 ) ) {
+    while ( my ($search,$replace) = splice(@strs,0,2) ) {
         $product =~ s/$search/$replace/ig;
     }
 
-    $product;
+	$product;
 }
 
 sub edit_note {
@@ -1048,34 +996,41 @@ sub edit_note {
 
     if ( $feat->has_tag('note') ) {
         my @notes = $feat->remove_tag('note');
-        for my $note (@notes) {
+        for my $note ( @notes ){
             next if ( $note =~ /hypothetical protein/ );
             $note = remove_banned($note);
-            $feat->add_tag_value( 'note', $note );
+            $feat->add_tag_value('note',$note);
         }
-    }
+    }     
 
     $feat;
 }
 
 sub remove_banned {
-    my $product = shift;
+	my $product = shift;
 
-    my @strs = (
-        '\s+related\s+',                              '\s+homologs?\s*',
-        '\s+\(partial\s\)',                           ',?\s*putative',
-        '^(Probable|Possible|Predicted|Putative)\s+', '\s+\(Fragment\)\s?',
-        '\bgene\b/\bprotein\b',                       '^PREDICTED:\s*',
-        '^(B.thurinienis|Salmonella)\s+',             '^Similar to\s+',
-        '^Truncated\s+',                              'hypothetical protein'
-    );
+	my @strs = (
+'\s+related\s+',            
+'\s+homologs?\s*',                           
+'\s+\(partial\s\)',                          
+',?\s*putative',                          
+'^(Probable|Possible|Predicted|Putative)\s+',
+'\s+\(Fragment\)\s?',
+'\bgene\b/\bprotein\b',                      
+'^PREDICTED:\s*',                    
+'^(B.thurinienis|Salmonella)\s+',  
+'^Similar to\s+',           
+'^Truncated\s+',
+'hypothetical protein',
+'\(S. cerevisiae\), '                  
+	);
 
-    for my $str (@strs) {
+    for my $str ( @strs ) {
         $product =~ s/$str/ /ig;
     }
     $product = trim($product);
 
-    $product;
+	$product;
 }
 
 sub remove_trailing {
@@ -1087,97 +1042,102 @@ sub remove_trailing {
 
     # Remove meaningless trailing comments
     my @strs = (
-        ', PFL_4704',
-        ' of prophage CP-933K',
-        ',\s+PFL_\d+',
-        '\s+and\sother\spencillin-binding\sproteins?',
-        '\s+\(Insoluble\sfraction\)',
-        '\s+\(amino terminus\)',
-        '\s+(SA2311|A118|AAA_5|MJ\d+|YLL\d+|SAB\d+[a-z]+|alr\d+)',
-        '\/Dioxygenas',
-        's+domain\s1\s\(GGDEF\)',
-        '\s+C\sX\sregion',
-        '\s+\(subunit\)',
-        '\s+firmicutes',
-        '\(Dihydro>',
-        '\s+in\S+\s+\S+region',
-        '\s+catalytic region',
-        '\s+and\s+(dehydrogenase|aminotransferase)',
-        's+\(Glutamate-aspartate\scarrierprotein\)',
-        '\s+\(Replication\sprotein\sori\d+\)',
-        '\s+\(Replication\sprotein\)',
-        'in\sMarinococcus\shalophilus',
-        '\s+clpC\/mecB',
-        '\s+CA_[A-Z]+\d+',
-        ',?\s+fhuD',
-        '\s+BCE_\d+',
-        '\s+BLi\d+\/BL\d+',
-        '\s+(BT|LMOf)\d+_\d+',
-        'family\sprotein',
-        'HD\ssub\sdomain',
-        '\s*(SA|BH|VC|NMB|HI|SH)\d+',
-        '\s+pXO\d+-\d+\/BXB\d+\/GBAA_pXO\d+_\d+',
-        '\s+BA_\d+\/GBAA\d+\/BAS\d+',
-        '\s*\(Ans\soperon\srepressor\s*protein\)',
-        '\s*\(Divided\swith\sOB2865\sand\sOB2866\)',
-        '\s*\(N-terminal\sdomain\sto\sN-Acetylmuramoyl-L-alanine\samidase\)',
-        '\s+family\sfamily',
-        '\s+related',
-        ',?\sfamily',
-        '\s*of\sV.\sanguillarum\s\(YclQ\sprotein\)',
-        '\s*\(Putative\sendopeptidase\sinhibitor\)',
-        '\s*\(Putative\sarconitate\shydratase\)',
-        '\s*\(Two component\ssystem\sresponse\sregulatory\sprotein\)',
-        '\s*\(Hypothetical\sprotein\)',
-        '\s*\(Outer\smembrane\susher\sprotein\)',
-        '\s*\(eIF-2Bgamma.eIF-2Bepsilon\)',
-        '\s*\(some\scontain\sLysM.invasin\sdomains\)',
+', PFL_4704',
+' of prophage CP-933K',
+',\s+PFL_\d+',
+'\s+and\sother\spencillin-binding\sproteins?',
+'\s+\(Insoluble\sfraction\)',
+'\s+\(amino terminus\)',
+'\s+(SA2311|A118|AAA_5|MJ\d+|YLL\d+|SAB\d+[a-z]+|alr\d+)',
+'\/Dioxygenas',
+'s+domain\s1\s\(GGDEF\)',
+'\s+C\sX\sregion',
+'\s+\(subunit\)',
+'\s+firmicutes',
+'\(Dihydro>',
+'\s+in\S+\s+\S+region',
+'\s+catalytic region',
+'\s+and\s+(dehydrogenase|aminotransferase)',
+'s+\(Glutamate-aspartate\scarrierprotein\)',
+'\s+\(Replication\sprotein\sori\d+\)',
+'\s+\(Replication\sprotein\)',
+'in\sMarinococcus\shalophilus',
+'\s+clpC\/mecB',
+'\s+CA_[A-Z]+\d+',
+',?\s+fhuD',
+'\s+BCE_\d+',
+'\s+BLi\d+\/BL\d+',
+'\s+(BT|LMOf)\d+_\d+',
+'family\sprotein',
+'HD\ssub\sdomain',
+'\s*(SA|BH|VC|NMB|HI|SH)\d+',
+'\s+pXO\d+-\d+\/BXB\d+\/GBAA_pXO\d+_\d+',
+'\s+BA_\d+\/GBAA\d+\/BAS\d+',
+'\s*\(Ans\soperon\srepressor\s*protein\)',
+'\s*\(Divided\swith\sOB2865\sand\sOB2866\)',
+'\s*\(N-terminal\sdomain\sto\sN-Acetylmuramoyl-L-alanine\samidase\)',
+'\s+family\sfamily',
+'\s+related',
+',?\sfamily',
+'\s*of\sV.\sanguillarum\s\(YclQ\sprotein\)',
+'\s*\(Putative\sendopeptidase\sinhibitor\)',
+'\s*\(Putative\sarconitate\shydratase\)',
+'\s*\(Two component\ssystem\sresponse\sregulatory\sprotein\)',
+'\s*\(Hypothetical\sprotein\)',
+'\s*\(Outer\smembrane\susher\sprotein\)',
+'\s*\(eIF-2Bgamma.eIF-2Bepsilon\)',
+'\s*\(some\scontain\sLysM.invasin\sdomains\)',
 ',\scatalytic\sdomain:D-isomer\sspecific\s2-hydroxyacid\sdehydrogenase,\sNAD\sbinding\sdomain',
-        ',?\struncat(ion|ed)',
-        ',?\sinterruption',
-        ',?\sYHCS\sB.subtilis\sortholog',
-        ',?\s\([A-Z\d-]+\)',
-        ',\ssimilar\sto\sSW:\w+',
-        ',?\shexapeptide\srepeat',
-        ',?\s(C|N)-termin(us|al)',
-        ',?\s(N|C)-terminal\s(domain|region)',
-        ',?\s(SHL|HD)\sdomains?',
-        'HD\ssub\sdomain',
-        ',?\s+N-region',
-        'and\sinactivated\sderivatives',
-        '\s+and\s+orf\d+',
-        '\s+and',
-        ',?\s(mitochondrial|chloroplastic)',
-        '\s*BCE?_\d+',
+',?\struncat(ion|ed)',
+',?\sinterruption',
+',?\sYHCS\sB.subtilis\sortholog',
+',?\s\([A-Z\d-]+\)',
+',\ssimilar\sto\sSW:\w+',
+',?\shexapeptide\srepeat',
+',?\s(C|N)-termin(us|al)',
+',?\s(N|C)-terminal\s(domain|region)',
+',?\s(SHL|HD)\sdomains?',
+'HD\ssub\sdomain',
+',?\s+N-region',
+'and\sinactivated\sderivatives',
+'\s+and\s+orf\d+',
+'\s+and',
+',?\s(mitochondrial|chloroplastic)',
+'\s*BCE?_\d+',
 '\(Dihydrolipoamide\sacetyltransferase\scomponent\sof\sacetoin\scleavingsystem\)',
-        '\s*\(Acetoin\sdehydrogenase\sE2\scomponent\)',
-        '\s*,\ssmall\schain\sVC\d+',
-        '\s*,\sGNAT\sfamily\sfamily\sprotein',
-        '\s*BC_\d+',
-        '\s*,\speriplsmic\sligand-binding\sprotein',
-        '\s*BA_\d+\/GBAA\d+\/BAS\d+',
+'\s*\(Acetoin\sdehydrogenase\sE2\scomponent\)',
+'\s*,\ssmall\schain\sVC\d+',
+'\s*,\sGNAT\sfamily\sfamily\sprotein',
+'\s*BC_\d+',
+'\s*,\speriplsmic\sligand-binding\sprotein',
+'\s*BA_\d+\/GBAA\d+\/BAS\d+',
 '\s*(\[NAD\(P\)+\]|\[Mn\]|\[NAD\(P\)H\]|\[NADPH?\]|\[ATP\]|\[Cu-Zn\]|\[ATP hydrolyzing\]|\[isomerizing\]|\[carboxylating\]|\[glutamine-hydrolyzing\]|\[decarboxylating\]|\[a?symmetrical\])',
 '\/isomerase:Polysaccharide biosynthesis protein CapD:dTDP-4-dehydrorhamnose reductase:Nucleotide sugar epimerase',
 '\s+\(Diaminohydroxyphosphoribosylaminopyrimidine deaminase \(Riboflavin-specific deaminase\) and 5-amino-6-\(5-phosphoribosylamino\)uracil reductase\)',
-        '\s+\(Probable\), IS891\/IS1136\/IS1341:Transposase, IS605 OrfB',
-        '\s+and inactivated derivatives-like protein',
-        '\[cytochrome\]\s*',
-        ', fused inner membrane subunits',
-        ', auxiliary component',
-        ', periplasmic component',
-        ', transcription of rRNA and tRNA operons, and DNA replication',
-        ' HI_\d+',
-        '\/FOG: TPR repeat protein',
-        '\/RND superfamily resistance-nodulation-cell division antiporter',
+'\s+\(Probable\), IS891\/IS1136\/IS1341:Transposase, IS605 OrfB',
+'\s+and inactivated derivatives-like protein',
+'\[cytochrome\]\s*',
+', fused inner membrane subunits',
+', auxiliary component',
+', periplasmic component',
+', transcription of rRNA and tRNA operons, and DNA replication',
+' HI_\d+',
+'\/FOG: TPR repeat protein',
+'\/RND superfamily resistance-nodulation-cell division antiporter',
 '\/ DNA internalization-related competence protein ComEC\/Rec2 \/ predicted membrane metal-binding protein',
-        ', transcription of rRNA and tRNA operons, and DNA replication',
-        ': membrane component/ATP-binding',
-        ' MS\d+',
-        ', HI\d+',
-        ' HD_\d+',
-        ', regulator of competence-specific genes',
-        ', fused lipid transporter subunits of ABC superfamily.+'
-    );
+', transcription of rRNA and tRNA operons, and DNA replication',
+': membrane component/ATP-binding',
+' MS\d+',
+', HI\d+',        
+' HD_\d+',
+', regulator of competence-specific genes',
+', fused lipid transporter subunits of ABC superfamily.+',
+'\s+R[A-Z]\d+',
+'\s+R[A-Z]_\d+',
+'\s+A1G_\s+',
+'\s+RBE_\d+',
+'\s+A1G_\d+'
+);
 
     for my $str (@strs) {
         $product =~ s/$str$//i;
@@ -1187,252 +1147,254 @@ sub remove_trailing {
 }
 
 sub is_hypothetical {
-    my $product = shift;
+	my $product = shift;
 
-    return 1 if !$product;
+	return 1 if ! $product;
 
-    # Product is 'hypothetical' if just an id with a vague name,
-    # e.g. 'Lin0391 protein' ^Lin\d+ protein \(Lin\d+ protein\)$/
+	# Product is 'hypothetical' if just an id with a vague name, 
+	# e.g. 'Lin0391 protein' ^Lin\d+ protein \(Lin\d+ protein\)$/ 
 
-    my @strs = (
-        '^RHS$',
-        '^protein HIB_\d+$',
-        '^Ybl\d+$',
+	my @strs = (
+'^RHS$',
+'^protein HIB_\d+$',
+'^Ybl\d+$',
 '^(similar|similarities)\s+(to|with)\s+(unknown|putative|probable|C-terminal|N-terminal)',
-        'polypeptide \([a-z]+\)\sencoded\sby\splasmid',
-        '^Possible\speptide\santibiotic',
-        '^PugilistDominant',
-        'mutants\sblock\ssporulation\safter\sengulfment',
-        '^Homo\ssapiens',
-        '^Similar\sto\sORF13\sof\senterococcus\sfaecalis',
-        '^ORF13\sof\senterococcus\sfaecalis\sTRANSPOSON\sTN916',
-        '^CheY-homologous\sreceiver\sdomain',
-        '^Plasmid\spPOD2000\sRep,\sRapAB,\sRapA,\sParA,\sParB,\sand\sParC',
-        '^Plasmid\spRiA4b\sORF-3',
-        'DEHA0C09658g\sDebaryomyces\shansenii',
-        'Bacillus\scereus\sgroup-specific\sprotein',
-        '^UPF\d+.+?protein.+?\S+$',
-        '^BC\d+\w+\sprotein',
+'polypeptide \([a-z]+\)\sencoded\sby\splasmid',
+'^Possible\speptide\santibiotic',
+'^PugilistDominant',
+'mutants\sblock\ssporulation\safter\sengulfment',
+'^Homo\ssapiens',
+'^Similar\sto\sORF13\sof\senterococcus\sfaecalis',
+'^ORF13\sof\senterococcus\sfaecalis\sTRANSPOSON\sTN916',
+'^CheY-homologous\sreceiver\sdomain',
+'^Plasmid\spPOD2000\sRep,\sRapAB,\sRapA,\sParA,\sParB,\sand\sParC',
+'^Plasmid\spRiA4b\sORF-3',
+'DEHA0C09658g\sDebaryomyces\shansenii',
+'Bacillus\scereus\sgroup-specific\sprotein',
+'^UPF\d+.+?protein.+?\S+$',
+'^BC\d+\w+\sprotein',
 'N\sterminal\sregion\sof\sphage-related\scontractile\stail\ssheath\sprotein',
-        'chromosome\s+\d+open\s+reading\s+frame\s+\d+',
-        'complete\sgenome',
-        'Genome\ssequencing\sdata,\scontig\sC\d+',
-        'chromosome\s\d+\sopen\sreading\sframe\s\d+',
-        'complete\snucleotide\ssequence',
-        'DNA,\scomplete\ssequence',
-        '^Genomic\sDNA',
-        'whole\sgenome\sshotgun\ssequence',
-        'Gene,\scomplete\scds',
-        '^Orf\s+\d+[A-Z]+$\s',
-        '^Nucleoside\srecognition',
-        '^Required\sfor\splasmid\sstability$',
-        '^Possible\sBacterial\sIg-like\sdomain',
-        '^Alpha-peptide$',
-        'LPXTG-motif\scell\swall\sanchor\sdomain$',
-        '^Amino\sacid\stranporter$',
-        '^Ankyrin\srepeats\scontaining\sprotein$',
-        '^Biotin\lipoyl\sattachment$',
-        '^Antigen$',
-        '^Restriction\smodification\ssystem\sDNA\sspecificity\sdomain',
+'chromosome\s+\d+open\s+reading\s+frame\s+\d+',
+'complete\sgenome',
+'Genome\ssequencing\sdata,\scontig\sC\d+',
+'chromosome\s\d+\sopen\sreading\sframe\s\d+',
+'complete\snucleotide\ssequence',
+'DNA,\scomplete\ssequence',
+'^Genomic\sDNA',
+'whole\sgenome\sshotgun\ssequence',
+'Gene,\scomplete\scds',
+'^Orf\s+\d+[A-Z]+$\s',
+'^Nucleoside\srecognition',
+'^Required\sfor\splasmid\sstability$',
+'^Possible\sBacterial\sIg-like\sdomain',
+'^Alpha-peptide$',
+'LPXTG-motif\scell\swall\sanchor\sdomain$',
+'^Amino\sacid\stranporter$',
+'^Ankyrin\srepeats\scontaining\sprotein$',
+'^Biotin\lipoyl\sattachment$',
+'^Antigen$',
+'^Restriction\smodification\ssystem\sDNA\sspecificity\sdomain',
 '^ABC\s\(ATP-binding\scassette\)\stransporter\snucleotide-binding\sdomain$',
-        '^(SAF|NACHT|Resolvase|FRG|C1q)\s+domain$',
-        '^Contains\scell\sadhesion\sdomain$',
-        '^Gene,\sIS3-like\selement$',
-        '^Micrococcal\snuclease-like\sprotein$',
-        '^modification\smethylase\sOB\d+$',
-        '^Micrococcal\snuclease$',
-        '^leucine-rich\srepeat-containing\sprotein\sDDB\d+$',
-        '^Possible\ssensor\shistidine\skinase\sdomain',
-        '^PIN\s.PilT\sN\sterminus.\sdomain$',
-        '^Divergent\sAAA\sregion$',
-        '^Conserved\srepeat\sdomain\sprotein$',
-        '^Collagen\striple\shelix\srepeat$\s',
-        '^Parallel\sbeta-helix\srepeat$\s\s',
-        '^PBS\slyase\sHEAT-like\srepeat\s\s',
-        '^Sel1-like\srepeat$',
-        '^Parallel\sbeta-helix\srepeat$\s\s',
-        '^Helix-turn-helix\smotif$',
-        '^Transferase\shexapeptide\srepeat$',
-        '^Helix-turn-helix,\stype\s\d+$',
-        '^(Thioredoxin|HTH|Potential\sSulfotransferase)\sdomain$',
-        '^S-layer\sdomain$',
-        '^(Thioredoxin|HTH)\sdomain\sfamily$',
-        '^Amino\sacid\sadenylation\sdomain$\s',
-        '^CopG-like\sDNA-binding$',
-        '^Helix-turn-helix$',
-        '^Helix-turn-helix\sHxlR\stype$',
-        '^Alpha\beta\shydrolase\sfold$\s\s',
-        '^Hydrolase,\salpha.beta\sfold\s\s',
-        '^Hydrolase,\salpha.beta\shydrolase\sfold',
-        '^unknown\s\w+-like\sprotein$',
-        '^C-terminal\shalf\sof\sCry\sprotein$\s',
-        '^protein\sof\sunknown\sfunction\s',
-        '^unknown\sprotein\s[A-Z]\d+\s\s',
-        '^Similarities\sto\sphage\sprotein\s',
-        '^hypothetical\smembrane\sspanning\sprotein$\s',
-        '^Conserved\shypothetical\sprotein$\s',
-        '^Uncharacterized\sconserved\smembrane\sprotein\s',
-        '^Similar\sto\s(hypothetical|bacteriophage)\sprotein\s',
-        '^Similar\sto\sshort\sunknown\sprotein\s',
-        '^Truncated\sphage-like\s',
-        '^Hypothetical\sphage\sprotein$\s',
-        '^Phage-related\sprotein\s',
-        '^Hypothetical\stranscriptional\sregulator$\s',
-        '^Mitochondrial\stransporter\s',
-        '^Uncharacterized\slow-complexity\s',
-        '^Conserved\shypothetical\smembrane\sprotein$\s',
-        '^integral\smembrane\sprotein\sTIGR\d+$\s',
-        '^hypothetical\stwo\sdomain\sprotein$\s',
-        '^Conserved\shypothetical\sintegral\smembrane\sprotein\s',
-        '^[a-z]+\s\(Conserved\sprotein\s[a-z]+\)$\s',
-        '^[a-z]+\s\(Conserved\smembrane\sprotein\s[a-z]+\)$\s',
-        '^Membrane\sprotein,\sputative$\s',
-        '^Conserved\sprotein\s*$\s',
+'^(SAF|NACHT|Resolvase|FRG|C1q)\s+domain$',
+'^Contains\scell\sadhesion\sdomain$',
+'^Gene,\sIS3-like\selement$',
+'^Micrococcal\snuclease-like\sprotein$',
+'^modification\smethylase\sOB\d+$',
+'^Micrococcal\snuclease$',
+'^leucine-rich\srepeat-containing\sprotein\sDDB\d+$',
+'^Possible\ssensor\shistidine\skinase\sdomain',
+'^PIN\s.PilT\sN\sterminus.\sdomain$',
+'^Divergent\sAAA\sregion$',
+'^Conserved\srepeat\sdomain\sprotein$',
+'^Collagen\striple\shelix\srepeat$\s',
+'^Parallel\sbeta-helix\srepeat$\s\s',
+'^PBS\slyase\sHEAT-like\srepeat\s\s',
+'^Sel1-like\srepeat$',
+'^Parallel\sbeta-helix\srepeat$\s\s',
+'^Helix-turn-helix\smotif$',
+'^Transferase\shexapeptide\srepeat$',
+'^Helix-turn-helix,\stype\s\d+$',
+'^(Thioredoxin|HTH|Potential\sSulfotransferase)\sdomain$',
+'^S-layer\sdomain$',
+'^(Thioredoxin|HTH)\sdomain\sfamily$',
+'^Amino\sacid\sadenylation\sdomain$\s',
+'^CopG-like\sDNA-binding$',
+'^Helix-turn-helix$',
+'^Helix-turn-helix\sHxlR\stype$',
+'^Alpha\beta\shydrolase\sfold$\s\s',
+'^Hydrolase,\salpha.beta\sfold\s\s',
+'^Hydrolase,\salpha.beta\shydrolase\sfold',
+'^unknown\s\w+-like\sprotein$',
+'^C-terminal\shalf\sof\sCry\sprotein$\s',
+'^protein\sof\sunknown\sfunction\s',
+'^unknown\sprotein\s[A-Z]\d+\s\s',
+'^Similarities\sto\sphage\sprotein\s',
+'^hypothetical\smembrane\sspanning\sprotein$\s',
+'^Conserved\shypothetical\sprotein$\s',
+'^Uncharacterized\sconserved\smembrane\sprotein\s',
+'^Similar\sto\s(hypothetical|bacteriophage)\sprotein\s',
+'^Similar\sto\sshort\sunknown\sprotein\s',
+'^Truncated\sphage-like\s',
+'^Hypothetical\sphage\sprotein$\s',
+'^Phage-related\sprotein\s',
+'^Hypothetical\stranscriptional\sregulator$\s',
+'^Mitochondrial\stransporter\s',
+'^Uncharacterized\slow-complexity\s',
+'^Conserved\shypothetical\smembrane\sprotein$\s',
+'^integral\smembrane\sprotein\sTIGR\d+$\s',
+'^hypothetical\stwo\sdomain\sprotein$\s',
+'^Conserved\shypothetical\sintegral\smembrane\sprotein\s',
+'^[a-z]+\s\(Conserved\sprotein\s[a-z]+\)$\s',
+'^[a-z]+\s\(Conserved\smembrane\sprotein\s[a-z]+\)$\s',
+'^Membrane\sprotein,\sputative$\s',
+'^Conserved\sprotein\s*$\s',
 'Predicted\stranscriptional\sregulator\swith\san\saddtional\sconserved\sdomain\s',
-        'transcriptional\sregulator\swith\san\sadditional\sconserved\sdomain\s',
+'transcriptional\sregulator\swith\san\sadditional\sconserved\sdomain\s',
 '^Conserved\s(predicted|phage|domain|membrane|exported|hypothetical)\sprotein\s',
-        '^membrane\sspann?ing\sprotein$\s',
-        '^inner\smembrane\sprotein$\s',
-        '^Predicted\ssmall\ssecreted\sprotein$\s',
-        '^Uncharacterized\sconserved\ssmall\sprotein\s',
-        '^Uncharacterized\sconserved\sprotein\s(UCP|CAC)\d+\s',
-        '^Outer\smembrane\sprotein\s[A-Z]+\d+$\s',
-        '^Predicted\sprotein\s*$\s',
-        '^Uncharacterized\sconserved$\s',
-        'putative\suncharacterized\sprotein\s',
-        '^Hypothetical\s(conserved|exported)\sprotein$\s',
-        '^Hypothetical\sprotein,\spartial$\s',
-        '^hypothetical\sprotein\smembrane\sprotein$\s',
-        '^Uncharacterized\sprotein\sconserved\sin\sbacteria$\s',
-        '^Uncharacterized\sconserved$\s',
-        '^lipoprotein$\s',
-        '^antigen$\s',
-        '^Bifunctional\senzyme,\scontains\s',
-        '^Group-specific\sprotein$\s',
-        '^Extended\sORF\sof\s',
-        '^Uncharacterized\s(membrane|conserved)\sprotein$\s',
-        '^Exported\smembrane\sprotein$\s',
-        '^Uncharacterized\sinner\smembrane\sprotein$\s',
-        '^Uncharacterized\sconserved\ssmall\sprotein-like\sprotein\s',
+'^membrane\sspann?ing\sprotein$\s',
+'^inner\smembrane\sprotein$\s',
+'^Predicted\ssmall\ssecreted\sprotein$\s',
+'^Uncharacterized\sconserved\ssmall\sprotein\s',
+'^Uncharacterized\sconserved\sprotein\s(UCP|CAC)\d+\s',
+'^Outer\smembrane\sprotein\s[A-Z]+\d+$\s',
+'^Predicted\sprotein\s*$\s',
+'^Uncharacterized\sconserved$\s',
+'putative\suncharacterized\sprotein\s',
+'^Hypothetical\s(conserved|exported)\sprotein$\s',
+'^Hypothetical\sprotein,\spartial$\s',
+'^hypothetical\sprotein\smembrane\sprotein$\s',
+'^Uncharacterized\sprotein\sconserved\sin\sbacteria$\s',
+'^Uncharacterized\sconserved$\s',
+'^lipoprotein$\s',
+'^antigen$\s',
+'^Bifunctional\senzyme,\scontains\s',
+'^Group-specific\sprotein$\s',
+'^Extended\sORF\sof\s',
+'^Uncharacterized\s(membrane|conserved)\sprotein$\s',
+'^Exported\smembrane\sprotein$\s',
+'^Uncharacterized\sinner\smembrane\sprotein$\s',
+'^Uncharacterized\sconserved\ssmall\sprotein-like\sprotein\s',
 '^Predicted\stranscriptional\sregulator\swith\san\saddtional\sconserved\sdomain\s',
-        '^Uncharacterized\sHTH-type\stranscriptional\sregulator\s',
-        '^Uncharacterized\sprotein\s',
-        '^uncharacterized\sdomain\s\d+$\s',
-        '^Uncharacterized\s[.\d]+\skDa\sprotein\s',
-        '^Possible\s(CDF|PET)\sfamily\s',
+'^Uncharacterized\sHTH-type\stranscriptional\sregulator\s',
+'^Uncharacterized\sprotein\s',
+'^uncharacterized\sdomain\s\d+$\s',
+'^Uncharacterized\s[.\d]+\skDa\sprotein\s',
+'^Possible\s(CDF|PET)\sfamily\s',
 '^(Possible|Similarity|Uncharacterized|protein|toxin|predicted|hypothetical|exported)$\s',
-        '^\w+-related$\s',
-        '^Enzyme\s?$\s',
-        '^Transposase\sIS\d+.$\s',
-        '^Bacillus\scereus\sspecific\sprotein,\suncharacterized$\s',
-        '^[A-Z][a-z]{2}[A-Z]$\s',
-        '^LP\d+G.\d+$\s',
-        '^R.EcoHK31I\sprotein$\s',
-        '^lmo\d+$\s',
-        '^Orf\d+\s*$\s',
-        '^\d+orf\d+$\s',
-        '^Orf\s+\d+[A-Z]+\s*$\s',
-        '^Orf\s+[A-Z]+\d+\s*$\s',
-        '^(IS66\sOrf2|Orf2)\slike$\s',
-        '^Orf\s+[A-Z]+\d+\s+putative\s',
-        '^IS66\sOrf2\slike$\s',
-        '^Orf\d+-like\sprotein\s*$\s',
-        '^Orf\d+-[A-Z]+\d+\s*$\s',
-        '^Orf\S+\s+\(\S+\s+protein\)\s*$\s',
-        '^Ig\s+hypothetical\s+\d+$\s',
-        '^[a-z]{2}$\s',
-        '^(HI|EF|Orf|Mob|MW|Blr|Cro|p|Blr|Orf-)\d+;?$\s',
-        '^Possible\s\(\S+\)\sorf\d+\s',
-        '^EF\d+\s+\(.+?\)$\s',
-        '^Orf[A-Z]\s*$\s',
-        '^GG\d+,?\s+isoform\s+[a-z]+$\s',
-        '^\d+orf\d+\s*$\s',
-        '^Cj\d+-\d+$\s',
-        '^PXO\d+-\d+\s*$',
-        '^UPI\S+\s+cluster$\s',
-        '^Vng\d+[a-z]$\s',
-        '^Zwa5b$\s',
-        '^PclL$\s',
-        '^\d+$\s',
+'^\w+-related$\s',
+'^Enzyme\s?$\s',
+'^Transposase\sIS\d+.$\s',
+'^Bacillus\scereus\sspecific\sprotein,\suncharacterized$\s',
+'^[A-Z][a-z]{2}[A-Z]$\s',
+'^LP\d+G.\d+$\s',
+'^R.EcoHK31I\sprotein$\s',
+'^lmo\d+$\s',
+'^Orf\d+\s*$\s',
+'^\d+orf\d+$\s',
+'^Orf\s+\d+[A-Z]+\s*$\s',
+'^Orf\s+[A-Z]+\d+\s*$\s',
+'^(IS66\sOrf2|Orf2)\slike$\s',
+'^Orf\s+[A-Z]+\d+\s+putative\s',
+'^IS66\sOrf2\slike$\s',
+'^Orf\d+-like\sprotein\s*$\s',
+'^Orf\d+-[A-Z]+\d+\s*$\s',
+'^Orf\S+\s+\(\S+\s+protein\)\s*$\s',
+'^Ig\s+hypothetical\s+\d+$\s',
+'^[a-z]{2}$\s',
+'^(HI|EF|Orf|Mob|MW|Blr|Cro|p|Blr|Orf-)\d+;?$\s',
+'^Possible\s\(\S+\)\sorf\d+\s',
+'^EF\d+\s+\(.+?\)$\s',
+'^Orf[A-Z]\s*$\s',
+'^GG\d+,?\s+isoform\s+[a-z]+$\s',
+'^\d+orf\d+\s*$\s',
+'^Cj\d+-\d+$\s',
+'^PXO\d+-\d+\s*$',
+'^UPI\S+\s+cluster$\s',
+'^Vng\d+[a-z]$\s',
+'^Zwa5b$\s',
+'^PclL$\s',
+'^\d+$\s',
 '^(Rep1|Doc|Vip2Ac|Zwa5A|Ugd|Sip1A|Vip1A\(BR\)|Tnp166|Blr5358|LAAC|MW2125)$',
-        '^Gene\s\d+\sprotein$\s',
-        '^Gp\d+\.\d+$\s',
-        '^(19|Gne|Aec\d{1,2})$\s',
-        '^protein\s+[\d{1,}a-z{1,}\/_-]+$\s',
-        '^[\d{1,}a-z{1,}\/_-]+\s+protein$\s',
-        '^lipoprotein\s+[\d{1,}a-z{1,}\/-_]+$\s',
-        '^Maf-like\sprotein\s+[\d{1,}a-z{1,}\/-_]+$\s',
-        '^[\d{1,}a-z{1,}\/-_]+\s+protein\s+[\d{1,}a-z{1,}\/-_]+$\s',
-        'Eag\d+',
-        'Conserved domain protein',
-        'Hypothetical conserved protein',
-        'Uncharacterized conserved protein',
-        'Uncharacterized membrane protein',
-        '^protein$',
-        '^gene$',
-        '^genes$',
-        '^conserved protein$',
-        'UPI[\dA-Z]+\s+cluster',
-        'KLLA0D19929p',
-        'protein PARA_\d+',
-        'HI\d+-like protein',
-        'protein conserved in bacteria',
-        'protein PM\d+',
-        'membrane protein PM\d+',
-        'protein HI_\d+',
-        'Hybrid protein containing carboxymuconolactone decarboxylase domain'
-    );
+'^Gene\s\d+\sprotein$\s',
+'^Gp\d+\.\d+$\s',
+'^(19|Gne|Aec\d{1,2})$\s',
+'^protein\s+[\d{1,}a-z{1,}\/_-]+$\s',
+'^[\d{1,}a-z{1,}\/_-]+\s+protein$\s',
+'^lipoprotein\s+[\d{1,}a-z{1,}\/-_]+$\s',
+'^Maf-like\sprotein\s+[\d{1,}a-z{1,}\/-_]+$\s',
+'^[\d{1,}a-z{1,}\/-_]+\s+protein\s+[\d{1,}a-z{1,}\/-_]+$\s',
+'Eag\d+',
+'Conserved domain protein',
+'Hypothetical conserved protein',
+'Uncharacterized conserved protein',
+'Uncharacterized membrane protein',
+'^protein$',
+'^gene$',
+'^genes$',
+'^conserved protein$',
+'UPI[\dA-Z]+\s+cluster',
+'KLLA0D19929p',
+'protein PARA_\d+',
+'HI\d+-like protein',
+'protein conserved in bacteria',
+'protein PM\d+',
+'membrane protein PM\d+',
+'protein HI_\d+',
+'Hybrid protein containing carboxymuconolactone decarboxylase domain',
+'^FTR\d+$',
+'^protein R[A-Z]\d+$',
+'^protein RBE_\d+$'
+);
 
-    for my $str (@strs) {
-        return 1 if ( $product =~ /$str/i );
-    }
+	for my $str ( @strs ) {
+		return 1 if ( $product =~ /$str/i );
+	}
 
-    0;
+	0;
 }
 
 sub set_feat_from_adj_contig {
-    my ( $self, $feat ) = @_;
+	my ($self,$feat) = @_;
 
-    if ($feat) {
-        push @{ $self->{feat_from_adj_contig} }, $feat;
-    }
-    else {
-        $self->{feat_from_adj_contig} = undef;
-    }
+	if ( $feat ) {
+		push @{$self->{feat_from_adj_contig}},$feat;
+	} else {
+		$self->{feat_from_adj_contig} = undef;
+	}
 }
 
 sub get_feat_from_adj_contig {
-    my $self = shift;
+	my $self = shift;
 
-    if ( defined $self->{feat_from_adj_contig} ) {
-        return @{ $self->{feat_from_adj_contig} };
-    }
+	if ( defined $self->{feat_from_adj_contig} ) {
+		return @{$self->{feat_from_adj_contig}};
+	}
 
-    return ();
+	return ();
 }
 
 sub get_start_plus {
-    my ( $self, $geneend ) = @_;
+	my ($self,$geneend) = @_;
 
-    my $mod = $geneend % 3;
+	my $mod = $geneend % 3;
 
-    $mod + 1;
+	$mod + 1;
 }
 
 sub get_start_minus {
-    my ( $self, $fend, $cend ) = @_;
-    my $diff = $fend - $cend;
+	my ($self,$fend,$cend) = @_;
+	my $diff = $fend - $cend;
 
-    return 1 if ( ( $diff % 3 ) == 0 );    # Not tested
-    return 2 if ( ( $diff % 3 ) == 2 );    # Not tested
-    return 3 if ( ( $diff % 3 ) == 1 );    # Confirmed
+	return 1 if ( ($diff % 3) == 0 ); # Not tested
+	return 2 if ( ($diff % 3) == 2 ); # Not tested
+	return 3 if ( ($diff % 3) == 1 ); # Confirmed
 }
 
 sub newFeatures {
-    my ( $self, @feat ) = @_;
+	my ($self, @feat) = @_;
 
-    push @{ $self->{newFeatures} }, @feat if @feat;
-    return @{ $self->{newFeatures} };
+	push @{$self->{newFeatures}}, @feat if @feat;
+	return @{$self->{newFeatures}};
 }
 
 # Example command, 4/2012:
@@ -1440,7 +1402,7 @@ sub newFeatures {
 # -j "[organism=Clostridium difficile ABDC] [strain=ABDC] [host=Homo sapiens] [country=Canada: Montreal] \
 # [collection_date=2008] [isolation-source=stool sample] [note=isolated from an outbreak in Montreal] [gcode=11]"
 sub run_tbl2asn {
-    my ( $self, $comment, $run ) = @_;
+	my ($self,$comment,$run) = @_;
 
     my ( $tmplt, $outdir, $tbl2asn, $id, $gcode, $strain, $organism, $host,
         $country, $collection_date, $isolation_source, $submission_note )
@@ -1453,30 +1415,27 @@ sub run_tbl2asn {
         $self->isolation_source, $self->submission_note
       );
 
-    if ( $run > 1 ) {
-        for my $suffix (qw( val sqn gbf )) {
-            system "mv $outdir/$id.$suffix $outdir/$id.$suffix.orig"
-              if ( -e "$outdir/$id.$suffix" );
-        }
-        system "mv discrp discrp.orig" if ( -e "discrp" );
-    }
+	if ( $run > 1) {
+		for my $suffix ( qw( val sqn gbf ) ) {
+			system "mv $outdir/$id.$suffix $outdir/$id.$suffix.orig" if ( -e "$outdir/$id.$suffix" );
+		}
+		system "mv discrp discrp.orig" if ( -e "discrp" );
+	}
 
-    # Fix country and city
-    $country =~ s/:\s*/: /;
+  # Fix country and city
+  $country =~ s/:\s*/: /;
 
-    my $jstring =
-      "[organism=$organism $strain] [strain=$strain] [gcode=$gcode]";
-    $jstring .= " [host=$host]"                         if $host;
-    $jstring .= " [country=$country]"                   if $country;
-    $jstring .= " [collection_date=$collection_date]"   if $collection_date;
-    $jstring .= " [isolation-source=$isolation_source]" if $isolation_source;
-    $jstring .= " [note=$submission_note]"              if $submission_note;
+  my $jstring = "[organism=$organism $strain] [strain=$strain] [gcode=$gcode]";
+  $jstring   .= " [host=$host]" if $host;
+  $jstring   .= " [country=$country]" if $country;
+  $jstring   .= " [collection_date=$collection_date]" if $collection_date;
+  $jstring   .= " [isolation-source=$isolation_source]" if $isolation_source;
+  $jstring   .= " [note=$submission_note]" if $submission_note;
 
-    my $cmd =
-        "$tbl2asn -t $tmplt.sbt -p $outdir -M n -Z discrp -y \"$comment\" "
-      . "-X C -V b -j \"$jstring\"";
-    print "tbl2asn command: \'$cmd\'\n" if $self->debug;
-    `$cmd`;
+	my $cmd = "$tbl2asn -t $tmplt.sbt -p $outdir -M n -Z discrp -y \"$comment\" " .
+                  "-X C -V b -j \"$jstring\"";
+	print "tbl2asn command: \'$cmd\'\n" if $self->debug;
+	`$cmd`;
 }
 
 # The *cmt file is a 2 column, tab-delimited file like this:
@@ -1507,47 +1466,43 @@ sub create_cmt {
     }
 
     if ( -e "$outdir/$id.cmt" ) {
-        $cmtfh = FileHandle->new(">>$outdir/$id.cmt")
-          or die("Cannot open file $outdir/$id.cmt for appending");
-    }
-    else {
-        $cmtfh = FileHandle->new(">$outdir/$id.cmt")
-          or die("Cannot open file $outdir/$id.cmt for writing");
+      $cmtfh = FileHandle->new(">>$outdir/$id.cmt")
+        or die("Cannot open file $outdir/$id.cmt for appending");
+    } else {
+      $cmtfh = FileHandle->new(">$outdir/$id.cmt")
+        or die("Cannot open file $outdir/$id.cmt for writing");      
     }
 
-    my $txt =
-        "StructuredCommentPrefix\t"
-      . '##Genome-Assembly-Data-START##' . "\n"
-      . "Assembly Method\t$method\n";
-    $txt .= "Assembly Name\t$name\n" if $name;
-    $txt .=
-        "Genome Coverage\t${coverage}x\n"
-      . "Sequencing Technology\t$tech\n"
-      . "StructuredCommentSuffix\t"
-      . '##Genome-Assembly-Data-END##';
+    my $txt = "StructuredCommentPrefix\t" . '##Genome-Assembly-Data-START##' . "\n" .
+              "Assembly Method\t$method\n";
+    $txt .=   "Assembly Name\t$name\n" if $name;
+    $txt .=   "Genome Coverage\t${coverage}x\n" .
+              "Sequencing Technology\t$tech\n" .
+              "StructuredCommentSuffix\t" . '##Genome-Assembly-Data-END##';
 
     print $cmtfh $txt;
     1;
 }
 
 sub fix_discrp {
-    my $self = shift;
+	my $self = shift;
 
-    my $tbl = $self->read_tbl;
-    print "Fixing discrepancies\n" if $self->debug;
+	my $tbl = $self->read_tbl;
+	print "Fixing discrepancies\n" if $self->debug;
 
-    my @geneoverlaps = $self->get_gene_overlaps;
-    $tbl = $self->delete_from_tbl( $tbl, @geneoverlaps );
+	my $cdsoverlaps = $self->get_gene_overlaps;
+  my $note = 'overlaps CDS with the same product name';
+	$tbl = $self->add_note_to_tbl($tbl,$note,$cdsoverlaps);
 
-    my @rnaoverlaps = $self->get_rna_overlaps;
-    $tbl = $self->delete_from_tbl( $tbl, @rnaoverlaps );
+	my @rnaoverlaps = $self->get_rna_overlaps;
+	$tbl = $self->delete_from_tbl($tbl,@rnaoverlaps);
 
-    my @duprnas = $self->get_dup_rnas;
-    $tbl = $self->delete_from_tbl( $tbl, @duprnas );
+	my @duprnas = $self->get_dup_rnas;
+	$tbl = $self->delete_from_tbl($tbl,@duprnas);
 
-    $self->write_tbl($tbl);
+	$self->write_tbl($tbl);
 
-    1;
+	1;
 }
 
 # DiscRep:OVERLAPPING_GENES::2 genes overlap another gene on the same strand.
@@ -1558,153 +1513,130 @@ sub fix_discrp {
 # WGQ:Gene        WGQ_50  lcl|ctg7180000000008:7373-7807  WGQ_50
 # WGQ:Gene        WGQ_240 lcl|ctg7180000000008:33916-34350        WGQ_240
 sub get_dup_rnas {
-    my $self     = shift;
-    my @todelete = ();
-    my $id       = $self->id;
-    my $gene1;
+	my $self = shift;
+	my @todelete = ();
+	my $id = $self->id;
+	my $gene1;
 
-    my @overlapgenes = $self->get_from_discrp('OVERLAPPING_GENES');
-    print "Overlapping genes: @overlapgenes\n" if $self->debug;
+	my @overlapgenes   = $self->get_from_discrp('OVERLAPPING_GENES');
+	print "Overlapping genes: @overlapgenes\n" if $self->debug;
 
-    $gene1 = shift @overlapgenes;
+	$gene1 = shift @overlapgenes;
 
-    while ( my $gene2 = shift @overlapgenes ) {
+	while ( my $gene2 = shift @overlapgenes ) {
 
-        if ( $gene1 =~ /_r\d+/ && $gene2 =~ /_r\d+/ ) {
+		if ( $gene1 =~ /_r\d+/ && $gene2 =~ /_r\d+/ ) {
 
-            my ( $g1start, $g1end ) =
-              $gene1 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
-            my ( $g2start, $g2end ) =
-              $gene2 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
-            my ($g1ctg) = $gene1 =~ m{lcl|([a-z]+[.\d]+)};
-            my ($g2ctg) = $gene2 =~ m{lcl|([a-z]+[\d.]+)};
+      my ($g1start,$g1end) = $gene1 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
+      my ($g2start,$g2end) = $gene2 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
+      my ($g1ctg) = $gene1 =~ m{lcl|([a-z]+[.\d]+)};
+      my ($g2ctg) = $gene2 =~ m{lcl|([a-z]+[\d.]+)};
 
-            # Remove identical rRNAs and rRNAs inside rRNAs
-            if ( $g1start == $g2start && $g1end == $g2end && $g1ctg eq $g2ctg )
-            {
-                push @todelete, $gene2;
-                print "Will remove duplicate gene2: $gene2" if $self->debug;
-            }
-            elsif ($g1start >= $g2start
-                && $g1end <= $g2end
-                && $g1ctg eq $g2ctg )
-            {
-                push @todelete, $gene1;
-                print "Will remove smaller rRNA inside larger: $gene1"
-                  if $self->debug;
-            }
-            elsif ($g2start >= $g1start
-                && $g2end <= $g1end
-                && $g1ctg eq $g2ctg )
-            {
-                push @todelete, $gene2;
-                print "Will remove smaller rRNA inside larger: $gene2"
-                  if $self->debug;
-            }
+			# Remove identical rRNAs and rRNAs inside rRNAs
+			if ( $g1start ==  $g2start && $g1end == $g2end && $g1ctg eq $g2ctg ) {
+ 				push @todelete, $gene2;
+ 				print "Will remove duplicate gene2: $gene2" if $self->debug;
+			} elsif ( $g1start >=  $g2start && $g1end <= $g2end && $g1ctg eq $g2ctg ) {
+				push @todelete, $gene1;
+				print "Will remove smaller rRNA inside larger: $gene1" if $self->debug;
+			} elsif ( $g2start >=  $g1start && $g2end <= $g1end && $g1ctg eq $g2ctg ) {
+		 		push @todelete, $gene2;
+				print "Will remove smaller rRNA inside larger: $gene2" if $self->debug;
+			}
 
-            my $g1len = abs( $g1start - $g1end );
-            my $g2len = abs( $g2start - $g2end );
+			my $g1len = abs($g1start - $g1end);
+			my $g2len = abs($g2start - $g2end);
 
-            # Remove the smaller of 2 overlapping rRNAs
-            if ( $g1len >= $g2len ) {
-                push @todelete, $gene2;
-                print "Will remove smaller rRNA overlapping larger: $gene2"
-                  if $self->debug;
-            }
-            else {
-                push @todelete, $gene1;
-                print "Will remove smaller rRNA overlapping larger: $gene1"
-                  if $self->debug;
-            }
+			# Remove the smaller of 2 overlapping rRNAs
+			if ( $g1len >= $g2len ) {
+		 		push @todelete, $gene2;
+				print "Will remove smaller rRNA overlapping larger: $gene2" if $self->debug;
+			} else {
+				push @todelete, $gene1;
+				print "Will remove smaller rRNA overlapping larger: $gene1" if $self->debug;
+			}
 
-        }
+		}
 
-        $gene1 = $gene2;
-    }
-    @todelete = unique(@todelete);
-    @todelete;
+		$gene1 = $gene2;
+	}
+	@todelete = unique(@todelete);
+	@todelete;
 }
 
-# "DiscRep:OVERLAPPING_GENES::277 genes overlap another gene on the same strand."
-# "DiscRep:OVERLAPPING_CDS::12 coding regions overlap another coding region with a
-# similar or identical name."
-# "DiscRep:OVERLAPPING_CDS::8 coding regions overlap another coding region with a similar
-# or identical name that does not contain 'ABC' and do not have the appropriate note text"
-# "DiscRep:OVERLAPPING_CDS::4 coding regions overlap another coding region with a similar
-# "or identical name that contains 'ABC'"
-# Solution: where 1 gene completely overlaps another, delete the smaller gene.
-# Note that the DiscRep:OVERLAPPING_GENES class contains all the smaller classes
+# Add a note when this occurs:
+# DiscRep_ALL:OVERLAPPING_CDS::79 coding regions overlap another coding region with a similar or identical name.
+# DiscRep_SUB:OVERLAPPING_CDS::79 coding regions overlap another coding region with a similar or identical name 
+# that do not have the appropriate note text
+# 
 sub get_gene_overlaps {
-    my $self     = shift;
-    my @todelete = ();
-    my $id       = $self->id;
-    my $gene1;
+	my $self = shift;
+	my $id = $self->id;
+	my ($toannotate,$gene1);
 
-    my @overlapgenes = $self->get_from_discrp('OVERLAPPING_GENES');
-    my @overlapcds   = $self->get_from_discrp('OVERLAPPING_CDS');
-    push @overlapgenes, @overlapcds;
+  my $text = qr(OVERLAPPING_CDS::\d+ coding regions overlap another coding region with a similar or identical name that do not have the appropriate note text);
+	my @overlapcds = $self->get_from_discrp($text);
 
-    $gene1 = shift @overlapgenes;
+  # 192:CDS    glycosyltransferase lcl|ctg7180000000003:c863978-863178 192_7700
+  # 192:CDS    glycosyltransferase lcl|ctg7180000000003:c864862-863978 192_7710
+  # or
+  # NS5531:CDS  Protein mrp lcl|NS5531:39337-40293  H374_350
+  # NS5531:CDS  Protein mrp lcl|NS5531:40293-41357  H374_360
 
-   # 192:CDS    glycosyltransferase lcl|ctg7180000000003:c863978-863178 192_7700
-   # 192:CDS    glycosyltransferase lcl|ctg7180000000003:c864862-863978 192_7710
+  # Want a string like:
+  # NS5531 40293 41357 
+  for my $cds ( @overlapcds ) {
+    $cds =~ m{^\S+\s+[^|]+\|([a-z\d.]+):c?(\d+)[<>]?-[<>]?(\d+)}i;
+    $toannotate->{"$1 $2 $3"}++;
+	}
 
-    while ( my $gene2 = shift @overlapgenes ) {
-
-        # Note that this loop does not collect rRNAs or tRNAs
-        my ( $g1start, $g1end ) =
-          $gene1 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
-        my ( $g2start, $g2end ) =
-          $gene2 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
-        my $g1len = abs( $g1start - $g1end );
-        my $g2len = abs( $g2start - $g2end );
-
-        my ($g1ctg) = $gene1 =~ m{lcl|([a-z]+[.\d]+)};
-        my ($g2ctg) = $gene2 =~ m{lcl|([a-z]+[\d.]+)};
-
-        # Gene	yberc_40220	lcl|contig01136:c856-281	yberc_40220
-        # Gene	yberc_40230	lcl|contig01136:c1053-856	yberc_40230
-        if ( $g1start >= $g2end && $g1start <= $g2start && $g1ctg eq $g2ctg ) {
-
-            # Delete the small one
-            if ( $g1len >= $g2len ) {
-                push @todelete, $gene2 if ( $gene2 !~ /${id}_(r|t)/ );
-                print "1a: Will remove gene2: $gene2" if $self->debug;
-            }
-            else {
-                push @todelete, $gene1 if ( $gene1 !~ /${id}_(r|t)/ );
-                print "1b: Will remove gene1: $gene1" if $self->debug;
-            }
-        }
-
-        # Gene	yberc_39260	lcl|contig00890:6892-7563	yberc_39260
-        # Gene	yberc_39270	lcl|contig00890:7563-7889	yberc_39270
-        if ( $g1end >= $g2start && $g1end <= $g2end && $g1ctg eq $g2ctg ) {
-
-            # Delete the small one
-            if ( $g1len >= $g2len ) {
-                if ( $gene2 !~ /${id}_(r|t)/ ) {
-                    push @todelete, $gene2;
-                    print "2a: Will remove gene2: $gene2" if $self->debug;
-                }
-            }
-            else {
-                if ( $gene1 !~ /${id}_(r|t)/ ) {
-                    push @todelete, $gene1;
-                    print "2b: Will remove gene1: $gene1" if $self->debug;
-                }
-            }
-        }
-
-        $gene1 = $gene2;
-    }
-
-    @todelete = unique(@todelete);
-    @todelete;
+	$toannotate;
 }
+
+    # Old code, that used to delete genes
+    #
+    # $gene1 = shift @overlapcds;
+    # while ( my $gene2 = shift @overlapcds ) {
+    # Note that this loop does not collect rRNAs or tRNAs
+    # my ($g1start,$g1end) = $gene1 =~ m{lcl|[a-z\d.]+:c?(\d+)[<>]?-[<>]?(\d+)}i;
+    # my ($g2start,$g2end) = $gene2 =~ m{lcl|[a-z\d.]+:c?(\d+)[<>]?-[<>]?(\d+)}i;
+    # my $g1len = abs($g1start - $g1end);
+    # my $g2len = abs($g2start - $g2end);
+    # my ($g1ctg) = $gene1 =~ m{lcl|([a-z\d]+)}i;
+    # my ($g2ctg) = $gene2 =~ m{lcl|([a-z\d.]+)}i;
+    # # Gene  yberc_40220 lcl|contig01136:c856-281  yberc_40220
+    # # Gene  yberc_40230 lcl|contig01136:c1053-856 yberc_40230
+    # if ( $g1start >=  $g2end && $g1start <= $g2start && $g1ctg eq $g2ctg ) {
+    #   # Delete the small one
+    #   if ( $g1len >= $g2len ) {
+    #     push @todelete,$gene2 if ( $gene2 !~ /${id}_(r|t)/ );
+    #     print "1a: Will remove gene2: $gene2" if $self->debug;
+    #   } else {
+    #     push @todelete,$gene1 if ( $gene1 !~ /${id}_(r|t)/ );
+    #     print "1b: Will remove gene1: $gene1" if $self->debug;
+    #   }
+    # }
+    # # Gene  yberc_39260 lcl|contig00890:6892-7563 yberc_39260
+    # # Gene  yberc_39270 lcl|contig00890:7563-7889 yberc_39270
+    # if ( $g1end >=  $g2start && $g1end <= $g2end && $g1ctg eq $g2ctg ) {
+    #   # Delete the small one
+    #   if ( $g1len >= $g2len ) {
+    #     if ( $gene2 !~ /${id}_(r|t)/ ) {
+    #       push @todelete,$gene2;
+    #       print "2a: Will remove gene2: $gene2" if $self->debug;
+    #     }
+    #   } else {
+    #     if ( $gene1 !~ /${id}_(r|t)/ ) {
+    #       push @todelete,$gene1;
+    #       print "2b: Will remove gene1: $gene1" if $self->debug;
+    #     }
+    #   }
+    # }
+    # $gene1 = $gene2;
+    # }
 
 # "2 coding regions completely contain RNAs"
-# Solution: where a gene overlaps a tRNA or mRNA delete the gene.
+# Solution: where a gene overlaps a tRNA or mRNA delete the gene.  
 # DiscRep_SUB:RNA_CDS_OVERLAP::1 coding regions are completely contained in RNAs
 # bcere0010:CDS hypothetical proteinlcl|contig00145:2461-2892 bcere0010_53360
 # bcere0010:rRNA 23S ribosomal RNAlcl|contig00145:9-2928 bcere0010_r50
@@ -1921,10 +1853,39 @@ sub is_short {
 }
 
 sub sort_by_loc {
-    my ($a1) = $a =~ /^[<>]?(\d+)/;
-    my ($b1) = $b =~ /^[<>]?(\d+)/;
+	my ($a1) = $a =~ /^[<>]?(\d+)/; 
+	my ($b1) = $b =~ /^[<>]?(\d+)/; 
 
-    $a1 <=> $b1;
+	$a1 <=> $b1;
+}
+
+sub add_note_to_tbl {
+    my ($self,$tbl,$notestr,$toannotate) = @_;
+
+    for my $contig ( @{$tbl} ) {
+        print "Next contig in *tbl is " . $contig->{contigname} . "\n"
+          if $self->debug;
+
+        for my $tonote ( keys %{$toannotate} ) {
+            my ( $notecontig, $loc1, $loc2 ) =
+              $tonote =~ /^(\S+)\s(\d+)\s(\d+)/;
+
+            if ( $notecontig eq $contig->{contigname} ) {
+                for my $feat ( keys %{$contig} ) {
+                    my ( $loca, $locb ) = $feat =~ /^[<>]?(\d+)\s+[<>]?(\d+)/;
+                    if ( $loca == $loc1 && $locb == $loc2 && $feat =~ /CDS/ ) {
+                        print "Adding note to CDS feature of $notecontig with location \'$loc1 $loc2\'\n"
+                          if $self->debug;
+                        my $str = $contig->{$feat};
+                        $str =~ s/\n$/\n\t\t\tnote\t$notestr\n/;
+                        $contig->{$feat} = $str;
+                    }
+                }
+            }
+        }
+    }
+
+    $tbl;
 }
 
 sub delete_from_tbl {
@@ -1952,8 +1913,7 @@ sub delete_from_tbl {
                 for my $feat ( keys %{$contig} ) {
                     my ( $loca, $locb ) = $feat =~ /^[<>]?(\d+)\s+[<>]?(\d+)/;
                     if ( $loca == $loc1 && $locb == $loc2 ) {
-                        print
-"Deleting feature $delete with location \'$loc1 $loc2\'\n"
+                        print "Deleting feature $delete with location \'$loc1 $loc2\'\n"
                           if $self->debug;
                         delete ${$contig}{$feat};
                     }
@@ -2008,9 +1968,9 @@ sub read_tbl {
 }
 
 sub cleanup {
-    my $self     = shift;
-    my $id       = $self->id;
-    my $dir      = $self->outdir;
+    my $self = shift;
+    my $id = $self->id;
+    my $dir = $self->outdir;
     my $template = $self->{template};
 
     `rm $template.sbt` if -e "$template.sbt";
@@ -2018,35 +1978,33 @@ sub cleanup {
     `mv discrp $dir`   if -e "discrp";
     `mv $id.agp $dir`  if -e "$id.agp";
 
-    for my $suffix (qw(gbf val tbl sqn cmt)) {
-        `rm -f $dir/$id.$suffix.orig` if -e "$dir/$id.$suffix.orig";
+    for my $suffix ( qw(gbf val tbl sqn cmt) ) {
+	`rm -f $dir/$id.$suffix.orig` if -e "$dir/$id.$suffix.orig";
     }
 }
 
 sub outdir {
-    my ( $self, $id ) = @_;
+	my ($self,$id) = @_;
 
-    if ($id) {
-
-        # Make output directory
-        my $outdir = "$id-gbsubmit.out.d";
-        `mkdir -p $outdir` if ( !-d $outdir );
-        $self->{outdir} = $outdir;
-    }
-    return $self->{outdir} if $self->{outdir};
+	if ($id) {
+		# Make output directory
+		my $outdir = "$id-gbsubmit.out.d";
+		`mkdir -p $outdir` if ( ! -d $outdir );
+		$self->{outdir} = $outdir;
+	}
+	return $self->{outdir} if $self->{outdir};
 }
 
 sub readsPerBase {
-    my ( $self, $len, $avg ) = @_;
+	my ($self,$len,$avg) = @_;
 
-    $self->{readsPerBase}->{$len} = $avg if ( $len && $avg );
+	$self->{readsPerBase}->{$len} = $avg if ($len && $avg);
 
-    if ( defined $self->{readsPerBase} ) {
-        return $self->{readsPerBase};
-    }
-    else {
-        return 0;
-    }
+	if (defined $self->{readsPerBase}) {
+		return $self->{readsPerBase};
+	} else {
+		return 0;
+	}
 }
 
 sub edit_asn_file {
@@ -2076,7 +2034,7 @@ sub edit_asn_file {
 sub make_top_comment {
     my $self = shift;
 
-    my $comment = "Bacteria available from BDRD" if ( $self->strain !~ /ATCC/ );
+    my $comment = "Bacteria available from MARC" if ( $self->strain !~ /ATCC/ );
 
     $comment;
 }
@@ -2133,11 +2091,11 @@ sub create_qual {
 # spacer: 'Chr1\t<start>\t<end>\t<number>\tN\t100\tfragment\tyes'
 sub create_agp {
     my ( $self, $gbk ) = @_;
-    my $taxid = $self->taxid or die "No taxid found";
-    my %frames = ( '1', '+', '-1', '-' );
+    my $taxid    = $self->taxid or die "No taxid found";
+    my %frames   = ( '1', '+', '-1', '-' );
 
-    my ( $date, $id, $organism, $strain ) =
-      ( $self->get_date, $self->id, $self->organism, $self->strain );
+    my ($date,$id,$organism,$strain) = 
+    ($self->get_date,$self->id,$self->organism,$self->strain);
 
 # hack!
 # my @gbks = <*rnammer.out.gbk>;
@@ -2167,7 +2125,7 @@ sub create_agp {
     for my $contig (@contigs) {
         my @names = $contig->get_tag_values('name');
         my $len = ( $contig->end ) - ( $contig->start );
-        print MYAPG "Chr1\t"
+        print MYAPG "Chr1\t" 
           . $pos . "\t"
           . ( $len + $pos ) . "\t"
           . $count . "\tW\t"
@@ -2176,7 +2134,7 @@ sub create_agp {
           . ( $frames{ $contig->strand } ) . "\n";
         $pos = $len + $pos + 1;
         $count++;
-        print MYAPG "Chr1\t"
+        print MYAPG "Chr1\t" 
           . $pos . "\t"
           . ( $pos + $spacer_len - 1 ) . "\t"
           . $count
@@ -2188,8 +2146,8 @@ sub create_agp {
 }
 
 sub get_date {
-    my $self = shift;
-    return time2str( "%d-%B-%Y", time );
+	my $self = shift;
+	return time2str("%d-%B-%Y",time);
 }
 
 sub trim_comma {
@@ -2246,7 +2204,6 @@ sub make_namemap {
         if ( $feat->primary_tag eq 'fasta_record' ) {
             my @names = $feat->get_tag_values('name');
             $namemap->{ $names[0] }->{num}++;
-
             # $namemap{$1}++ if ( /\/name="([^"]+)/ );
             $namemap->{ $names[0] }->{len} = ( $feat->end ) - ( $feat->start );
         }
@@ -2256,36 +2213,34 @@ sub make_namemap {
 }
 
 sub number_the_duplicate {
-    my ( $self, $name ) = @_;
+	my ($self,$name) = @_;
 
-    if ( !defined $self->{duplicates}->{$name} ) {
-        $self->{duplicates}->{$name} = 1;
-    }
-    else {
-        $self->{duplicates}->{$name}++;
-    }
-    ( $name . "." . $self->{duplicates}->{$name} );
+	if ( ! defined $self->{duplicates}->{$name} ) {
+		$self->{duplicates}->{$name} = 1;
+	} else {
+		$self->{duplicates}->{$name}++;
+	}
+	($name . "." . $self->{duplicates}->{$name});
 }
 
 sub is_duplicate_name {
-    my ( $self, $name ) = @_;
+	my ($self,$name) = @_;
 
-    my $namemap = $self->{namemap};
-    if ( $namemap->{$name}->{num} > 1 ) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
+	my $namemap = $self->{namemap};
+	if ( $namemap->{$name}->{num} > 1 ) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 sub _initialize {
-    my $self = shift;
+	my $self = shift;
 
-    while (@_) {
-        ( my $key = shift ) =~ s/^-//;
-        $self->{$key} = shift;
-    }
+	while ( @_ ) {
+		( my $key = shift ) =~ s/^-//;
+		$self->{$key} = shift;
+	}
 }
 
 # $property = sub {
@@ -2393,7 +2348,6 @@ sub country {
 # 20-May-2012
 sub collection_date {
     my ( $self, $base ) = @_;
-
     # @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
     # printf "%4d-%s-%02d\n", $d[5]+1900, $mon[$d[4]], $d[3];
     $self->{'collection_date'} = $base if defined $base;
@@ -2461,6 +2415,7 @@ sub unique {
 
     ( keys %hsh );
 }
+
 
 1;
 

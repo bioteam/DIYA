@@ -80,28 +80,30 @@ check_keys($conf);
 
 sub check_keys {
 	my $conf = shift;
-	foreach my $key ( keys %$conf ) {
-		ok(grep( /^$key$/, qw( run script parser order ) ), "Found <$key> in $testconf") or 
-		  diag("Found <$key> in $testconf");
+	foreach my $name ( qw( run script parser order ) ) {
+		my $res = $conf->first_child($name);
+		ok( defined $res, "Found <$name> in $testconf") or 
+		  diag("Did not find <$name> in $testconf");
 	}
 }
+# TODO
 #
 # Round-trip a conf file using write_conf()
 #
-my $tmpconf = "t/tmp/testconf";
-$diya->write_conf($tmpconf);
-ok(-e $tmpconf, "Can write $tmpconf") || diag("$tmpconf not written");
-$diya->read_conf($tmpconf);
-my $newconf = $diya->_conf;
-ok(defined $newconf, "Can re-read conf") or diag("Cannot re-read conf file");
-is_deeply($conf,$newconf,"Can round-trip a conf file") or 
-  diag("Cannot round-trip a conf file");
+#my $tmpconf = "t/tmp/testconf";
+# $diya->write_conf($tmpconf);
+# ok(-e $tmpconf, "Can write $tmpconf") || diag("$tmpconf not written");
+# $diya->read_conf($tmpconf);
+# my $newconf = $diya->_conf;
+# ok(defined $newconf, "Can re-read conf") or diag("Cannot re-read conf file");
+# is_deeply($conf,$newconf,"Can round-trip a conf file") or 
+#   diag("Cannot round-trip a conf file");
 #
 # make a conf file when no name is supplied
 #
-my $confname = $diya->write_conf;
-ok(-e $confname, "Can write conf file with timestamp") || 
-  diag("Cannot write conf file with timestamp");
+# my $confname = $diya->write_conf;
+# ok(-e $confname, "Can write conf file with timestamp") || 
+#   diag("Cannot write conf file with timestamp");
 #
 # get and set order() 
 #
@@ -134,9 +136,33 @@ is_deeply(\@cs, \@ps, "Can get with _parsers" || "Can not get with _parsers");
 #
 # get executable name for parser
 #
-$p = $diya->_executable("MARC::tRNAscanSE");
-is($p, "tRNAscan-SE", "Can get executable name with _executable") ||
-  diag("Can not get executable name with _executable");
+$p = $diya->_executable("MARC::blastall");
+is($p, "blastall", "Can get executable name with _executable") ||
+diag("Can not get executable name with _executable");
+#
+# get inputformat for parser
+#
+$p = $diya->_inputformat("MARC::blastall");
+is($p, "fasta", "Can get format with _inputformat") ||
+diag("Can not get format with _inputformat");
+#
+# get command for parser
+#
+$p = $diya->_command("MARC::blastall");
+is($p, "-p blastp -d ran.fa -i INPUTFILE > OUTPUTFILE", "Can get command with _command") ||
+diag("Can not get command with _command");
+#
+# get inputfrom for parser
+#
+$p = $diya->_inputfrom("MARC::blastall");
+is($p, '', "Can get inputfrom with _inputfrom") ||
+diag("Can not get inputfrom with _inputfrom");
+#
+# get home for parser
+#
+$p = $diya->_home("MARC::blastall");
+like($p, qr(/usr/local/share/apps/ncbi/bin), "Can get home with _home") ||
+diag("Can not get home with _home");
 #
 # get and set mode
 #
@@ -191,7 +217,7 @@ my $inputfrom = $z->_inputfrom("MARC::blastall");
 is($inputfrom,'formatdb',"Can get inputfrom() of parser from $conf" || 
   "Can not get inputfrom() from $conf");
 $inputfrom = $z->_inputfrom("formatdb");
-is($inputfrom, 0,"Can get null inputfrom() of parser from $conf" || 
+is($inputfrom, '', "Can get null inputfrom() of parser from $conf" || 
   "Can not get null inputfrom() from $conf");
 #
 # _check_executable
@@ -216,8 +242,8 @@ SKIP: {
 
 
 END: {
-	unlink $tmpconf;
-	unlink $confname;
+	#unlink $tmpconf;
+	#unlink $confname;
 	system "rm -fr $timestampdir";
 	system "rm -fr $tmpdir";
 }

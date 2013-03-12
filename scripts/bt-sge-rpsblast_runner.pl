@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ###################################################################
 # This software is proprietary to The BioTeam, Inc.
 # This document may not be distributed or duplicated, in any part 
@@ -6,15 +6,15 @@
 # except for the express purpose for which it was shared. 
 # Copyright 2009. All Rights Reserved.
 ###################################################################
-#BSUB -L /usr/bin/perl
+#$ -S /usr/bin/env perl
 
 =head1 NAME
 
-bt-rpsblast_runner.pl
+bt-sge-rpsblast_runner.pl
 
 =head1 DESCRIPTION
 
-The execution portion of bt-batchrpsblast. LSF version.
+The execution portion of bt-sge-batchrpsblast.
 
 =cut
 
@@ -22,13 +22,12 @@ use strict;
 use Getopt::Long;
 use Bio::SeqIO;
 use File::Basename;
-use POSIX;
 
-$ENV{BLASTMAT} = "/Jake/apps/ncbi/data/" unless (defined($ENV{BLASTMAT}));
+$ENV{BLASTMAT} = "/common/data/blastmat" unless (defined($ENV{BLASTMAT}));
 
-my ($query, $id, $blast_output, $db, $localdata);
+my ($query, $id, $blast_output, $db, $tmp_output, $localdata);
 my $chunk_size = 1;
-my $bindir     = '/Jake/apps/bin';
+my $bindir     = '/arch/bin';
 
 Getopt::Long::Configure(("pass_through", "no_auto_abbrev", "no_ignore_case"));
 GetOptions("chunk=i"      => \$chunk_size,
@@ -40,11 +39,12 @@ GetOptions("chunk=i"      => \$chunk_size,
           );
 my $more_args = join(" ", @ARGV);
 
-# LSB_JOBINDEX == SGE_TASK_ID
-$id = $ENV{LSB_JOBINDEX} unless $id;
+# SGE gives us the string "undefined" in the environment variable above if 
+# we're not running in a task array.
+$id = $ENV{SGE_TASK_ID} unless ($id);
+$id = 1 if ($id eq "undefined");
 
-my $timestamp = strftime("%Y_%m_%d_%H_%M_%S", localtime);
-my $tmp_output = "/tmp/rpsblast-${timestamp}.tmp";
+$tmp_output= sprintf("/tmp/blastall.%05d.tmp", $$);
 #
 # Fountain of debugging info
 #
@@ -105,9 +105,9 @@ $tmp_output_dir = "rpsblast_tmp" unless ($tmp_output_dir);
 my ($blast_local, $blast_path, $blast_suffix) = fileparse($blast_output);
 my $output_fn = sprintf("$tmp_output_dir/%s.%-5d", $blast_local, $id);
 my $blast_cmd = "$bindir/rpsblast " . 
-                "-i $query_fn  " .
-                "-o $tmp_output " . 
-                "-d $db " .
+                "-query $query_fn  " .
+                "-out $tmp_output " . 
+                "-db $db " .
                 $more_args;
 print STDERR "BLAST Cmd:  $blast_cmd\n";
 system($blast_cmd);
@@ -119,6 +119,6 @@ print STDERR `$cmd`;
 #
 # Clean up after ourselves.
 #
-system("rm -f $query_fn");
-system("rm -f $tmp_output");
+unlink($query_fn);
+unlink($tmp_output);
 

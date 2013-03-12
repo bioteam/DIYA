@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ###################################################################
 # This software is proprietary to The BioTeam, Inc.
 # This document may not be distributed or duplicated, in any part
@@ -6,15 +6,15 @@
 # except for the express purpose for which it was shared.
 # Copyright 2009. All Rights Reserved.
 ###################################################################
-#BSUB -L /usr/bin/perl
+#$ -S /usr/bin/env perl
 
 =head1 NAME
 
-bt-blast_runner.pl
+bt-sge-blast_runner.pl
 
 =head1 DESCRIPTION
 
-The execution portion of bt-batchblast. LSF version.
+The execution portion of bt-sge-batchblast.
 
 =cut
 
@@ -22,13 +22,12 @@ use strict;
 use Getopt::Long;
 use Bio::SeqIO;
 use File::Basename;
-use POSIX;
 
-$ENV{BLASTMAT} = "/Jake/apps/ncbi/data/" if ( ! defined( $ENV{BLASTMAT} ) );
+$ENV{BLASTMAT} = "/common/data/blastmat" unless ( defined( $ENV{BLASTMAT} ) );
 
-my ( $query, $id, $blast_output, $db, $localdata );
+my ( $query, $id, $blast_output, $db, $tmp_output, $localdata );
 my $chunk_size = 1;
-my $bindir     = '/Jake/apps/bin';
+my $bindir     = '/arch/bin';
 
 Getopt::Long::Configure(
     ( "pass_through", "no_auto_abbrev", "no_ignore_case" ) );
@@ -42,12 +41,12 @@ GetOptions(
 );
 my $more_args = join( " ", @ARGV );
 
-# LSB_JOBINDEX is used in the "job array" context
-$id = $ENV{LSB_JOBINDEX} unless $id;
+# SGE gives us the string "undefined" in the environment variable above if
+# we're not running in a task array.
+$id = $ENV{SGE_TASK_ID} unless $id;
+$id = 1 if ( $id eq "undefined" );
 
-my $timestamp = strftime("%Y_%m_%d_%H_%M_%S", localtime);
-my $tmp_output = "/tmp/blastall-${timestamp}.tmp";
-
+$tmp_output = sprintf( "/tmp/blastall.%05d.tmp", $$ );
 #
 # Fountain of debugging info
 #
@@ -58,9 +57,8 @@ print STDERR "query     = $query\n";
 print STDERR "chunk     = $chunk_size\n";
 print STDERR "id        = $id\n";
 print STDERR "more_args = $more_args\n";
-print STDERR "out file  = $tmp_output\n";
-print STDERR "db to use = $db\n";
-
+print STDERR "temp output = $tmp_output\n";
+print STDERR "db to use... = $db\n";
 #
 # If local data cache is available and specified on the command line,
 # use it.
@@ -81,34 +79,30 @@ if ($localdata) {
 }
 
 die "Unable to locate query file $query" unless ( -e $query );
-
 #
-# Make a private query file in /tmp with just our inputs.
+# Make a private query file with just our inputs.
 #
-my $queryIO = Bio::SeqIO->new( -format => 'Fasta', -file => $query );
+my $queryIO = new Bio::SeqIO( -format => 'Fasta', -file => $query );
 my ( $query_local, $query_path, $query_suffix ) = fileparse($query);
 my $query_fn = sprintf( "/tmp/%s.%d", $query_local, $id );
-print STDERR "input  = $query_fn\n";
 
-die "Unable to open private query $query_fn for writing"
+die "unable to open private query $query_fn for writing"
   unless ( open( QUERY, ">$query_fn" ) );
 
 my $out = Bio::SeqIO->new(
     -format => 'Fasta',
     -fh     => \*QUERY
 );
-
 my $counter   = 1;
 my $seq_count = 1;
 while ( my $seq = $queryIO->next_seq() ) {
     if ( $counter == $id ) {
         $out->write_seq($seq);
     }
-    $counter++ if ( $seq_count % $chunk_size == 0 );
+    if ( $seq_count % $chunk_size == 0 ) { $counter++; }
     $seq_count++;
 }
 close(QUERY);
-
 #
 # Construct the BLAST command
 #
@@ -117,18 +111,21 @@ $tmp_output_dir = "batchblast_tmp" unless ($tmp_output_dir);
 my ( $blast_local, $blast_path, $blast_suffix ) = fileparse($blast_output);
 my $output_fn = sprintf( "$tmp_output_dir/%s.%-5d", $blast_local, $id );
 my $blast_cmd =
-  "$bindir/blastall -i $query_fn -o $tmp_output -d $db $more_args";
-
-print STDERR "BLAST Cmd from $0 on $hostname:  $blast_cmd\n";
+    "$bindir/blastall "
+  . "-i $query_fn  "
+  . "-o $tmp_output "
+  . "-d $db "
+  . $more_args;
+print STDERR "BLAST Cmd:  $blast_cmd\n";
 system($blast_cmd);
 
 `mkdir $tmp_output_dir` unless ( -e $tmp_output_dir );
 my $cmd = "/bin/cp $tmp_output $output_fn\n";
 print STDERR "$cmd\n";
 print STDERR `$cmd`;
-
 #
 # Clean up after ourselves.
 #
-system("rm -f $query_fn");
-system("rm -f $tmp_output");
+unlink($query_fn);
+unlink($tmp_output);
+
