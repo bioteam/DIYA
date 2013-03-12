@@ -11,12 +11,12 @@ Example command:
 nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi-ml.xml \
 -set MYUNIREFD=/Jake/data/mirror/uniprot/uniref50.fasta -set MYSTRAIN=test0001 \
 -set MYSPECIES='Test test' -set MYRPSD=/Jake/data/mirror/ncbi/CDD/Cdd -set MYSEQID=test0001 \
--set MYCLUSTERS=/Jake/data/mirror/ncbi/CDD/Clusters.bcp \
+-set MYCLUSTERS=/Jake/data/mirror/ncbi/CDD/Clusters.bcp --set MIMS='Bibersteinia_trehalsoi_192_lung_swab' \
 -set MYCDD=/Jake/data/mirror/ncbi/CDD/cddid_all.tbl -set MYQUALFILE=454MiniContigs.qual \
--set MYTAXID=12345 454MiniContigs.fna -set MYHOST='Homo sapiens' -set MYCOUNTRY=Montreal:Canada \
+-set MYTAXID=12345 -set MYHOST='Homo sapiens' -set MYCOUNTRY=Montreal:Canada \
 -set MYCOLLECTION_DATE=04-21-1960 -set MYISOLATION_SOURCE=liver -set MYNOTE='note test' \
 -set MYGENOME_COVERAGE=12 -set MYASSEMBLY_METHOD='method test' -set MYSEQUENCING_TECHNOLOGY="test test" \
--set MYTOPOLOGY=circular > test0001.out &
+-set MYTOPOLOGY=circular 454MiniContigs.fna > test0001.out &
 
 1. copy all relevant files to a working directory
 2. run glimmer3
@@ -146,7 +146,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
   <script>
     <name>create-cmt-file</name>
     <executable>create-cmt-file.pl</executable>
-    <command>-i MYSEQID -s MYSTRAIN</command>
+    <command>-i MYSEQID -s MIMS</command>
     <home>/Jake/apps/DIYA/scripts</home>
     <inputformat></inputformat>
     <inputfrom></inputfrom>
