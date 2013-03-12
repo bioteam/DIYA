@@ -846,7 +846,10 @@ my @strs = (
 '[Uu]ncharacterized', 'putative',
 '[Ss]ulphate', 'sulfate',
 '- \(pentapeptide', '-(pentapeptide',
-'genes activator', 'gene activator'
+'genes activator', 'gene activator',
+'ANTIGEN','antigen',
+'PROTEASE','protease',
+
 );
 
     while ( my ($search,$replace) = splice(@strs,0,2) ) {
@@ -1018,7 +1021,8 @@ sub remove_banned {
 '^(B.thurinienis|Salmonella)\s+',  
 '^Similar to\s+',           
 '^Truncated\s+',
-'hypothetical protein'                      
+'hypothetical protein',
+'\(S. cerevisiae\), '                  
 	);
 
     for my $str ( @strs ) {
@@ -1127,7 +1131,12 @@ sub remove_trailing {
 ', HI\d+',        
 ' HD_\d+',
 ', regulator of competence-specific genes',
-', fused lipid transporter subunits of ABC superfamily.+'
+', fused lipid transporter subunits of ABC superfamily.+',
+'\s+R[A-Z]\d+',
+'\s+R[A-Z]_\d+',
+'\s+A1G_\s+',
+'\s+RBE_\d+',
+'\s+A1G_\d+'
 );
 
     for my $str (@strs) {
@@ -1331,7 +1340,10 @@ sub is_hypothetical {
 'protein PM\d+',
 'membrane protein PM\d+',
 'protein HI_\d+',
-'Hybrid protein containing carboxymuconolactone decarboxylase domain'
+'Hybrid protein containing carboxymuconolactone decarboxylase domain',
+'^FTR\d+$',
+'^protein R[A-Z]\d+$',
+'^protein RBE_\d+$'
 );
 
 	for my $str ( @strs ) {
@@ -1478,8 +1490,9 @@ sub fix_discrp {
 	my $tbl = $self->read_tbl;
 	print "Fixing discrepancies\n" if $self->debug;
 
-	my @geneoverlaps = $self->get_gene_overlaps;
-	$tbl = $self->delete_from_tbl($tbl,@geneoverlaps);
+	my $cdsoverlaps = $self->get_gene_overlaps;
+  my $note = 'overlaps CDS with the same product name';
+	$tbl = $self->add_note_to_tbl($tbl,$note,$cdsoverlaps);
 
 	my @rnaoverlaps = $self->get_rna_overlaps;
 	$tbl = $self->delete_from_tbl($tbl,@rnaoverlaps);
@@ -1551,77 +1564,76 @@ sub get_dup_rnas {
 	@todelete;
 }
 
-# "DiscRep:OVERLAPPING_GENES::277 genes overlap another gene on the same strand."
-# "DiscRep:OVERLAPPING_CDS::12 coding regions overlap another coding region with a 
-# similar or identical name."
-# "DiscRep:OVERLAPPING_CDS::8 coding regions overlap another coding region with a similar 
-# or identical name that does not contain 'ABC' and do not have the appropriate note text"
-# "DiscRep:OVERLAPPING_CDS::4 coding regions overlap another coding region with a similar 
-# "or identical name that contains 'ABC'"
-# Solution: where 1 gene completely overlaps another, delete the smaller gene.
-# Note that the DiscRep:OVERLAPPING_GENES class contains all the smaller classes
+# Add a note when this occurs:
+# DiscRep_ALL:OVERLAPPING_CDS::79 coding regions overlap another coding region with a similar or identical name.
+# DiscRep_SUB:OVERLAPPING_CDS::79 coding regions overlap another coding region with a similar or identical name 
+# that do not have the appropriate note text
+# 
 sub get_gene_overlaps {
 	my $self = shift;
-	my @todelete = ();
 	my $id = $self->id;
-	my $gene1;
+	my ($toannotate,$gene1);
 
-	my @overlapgenes = $self->get_from_discrp('OVERLAPPING_GENES');
-	my @overlapcds = $self->get_from_discrp('OVERLAPPING_CDS');
-	push @overlapgenes,@overlapcds;
+  my $text = qr(OVERLAPPING_CDS::\d+ coding regions overlap another coding region with a similar or identical name that do not have the appropriate note text);
+	my @overlapcds = $self->get_from_discrp($text);
 
-	$gene1 = shift @overlapgenes;
+  # 192:CDS    glycosyltransferase lcl|ctg7180000000003:c863978-863178 192_7700
+  # 192:CDS    glycosyltransferase lcl|ctg7180000000003:c864862-863978 192_7710
+  # or
+  # NS5531:CDS  Protein mrp lcl|NS5531:39337-40293  H374_350
+  # NS5531:CDS  Protein mrp lcl|NS5531:40293-41357  H374_360
 
-# 192:CDS    glycosyltransferase lcl|ctg7180000000003:c863978-863178 192_7700
-# 192:CDS    glycosyltransferase lcl|ctg7180000000003:c864862-863978 192_7710
-
-	while ( my $gene2 = shift @overlapgenes ) {
-
-		# Note that this loop does not collect rRNAs or tRNAs
-    my ($g1start,$g1end) = $gene1 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
-    my ($g2start,$g2end) = $gene2 =~ m{lcl|[a-z]+[\d.]+:c?(\d+)[<>]?-[<>]?(\d+)};
-		my $g1len = abs($g1start - $g1end);
-		my $g2len = abs($g2start - $g2end);
-
-		my ($g1ctg) = $gene1 =~ m{lcl|([a-z]+[.\d]+)};
-		my ($g2ctg) = $gene2 =~ m{lcl|([a-z]+[\d.]+)};
-
-		# Gene	yberc_40220	lcl|contig01136:c856-281	yberc_40220
-		# Gene	yberc_40230	lcl|contig01136:c1053-856	yberc_40230
- 		if ( $g1start >=  $g2end && $g1start <= $g2start && $g1ctg eq $g2ctg ) {
-			# Delete the small one
- 			if ( $g1len >= $g2len ) {
- 				push @todelete,$gene2 if ( $gene2 !~ /${id}_(r|t)/ );
- 				print "1a: Will remove gene2: $gene2" if $self->debug;
- 			} else {
- 				push @todelete,$gene1 if ( $gene1 !~ /${id}_(r|t)/ );
- 				print "1b: Will remove gene1: $gene1" if $self->debug;
- 			}
- 		}
-
-		# Gene	yberc_39260	lcl|contig00890:6892-7563	yberc_39260
-		# Gene	yberc_39270	lcl|contig00890:7563-7889	yberc_39270
- 		if ( $g1end >=  $g2start && $g1end <= $g2end && $g1ctg eq $g2ctg ) {
-			# Delete the small one
-			if ( $g1len >= $g2len ) {
-				if ( $gene2 !~ /${id}_(r|t)/ ) {
-					push @todelete,$gene2;
-					print "2a: Will remove gene2: $gene2" if $self->debug;
-				}
-			} else {
-				if ( $gene1 !~ /${id}_(r|t)/ ) {
-					push @todelete,$gene1;
-					print "2b: Will remove gene1: $gene1" if $self->debug;
-				}
-			}
- 		}
-
-		$gene1 = $gene2;
+  # Want a string like:
+  # NS5531 40293 41357 
+  for my $cds ( @overlapcds ) {
+    $cds =~ m{^\S+\s+[^|]+\|([a-z\d.]+):c?(\d+)[<>]?-[<>]?(\d+)}i;
+    $toannotate->{"$1 $2 $3"}++;
 	}
 
-	@todelete = unique(@todelete);
-	@todelete;
+	$toannotate;
 }
+
+    # Old code, that used to delete genes
+    #
+    # $gene1 = shift @overlapcds;
+    # while ( my $gene2 = shift @overlapcds ) {
+    # Note that this loop does not collect rRNAs or tRNAs
+    # my ($g1start,$g1end) = $gene1 =~ m{lcl|[a-z\d.]+:c?(\d+)[<>]?-[<>]?(\d+)}i;
+    # my ($g2start,$g2end) = $gene2 =~ m{lcl|[a-z\d.]+:c?(\d+)[<>]?-[<>]?(\d+)}i;
+    # my $g1len = abs($g1start - $g1end);
+    # my $g2len = abs($g2start - $g2end);
+    # my ($g1ctg) = $gene1 =~ m{lcl|([a-z\d]+)}i;
+    # my ($g2ctg) = $gene2 =~ m{lcl|([a-z\d.]+)}i;
+    # # Gene  yberc_40220 lcl|contig01136:c856-281  yberc_40220
+    # # Gene  yberc_40230 lcl|contig01136:c1053-856 yberc_40230
+    # if ( $g1start >=  $g2end && $g1start <= $g2start && $g1ctg eq $g2ctg ) {
+    #   # Delete the small one
+    #   if ( $g1len >= $g2len ) {
+    #     push @todelete,$gene2 if ( $gene2 !~ /${id}_(r|t)/ );
+    #     print "1a: Will remove gene2: $gene2" if $self->debug;
+    #   } else {
+    #     push @todelete,$gene1 if ( $gene1 !~ /${id}_(r|t)/ );
+    #     print "1b: Will remove gene1: $gene1" if $self->debug;
+    #   }
+    # }
+    # # Gene  yberc_39260 lcl|contig00890:6892-7563 yberc_39260
+    # # Gene  yberc_39270 lcl|contig00890:7563-7889 yberc_39270
+    # if ( $g1end >=  $g2start && $g1end <= $g2end && $g1ctg eq $g2ctg ) {
+    #   # Delete the small one
+    #   if ( $g1len >= $g2len ) {
+    #     if ( $gene2 !~ /${id}_(r|t)/ ) {
+    #       push @todelete,$gene2;
+    #       print "2a: Will remove gene2: $gene2" if $self->debug;
+    #     }
+    #   } else {
+    #     if ( $gene1 !~ /${id}_(r|t)/ ) {
+    #       push @todelete,$gene1;
+    #       print "2b: Will remove gene1: $gene1" if $self->debug;
+    #     }
+    #   }
+    # }
+    # $gene1 = $gene2;
+    # }
 
 # "2 coding regions completely contain RNAs"
 # Solution: where a gene overlaps a tRNA or mRNA delete the gene.  
@@ -1845,6 +1857,35 @@ sub sort_by_loc {
 	my ($b1) = $b =~ /^[<>]?(\d+)/; 
 
 	$a1 <=> $b1;
+}
+
+sub add_note_to_tbl {
+    my ($self,$tbl,$notestr,$toannotate) = @_;
+
+    for my $contig ( @{$tbl} ) {
+        print "Next contig in *tbl is " . $contig->{contigname} . "\n"
+          if $self->debug;
+
+        for my $tonote ( keys %{$toannotate} ) {
+            my ( $notecontig, $loc1, $loc2 ) =
+              $tonote =~ /^(\S+)\s(\d+)\s(\d+)/;
+
+            if ( $notecontig eq $contig->{contigname} ) {
+                for my $feat ( keys %{$contig} ) {
+                    my ( $loca, $locb ) = $feat =~ /^[<>]?(\d+)\s+[<>]?(\d+)/;
+                    if ( $loca == $loc1 && $locb == $loc2 && $feat =~ /CDS/ ) {
+                        print "Adding note to CDS feature of $notecontig with location \'$loc1 $loc2\'\n"
+                          if $self->debug;
+                        my $str = $contig->{$feat};
+                        $str =~ s/\n$/\n\t\t\tnote\t$notestr\n/;
+                        $contig->{$feat} = $str;
+                    }
+                }
+            }
+        }
+    }
+
+    $tbl;
 }
 
 sub delete_from_tbl {
