@@ -70,7 +70,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
   </script>
   <parser>
     <name>MARC::blastxCDS</name>
-    <executable>bt-batchblast.pl</executable>
+    <executable>bt-lsf-batchblast.pl</executable>
    <command>-i INPUTFILE -p blastx -d MYUNIREFD -o OUTPUTFILE -e .001 -v 1 -b 1 --sync</command>
     <home>/Jake/apps/DIYA/scripts</home>
     <inputformat></inputformat>
@@ -78,7 +78,7 @@ nohup /usr/lib/perl5/site_perl/5.8.8/diya.pl -conf genome-annotator-for-ncbi-mpi
   </parser>
   <parser>
     <name>MARC::rpsblastCDS</name>
-    <executable>bt-batchrpsblast.pl</executable>
+    <executable>bt-lsf-batchrpsblast.pl</executable>
     <command>-d MYRPSD -i INPUTFILE -o OUTPUTFILE -e .001 -I T -p F -v 1 -b 1 --sync</command>
     <home>/Jake/apps/DIYA/scripts</home>
     <inputformat></inputformat>

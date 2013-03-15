@@ -1022,7 +1022,8 @@ sub remove_banned {
 '^Similar to\s+',           
 '^Truncated\s+',
 'hypothetical protein',
-'\(S. cerevisiae\), '                  
+'\(S. cerevisiae\), ',
+'^Nnac \('                 
 	);
 
     for my $str ( @strs ) {
@@ -1042,6 +1043,7 @@ sub remove_trailing {
 
     # Remove meaningless trailing comments
     my @strs = (
+'\s+\(Ec [\d.]+\)\)',
 ', PFL_4704',
 ' of prophage CP-933K',
 ',\s+PFL_\d+',
@@ -1586,7 +1588,7 @@ sub get_gene_overlaps {
   # Want a string like:
   # NS5531 40293 41357 
   for my $cds ( @overlapcds ) {
-    $cds =~ m{^\S+\s+[^|]+\|([a-z\d.]+):c?(\d+)[<>]?-[<>]?(\d+)}i;
+    $cds =~ m{^\S+\s+[^|]+\|([^:]+):c?(\d+)[<>]?-[<>]?(\d+)}i;
     $toannotate->{"$1 $2 $3"}++;
 	}
 

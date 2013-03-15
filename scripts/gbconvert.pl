@@ -114,7 +114,7 @@ my $tblfn = "$outdir/$id.tbl";
 my $outfeat = FileHandle->new(">$tblfn") or warn ("$tblfn: $!");
 my $fsafn = "$outdir/$id.fsa";
 my $outfsa = Bio::SeqIO->new(-file => ">$fsafn",
-					         -format => 'fasta') or warn ("$fsafn: $!");
+			     -format => 'fasta') or warn ("$fsafn: $!");
 
 $parser->make_namemap($infile);
 
