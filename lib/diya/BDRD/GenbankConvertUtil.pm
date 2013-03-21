@@ -592,7 +592,6 @@ sub fix_feature {
             my @notes = $feat->remove_tag("note");
 
             for my $note (@notes) {
-                $note =~ s/score=/RNAMMER score=/;
                 $feat->add_tag_value( 'note', $note )
                   if ( $note !~ /frame=\./ );
             }
