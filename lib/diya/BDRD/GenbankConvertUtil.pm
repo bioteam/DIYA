@@ -174,7 +174,7 @@ sub fixAndPrint {
             my $avg;
             for my $note (@notes) {
                 ($avg) = $note =~ /coverage\s+=\s+([.\d]+)\s+reads/;
-                $self->readsPerBase( $len, $avg ) if ($avg);
+                $self->reads_per_base( $len, $avg ) if ($avg);
             }
 
             # Write to fasta file if there's coverage data
@@ -849,7 +849,8 @@ my @strs = (
 'genes activator', 'gene activator',
 'ANTIGEN','antigen',
 'PROTEASE','protease',
-
+'VIRB8 PROTEIN','VirB8 protein',
+'\[Mn\/Fe\]','(Mn/Fe)'
 );
 
     while ( my ($search,$replace) = splice(@strs,0,2) ) {
@@ -1136,7 +1137,10 @@ sub remove_trailing {
 '\s+R[A-Z]_\d+',
 '\s+A1G_\s+',
 '\s+RBE_\d+',
-'\s+A1G_\d+'
+'\s+A1G_\d+',
+'\s+RrIowa_\d+',
+'\s+cell wall anchor domain',
+', PadR-like'
 );
 
     for my $str (@strs) {
@@ -1343,7 +1347,12 @@ sub is_hypothetical {
 'Hybrid protein containing carboxymuconolactone decarboxylase domain',
 '^FTR\d+$',
 '^protein R[A-Z]\d+$',
-'^protein RBE_\d+$'
+'^protein RBE_\d+$',
+'^WGS project CABT00000000 data',
+'ORFII',
+'SMI1 / KNR4',
+'TIGR\d+',
+'PAP\d+'
 );
 
 	for my $str ( @strs ) {
@@ -1426,19 +1435,23 @@ sub run_tbl2asn {
   $country =~ s/:\s*/: /;
 
   my $jstring = "[organism=$organism $strain] [strain=$strain] [gcode=$gcode]";
-  $jstring   .= " [host=$host]" if $host;
-  $jstring   .= " [country=$country]" if $country;
-  $jstring   .= " [collection_date=$collection_date]" if $collection_date;
+  $jstring   .= " [host=$host]"                         if $host;
+  $jstring   .= " [country=$country]"                   if $country;
+  $jstring   .= " [collection_date=$collection_date]"   if $collection_date;
   $jstring   .= " [isolation-source=$isolation_source]" if $isolation_source;
-  $jstring   .= " [note=$submission_note]" if $submission_note;
+  $jstring   .= " [note=$submission_note]"              if $submission_note;
 
 	my $cmd = "$tbl2asn -t $tmplt.sbt -p $outdir -M n -Z discrp -y \"$comment\" " .
-                  "-X C -V b -j \"$jstring\"";
+            "-V b -j \"$jstring\" -n \"$organism\"";
+  $cmd .= " -X C" if $self->cmt_file;
 	print "tbl2asn command: \'$cmd\'\n" if $self->debug;
 	`$cmd`;
 }
 
 # The *cmt file is a 2 column, tab-delimited file like this:
+# StructuredCommentPrefix\t" . '##MIGS:3.0-Data-START##
+# investigation_type  bacteria_archaea
+# StructuredCommentSuffix\t" . '##MIGS:3.0-Data-END##
 # StructuredCommentPrefix ##Genome-Assembly-Data-START##
 # Assembly Method Newbler v. 2.3
 # Assembly Name   Ecoli.str12345_v1.0
@@ -1446,42 +1459,42 @@ sub run_tbl2asn {
 # Sequencing Technology   454 Titanium; PacBio RS
 # StructuredCommentSuffix ##Genome-Assembly-Data-END##
 sub create_cmt {
-    my $self = shift;
-    my ( $method, $name, $coverage, $tech, $id, $outdir, $readsPerBase ) = (
-        $self->Assembly_Method, $self->Assembly_Name,
-        $self->Genome_Coverage, $self->Sequencing_Technology,
-        $self->id,              $self->outdir,
-        $self->readsPerBase
+    my ($self,$csvfile) = shift;
+    my ( $id, $outdir, $readsPerBase ) = (
+        $self->id, $self->outdir, $self->reads_per_base
     );
-    $method = trim_comma($method);
-    $tech   = trim_comma($tech);
-    my ( $totalLen, $totalReads, $cmtfh );
 
     if ($readsPerBase) {
+      my ( $totalLen, $totalReads );
         for my $len ( keys %{$readsPerBase} ) {
             $totalLen   += $len;
             $totalReads += ( $len * $readsPerBase->{$len} );
         }
-        $coverage = sprintf( "%.1f", ( $totalReads / $totalLen ) );
+        my $coverage = sprintf( "%.1f", ( $totalReads / $totalLen ) );
+        $self->genome_coverage = $coverage
     }
 
-    if ( -e "$outdir/$id.cmt" ) {
-      $cmtfh = FileHandle->new(">>$outdir/$id.cmt")
-        or die("Cannot open file $outdir/$id.cmt for appending");
-    } else {
-      $cmtfh = FileHandle->new(">$outdir/$id.cmt")
-        or die("Cannot open file $outdir/$id.cmt for writing");      
+    my $csvfh = FileHandle->new($csvfile) or die("Cannot open file $csvfile");
+    my $cmtfh = FileHandle->new(">$outdir/$id.cmt")
+        or die("Cannot write to file $outdir/$id.cmt");
+
+    my $cmt = "StructuredCommentPrefix\t" . '##MIGS:3.0-Data-START##' . "\n";
+    
+    while ( my $line = <$csvfh> ) {
+      my ($key,$val) = $line =~ /^([^,]+),(.+)/;
+      $cmt .= "$key\t$val\n";
     }
 
-    my $txt = "StructuredCommentPrefix\t" . '##Genome-Assembly-Data-START##' . "\n" .
-              "Assembly Method\t$method\n";
-    $txt .=   "Assembly Name\t$name\n" if $name;
-    $txt .=   "Genome Coverage\t${coverage}x\n" .
-              "Sequencing Technology\t$tech\n" .
-              "StructuredCommentSuffix\t" . '##Genome-Assembly-Data-END##';
+    $cmt .= "StructuredCommentSuffix\t" . '##MIGS:3.0-Data-END##' . "\n" .
+            "StructuredCommentPrefix\t" . '##Genome-Assembly-Data-START##' . "\n" .
+            "Assembly Method\t"       . $self->assembly_method . "\n" .
+            "Genome Coverage\t"       . $self->genome_coverage . "\n" .
+            "Sequencing Technology\t" . $self->sequencing_technology . "\n";
+    $cmt .= "Assembly Name\t"         . $self->assembly_name . "\n" if $self->assembly_name;
+    $cmt .= "StructuredCommentSuffix\t" . '##Genome-Assembly-Data-END##';
 
-    print $cmtfh $txt;
-    1;
+    print $cmtfh $cmt;
+    $self->cmt_file("$outdir/$id.cmt");
 }
 
 sub fix_discrp {
@@ -1995,7 +2008,7 @@ sub outdir {
 	return $self->{outdir} if $self->{outdir};
 }
 
-sub readsPerBase {
+sub reads_per_base {
 	my ($self,$len,$avg) = @_;
 
 	$self->{readsPerBase}->{$len} = $avg if ($len && $avg);
@@ -2034,7 +2047,7 @@ sub edit_asn_file {
 sub make_top_comment {
     my $self = shift;
 
-    my $comment = "Bacteria available from MARC" if ( $self->strain !~ /ATCC/ );
+    my $comment = "Bacteria available from NMRC" if ( $self->strain !~ /ATCC/ );
 
     $comment;
 }
@@ -2372,29 +2385,35 @@ sub gcode {
     return $self->{'gcode'};
 }
 
-sub Assembly_Name {
+sub assembly_name {
     my ( $self, $base ) = @_;
-    $self->{'Assembly_Name'} = $base if defined $base;
-    return $self->{'Assembly_Name'} if defined $self->{'Assembly_Name'};
+    $self->{'assembly_name'} = $base if defined $base;
+    return $self->{'assembly_name'} if defined $self->{'assembly_name'};
     '';
 }
 
-sub Genome_Coverage {
+sub genome_coverage {
     my ( $self, $base ) = @_;
-    $self->{'Genome_Coverage'} = $base if defined $base;
-    return $self->{'Genome_Coverage'};
+    $self->{'genome_coverage'} = $base if defined $base;
+    return $self->{'genome_coverage'};
 }
 
-sub Sequencing_Technology {
+sub sequencing_technology {
     my ( $self, $base ) = @_;
-    $self->{'Sequencing_Technology'} = $base if defined $base;
-    return $self->{'Sequencing_Technology'};
+    $self->{'sequencing_technology'} = $base if defined $base;
+    return $self->{'sequencing_technology'};
 }
 
-sub Assembly_Method {
+sub assembly_method {
     my ( $self, $base ) = @_;
-    $self->{'Assembly_Method'} = $base if defined $base;
-    return $self->{'Assembly_Method'};
+    $self->{'assembly_method'} = $base if defined $base;
+    return $self->{'assembly_method'};
+}
+
+sub cmt_file {
+    my ( $self, $base ) = @_;
+    $self->{'cmt_file'} = $base if defined $base;
+    return $self->{'cmt_file'};
 }
 
 sub trim {
