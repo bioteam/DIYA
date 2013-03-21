@@ -62,19 +62,23 @@ sub parse {
 	open MYIN,$rout or die "Cannot read file $rout";
 
 	while ( my $line = <MYIN> ) {
+		my $strand;
 
-		if ( $line =~ /^\S+\s+(\w+)-([\d.]+)\s+rRNA\s+(\d+)\s+(\d+)\s+(\S+)\s+[+-]\s+\.\s+(\d+s)/ ) {
+		if ( $line =~ /^\S+\s+(\w+)-([\d.]+)\s+rRNA\s+(\d+)\s+(\d+)\s+(\S+)\s+([+-])\s+\.\s+(\d+s)/ ) {
 			my %tags;
 
 			$tags{locus_tag} = $gbk->display_id . "_r" . ($LOCUS_TAG_NUMBER += 10);
 			$tags{note} = "$1 score=$5";
-			$tags{product} = "$6 ribosomal rna";
+			$tags{product} = "$7 ribosomal rna";
 			$tags{inference} = "profile:$1:$2";
+
+			$strand = ( $6 eq '+' ) ? '1' : '-1';
 
 			my $feat = Bio::SeqFeature::Generic->new(-primary    => 'rRNA',
 																  -source_tag => 'rnammer',
 																  -start      => $3,
 																  -end        => $4,
+																  -strand     => $strand,
 																  -tag        => { %tags } );
 			$gbk->add_SeqFeature($feat);
 		}
