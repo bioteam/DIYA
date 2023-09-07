@@ -35,7 +35,6 @@ find diya. Alternatively:
 
 Or wherever diya.pm can be found.
 
-
 SAMPLE PIPELINES
 
 Diya is not itself a pipeline, but rather a simple infrastructure for running
